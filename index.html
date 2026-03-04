@@ -9,7 +9,6 @@
     <script>
         try {
             if (localStorage.getItem("logado") !== "sim") {
-                // Previne erro de redirecionamento no ambiente de preview/sandbox
                 if (window.location.protocol !== 'about:' && window.location.protocol !== 'data:' && window.location.hostname !== '') {
                     window.location.href = "login.html";
                 } else {
@@ -26,18 +25,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
     <!-- Babel (Para rodar o JSX/React direto no navegador) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <!-- Dependências do Recharts -->
-    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
-    <script src="https://unpkg.com/react-is@18.2.0/umd/react-is.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.js"></script>
+    <script src="https://unpkg.com/react-is@18.2.0/umd/react-is.development.js"></script>
 
-    <!-- Recharts (Versão fixada para estabilidade via CDN) -->
-    <script src="https://unpkg.com/recharts@2.1.9/umd/Recharts.js"></script>
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.js"></script>
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,21 +57,28 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // Extraindo React e Recharts das bibliotecas globais
-        const { useState, useEffect, useMemo } = React;
-        const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip: RechartsTooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } = window.Recharts;
+        // Extraindo React e Recharts
+        const { useState, useEffect, useMemo, useRef } = React;
+        const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } = window.Recharts;
 
-        // Configuração do Supabase (Usando suas chaves do código antigo)
+        // Configuração do Supabase
         const supabaseUrl = 'https://izmdjkalwgupuehrbcxm.supabase.co'; 
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         // Componente wrapper para os ícones Lucide
         const Icon = ({ name, className }) => {
+            const iconRef = useRef(null);
+            
             useEffect(() => {
-                lucide.createIcons();
-            }, [name]);
-            return <i data-lucide={name} className={className}></i>;
+                if (iconRef.current) {
+                    lucide.createIcons({
+                        root: iconRef.current.parentNode
+                    });
+                }
+            }, [name, className]);
+
+            return <i ref={iconRef} data-lucide={name} className={className}></i>;
         };
 
         // --- ESTRUTURA DE DADOS E METADADOS PADRÃO ---
@@ -286,46 +292,40 @@
             // Inicialização e Autenticação com Supabase
             useEffect(() => {
                 const initApp = async () => {
-                    // Proteção secundária para ambiente isolado
-                    if (localStorage.getItem("logado") !== "sim") {
-                        if (window.location.protocol !== 'about:' && window.location.protocol !== 'data:' && window.location.hostname !== '') {
-                            window.location.href = "login.html";
+                    try {
+                        const { data: { session }, error } = await supabaseClient.auth.getSession();
+                        
+                        if (error || !session?.user) {
+                            if (localStorage.getItem("logado") === "sim") {
+                                // Fallback para ambiente de testes se a pessoa clicou em entrar sem login de banco
+                                console.log("Usuário local, pulando auth do banco...");
+                                setLoading(false);
+                            } else {
+                                window.location.href = "login.html";
+                            }
                             return;
                         }
-                    }
 
-                    const { data: { session }, error } = await supabaseClient.auth.getSession();
-                    
-                    if (error || !session?.user) {
-                        localStorage.removeItem("logado");
-                        if (window.location.protocol !== 'about:' && window.location.protocol !== 'data:' && window.location.hostname !== '') {
-                            window.location.href = "login.html";
+                        // Verifica a Assinatura (Profile)
+                        const { data: profile } = await supabaseClient
+                            .from('profiles')
+                            .select('subscription_status')
+                            .eq('id', session.user.id)
+                            .single();
+
+                        if (!profile || profile.subscription_status !== 'active') {
+                            alert("Acesso restrito para assinantes. Ative sua conta!");
+                            window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${session.user.id}`;
                             return;
                         }
-                    }
 
-                    // Se estiver no preview sem sessão real, mockar um usuário
-                    if (!session?.user) {
-                        console.log("Mocking usuário no ambiente de preview...");
+                        setUser(session.user);
+                        await loadDadosSupabase(session.user.id);
+                    } catch(err) {
+                        console.error("Erro na inicialização", err);
+                        // Em caso de erro severo, pelo menos tira da tela de loading
                         setLoading(false);
-                        return;
                     }
-
-                    // Verifica a Assinatura (Profile)
-                    const { data: profile } = await supabaseClient
-                        .from('profiles')
-                        .select('subscription_status')
-                        .eq('id', session.user.id)
-                        .single();
-
-                    if (!profile || profile.subscription_status !== 'active') {
-                        alert("Acesso restrito para assinantes. Ative sua conta!");
-                        window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${session.user.id}`;
-                        return;
-                    }
-
-                    setUser(session.user);
-                    loadDadosSupabase(session.user.id);
                 };
                 
                 initApp();
@@ -342,25 +342,21 @@
                     if (data && data.payload) {
                         const payload = data.payload;
                         
-                        // Verifica se é a estrutura antiga ou a nova (com meses)
                         if (payload.Janeiro) {
-                            // É a estrutura nova!
                             setBudgetData(payload);
                         } else {
-                            // É a estrutura antiga. Como a plataforma mudou muito, 
-                            // carregamos a nova estrutura vazia.
                             console.log("Estrutura antiga detectada, iniciando novo ciclo.");
                             setBudgetData(generateEmptyData());
                         }
                     } else {
-                        // Usuário novo
                         setBudgetData(generateEmptyData());
                     }
                 } catch (err) {
                     console.error("Erro ao carregar dados", err);
                     setErrorMsg("Erro de conexão.");
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             };
 
             const saveToSupabase = async (dataToSave) => {
@@ -753,7 +749,7 @@
                                         }}>
                                             {data.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
                                         </Pie>
-                                        <RechartsTooltip formatter={(v) => formatCurrency(v)} />
+                                        <Tooltip formatter={(v) => formatCurrency(v)} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -798,7 +794,7 @@
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={65} tickFormatter={(val) => `R$ ${val}`} />
-                                    <RechartsTooltip formatter={(value) => formatCurrency(value)} cursor={{ fill: '#f8fafc' }} />
+                                    <Tooltip formatter={(value) => formatCurrency(value)} cursor={{ fill: '#f8fafc' }} />
                                     <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                                     <Bar dataKey="Rendimentos" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
                                     <Bar dataKey="Gastos" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -810,7 +806,7 @@
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                        {renderPieChartCard("Para onde vai meu dinheiro? (Categorias)", dashboardChartData, COLORS_GERAL)}
+                        {renderPieChartCard("Para onde vai meu dinheiro?", dashboardChartData, COLORS_GERAL)}
                         {renderPieChartCard("Gastos: Fixos vs Variáveis", fixedVariableChartData, ['#f43f5e', '#f59e0b'])}
                         {renderPieChartCard("Rendimentos", incomeChartData, COLORS_INCOME)}
                     </div>
@@ -889,7 +885,7 @@
                                             <Pie data={chartData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={4} dataKey="value">
                                                 {chartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                                             </Pie>
-                                            <RechartsTooltip formatter={(val) => `${val}% do Orçamento`} />
+                                            <Tooltip formatter={(val) => `${val}% do Orçamento`} />
                                             <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }}/>
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -1144,7 +1140,7 @@
                                                     <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={4} dataKey="value">
                                                         {chartData.map((_, i) => <Cell key={i} fill={COLORS_INVEST[i % COLORS_INVEST.length]} />)}
                                                     </Pie>
-                                                    <RechartsTooltip formatter={(v) => formatCurrency(v)} />
+                                                    <Tooltip formatter={(v) => formatCurrency(v)} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
