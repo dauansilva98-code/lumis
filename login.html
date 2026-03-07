@@ -7,91 +7,105 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         
         body { 
             font-family: 'Inter', sans-serif; 
             overflow: hidden;
-            background-color: #f8fafc;
+            /* Fundo sutil e elegante inspirado no seu mockup */
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
         }
         
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        .clean-card {
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 20px 0 rgba(255, 255, 255, 0.5) inset;
+            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
+        /* Animação das esferas de fundo bem sutis */
         .blob {
             position: absolute;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(180deg, rgba(79, 70, 229, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
-            filter: blur(80px);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 64, 161, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
             border-radius: 50%;
             z-index: -1;
-            animation: move 20s infinite alternate;
+            animation: move 25s infinite alternate ease-in-out;
         }
 
         @keyframes move {
             from { transform: translate(-10%, -10%) scale(1); }
-            to { transform: translate(20%, 20%) scale(1.1); }
+            to { transform: translate(15%, 15%) scale(1.1); }
         }
 
-        .blob-2 {
-            bottom: -10%;
-            right: -10%;
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, rgba(79, 70, 229, 0.1) 100%);
-            animation: move-reverse 25s infinite alternate;
+        /* Estilos para animação do Toast */
+        .toast-enter {
+            transform: translateY(100%);
+            opacity: 0;
         }
-
-        @keyframes move-reverse {
-            from { transform: translate(10%, 10%) scale(1.1); }
-            to { transform: translate(-20%, -20%) scale(1); }
+        .toast-enter-active {
+            transform: translateY(0);
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast-leave {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-leave-active {
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 relative">
     
-    <div class="blob"></div>
-    <div class="blob blob-2"></div>
-    
-    <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#4f46e5 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
+    <!-- Container para Notificações (Toasts) -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
-    <div class="w-full max-w-md z-10">
-        <div class="text-center mb-6 sm:mb-8 flex flex-col items-center">
-            <img src="logo.png" alt="Lumis Logo" class="w-56 md:w-64 h-auto object-contain">
+    <div class="blob top-0 left-0"></div>
+    <div class="blob bottom-0 right-0" style="animation-direction: alternate-reverse; animation-duration: 30s;"></div>
+
+    <div class="w-full max-w-[420px] z-10">
+        
+        <div class="text-center mb-8 flex flex-col items-center">
+            <!-- Sua logo real entra aqui, substituindo o ícone e o texto -->
+            <img src="logo.png" alt="Lumis Logo" class="w-64 md:w-80 h-auto object-contain mb-4">
             
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-widest -mt-8 relative z-10">Organizador Financeiro</p>
+            <h2 class="text-[13px] font-extrabold text-[#64748b] uppercase tracking-[0.15em] relative z-10">
+                Organizador Financeiro
+            </h2>
         </div>
 
-        <div class="glass-card p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem]">
-            <div class="space-y-5 sm:space-y-6">
+        <div class="clean-card p-8 sm:p-10">
+            <div class="space-y-6">
                 
                 <div class="input-group">
-                    <label for="email" class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1 transition-colors">E-mail de acesso</label>
+                    <label for="email" class="block text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">E-mail de acesso</label>
                     <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="mail" class="w-5 h-5"></i>
                         </span>
                         <input type="email" id="email" 
-                            class="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-300 text-base sm:text-sm" 
+                            class="block w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
                             placeholder="exemplo@email.com">
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label for="senha" class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1 transition-colors">Senha</label>
+                    <label for="senha" class="block text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Senha</label>
                     <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="lock" class="w-5 h-5"></i>
                         </span>
                         
                         <input type="password" id="senha" 
-                            class="block w-full pl-12 pr-12 py-3 sm:py-4 bg-white/50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-slate-300 text-base sm:text-sm" 
+                            class="block w-full pl-12 pr-12 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
                             placeholder="••••••••">
                             
-                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-indigo-500 cursor-pointer focus:outline-none transition-colors">
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0040A1] cursor-pointer focus:outline-none transition-colors">
                             <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                 <circle cx="12" cy="12" r="3"/>
@@ -100,31 +114,31 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between text-[11px] px-1">
-                    <label class="flex items-center text-slate-600 cursor-pointer group">
-                        <input type="checkbox" class="mr-2 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
-                        <span class="group-hover:text-slate-800">Manter sessão iniciada</span>
+                <div class="flex items-center justify-between text-xs px-1 pt-1">
+                    <label class="flex items-center text-slate-500 cursor-pointer group hover:text-slate-700 transition-colors">
+                        <input type="checkbox" class="mr-2.5 h-4 w-4 rounded border-slate-300 text-[#0040A1] focus:ring-[#0040A1] transition-all cursor-pointer">
+                        <span>Manter sessão iniciada</span>
                     </label>
-                    <a href="#" class="text-indigo-600 font-bold hover:text-indigo-800 transition-colors">Esqueceu-se da senha?</a>
+                    <a href="#" class="text-[#0040A1] font-bold hover:text-[#002b70] transition-colors">Esqueceu-se da senha?</a>
                 </div>
 
-                <button onclick="entrar()" id="btnLogin" class="w-full py-3 sm:py-4 bg-indigo-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group">
+                <button onclick="entrar()" id="btnLogin" class="w-full py-4 mt-2 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
                     <span>Acessar Painel</span>
                     <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </div>
         </div>
         
-        <div style="margin-top: 20px; text-align: center; font-size: 14px;">
+        <div class="mt-8 text-center text-[13px] text-slate-600">
             <span>Ainda não é assinante?</span>
             <br>
-            <a href="cadastro.html" style="color: #635bff; font-weight: bold; text-decoration: none;">
+            <a href="cadastro.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
                 Criar conta e Assinar ➔
             </a>
         </div>
 
-        <div class="mt-8 sm:mt-10 text-center">
-            <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">
+        <div class="mt-10 text-center">
+            <p class="text-[#64748b] text-[10px] uppercase tracking-[0.2em] font-extrabold">
                 © 2026 Lumis
             </p>
         </div>
@@ -132,8 +146,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+      // Inicializa ícones Lucide
       lucide.createIcons();
 
+      // Configurações do Supabase (Mantidas do original)
       const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
 
@@ -142,6 +158,49 @@
           supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       }
 
+      // Sistema Customizado de Notificação (Toast) para substituir os alert()
+      function showToast(message, type = 'error') {
+          const container = document.getElementById('toast-container');
+          const toast = document.createElement('div');
+          
+          const bgColors = {
+              error: 'bg-red-500',
+              success: 'bg-emerald-500',
+              warning: 'bg-amber-500'
+          };
+          
+          const icons = {
+              error: 'alert-circle',
+              success: 'check-circle',
+              warning: 'alert-triangle'
+          };
+
+          toast.className = `${bgColors[type]} text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 font-medium text-sm toast-enter w-max max-w-sm ml-auto`;
+          toast.innerHTML = `
+            <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i> 
+            <span>${message}</span>
+          `;
+          
+          container.appendChild(toast);
+          lucide.createIcons();
+
+          // Animação de entrada
+          requestAnimationFrame(() => {
+              toast.classList.remove('toast-enter');
+              toast.classList.add('toast-enter-active');
+          });
+
+          // Remoção após 4 segundos
+          setTimeout(() => {
+              toast.classList.remove('toast-enter-active');
+              toast.classList.add('toast-leave-active');
+              setTimeout(() => {
+                  toast.remove();
+              }, 300);
+          }, 4000);
+      }
+
+      // Alternar visualização da senha
       function togglePassword() {
         const input = document.getElementById('senha');
         const icon = document.getElementById('eyeIcon');
@@ -155,56 +214,82 @@
         }
       }
 
+      // Função de login
       async function entrar() {
-        if (!SUPABASE_KEY) return;
+        if (!SUPABASE_KEY) {
+            showToast("Configurações do banco de dados ausentes.", "error");
+            return;
+        }
 
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
         const senha = document.getElementById('senha').value;
         const btn = document.getElementById('btnLogin');
 
         if (!email || !senha) {
-            alert("Por favor, preencha todos os campos.");
+            showToast("Por favor, preencha todos os campos para continuar.", "warning");
             return;
         }
 
+        // Estado de Loading no botão
         const originalContent = btn.innerHTML;
-        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>A verificar...</span>`;
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Autenticando...</span>`;
         btn.disabled = true;
+        btn.classList.add('opacity-90', 'cursor-not-allowed');
 
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
             
             if (error) {
-                alert("Erro ao entrar: " + error.message);
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
+                // Mensagem customizada para credenciais inválidas
+                let errorMsg = error.message;
+                if (errorMsg.includes("Invalid login credentials")) {
+                    errorMsg = "E-mail ou senha incorretos.";
+                }
+                showToast(errorMsg, "error");
+                restaurarBotao();
                 return;
             }
 
             const userId = data.user.id;
-            const { data: profile } = await supabaseClient
+            const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('subscription_status')
                 .eq('id', userId)
                 .single();
 
             if (profile && profile.subscription_status === 'active') {
+                showToast("Login realizado com sucesso! Redirecionando...", "success");
                 localStorage.setItem("logado", "sim");
-                window.location.href = "index.html"; 
+                
+                // Pequeno delay para exibir o toast de sucesso antes de redirecionar
+                setTimeout(() => {
+                    window.location.href = "index.html"; 
+                }, 1500);
             } else {
-                alert("Identificamos que sua assinatura ainda não está ativa. Redirecionando para o pagamento...");
-                window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${userId}`;
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
+                showToast("Assinatura inativa. Redirecionando para o pagamento...", "warning");
+                
+                setTimeout(() => {
+                    window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${userId}`;
+                }, 2000);
             }
         } catch (err) {
-            alert("Erro de conexão com o servidor.");
+            console.error(err);
+            showToast("Erro de conexão. Verifique sua internet ou tente mais tarde.", "error");
+            restaurarBotao();
+        }
+
+        function restaurarBotao() {
             btn.innerHTML = originalContent;
             btn.disabled = false;
+            btn.classList.remove('opacity-90', 'cursor-not-allowed');
+            lucide.createIcons(); // Recriar o ícone da seta
         }
       }
 
-      document.addEventListener('keypress', (e) => { if (e.key === 'Enter') entrar(); });
+      // Permitir login ao pressionar a tecla Enter
+      document.addEventListener('keypress', (e) => { 
+          if (e.key === 'Enter') entrar(); 
+      });
     </script>
 </body>
 </html>
