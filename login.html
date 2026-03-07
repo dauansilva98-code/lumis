@@ -60,7 +60,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative">
+<body class="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 relative">
     
     <!-- Container para Notificações (Toasts) -->
     <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
@@ -68,24 +68,25 @@
     <div class="blob top-0 left-0"></div>
     <div class="blob bottom-0 right-0" style="animation-direction: alternate-reverse; animation-duration: 30s;"></div>
 
-    <div class="w-full max-w-[420px] z-10">
+    <!-- main wrapper com mx-auto e w-full para centralização absoluta -->
+    <main class="w-full max-w-[400px] mx-auto z-10 flex flex-col items-center justify-center">
         
-        <div class="text-center mb-8 flex flex-col items-center">
-            <!-- Sua logo real entra aqui, substituindo o ícone e o texto -->
-            <img src="logo.png" alt="Lumis Logo" class="w-64 md:w-80 h-auto object-contain mb-4">
+        <div class="w-full text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
+            <!-- Removi as margens inferiores (mb-3/mb-4) que estavam aqui -->
+            <img src="logo.png" alt="Lumis Logo" class="w-48 sm:w-60 h-auto object-contain">
             
-            <h2 class="text-[13px] font-extrabold text-[#64748b] uppercase tracking-[0.15em] relative z-10">
+            <!-- Adicionei -mt-8 (margem negativa) para puxar o texto para cima -->
+            <h2 class="text-[12px] sm:text-[13px] font-extrabold text-[#64748b] uppercase tracking-[0.15em] relative z-10 -mt-6 sm:-mt-10">
                 Organizador Financeiro
             </h2>
         </div>
 
-        <div class="clean-card p-8 sm:p-10">
-            <div class="space-y-6">
+        <div class="clean-card w-full p-6 sm:p-10">
+            <div class="space-y-5 sm:space-y-6 w-full">
                 
-                <div class="input-group">
-                    <label for="email" class="block text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">E-mail de acesso</label>
-                    <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                <div class="input-group w-full">
+                    <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">E-mail de acesso</label>
+                    <div class="relative group w-full">
                             <i data-lucide="mail" class="w-5 h-5"></i>
                         </span>
                         <input type="email" id="email" 
@@ -94,9 +95,9 @@
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label for="senha" class="block text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Senha</label>
-                    <div class="relative group">
+                <div class="input-group w-full">
+                    <label for="senha" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Senha</label>
+                    <div class="relative group w-full">
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="lock" class="w-5 h-5"></i>
                         </span>
@@ -114,22 +115,22 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between text-xs px-1 pt-1">
+                <div class="flex items-center justify-between text-xs px-1 pt-1 w-full">
                     <label class="flex items-center text-slate-500 cursor-pointer group hover:text-slate-700 transition-colors">
                         <input type="checkbox" class="mr-2.5 h-4 w-4 rounded border-slate-300 text-[#0040A1] focus:ring-[#0040A1] transition-all cursor-pointer">
-                        <span>Manter sessão iniciada</span>
+                        <span>Manter sessão</span>
                     </label>
-                    <a href="#" class="text-[#0040A1] font-bold hover:text-[#002b70] transition-colors">Esqueceu-se da senha?</a>
+                    <a href="#" class="text-[#0040A1] font-bold hover:text-[#002b70] transition-colors">Esqueceu a senha?</a>
                 </div>
 
-                <button onclick="entrar()" id="btnLogin" class="w-full py-4 mt-2 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
+                <button onclick="entrar()" id="btnLogin" class="w-full py-3.5 sm:py-4 mt-2 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[14px] sm:text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
                     <span>Acessar Painel</span>
                     <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </div>
         </div>
         
-        <div class="mt-8 text-center text-[13px] text-slate-600">
+        <div class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
             <span>Ainda não é assinante?</span>
             <br>
             <a href="cadastro.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
@@ -137,12 +138,12 @@
             </a>
         </div>
 
-        <div class="mt-10 text-center">
-            <p class="text-[#64748b] text-[10px] uppercase tracking-[0.2em] font-extrabold">
+        <div class="mt-8 sm:mt-10 w-full text-center">
+            <p class="text-[#64748b] text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-extrabold">
                 © 2026 Lumis
             </p>
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
