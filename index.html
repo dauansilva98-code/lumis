@@ -596,64 +596,68 @@
             }, 0);
 
             return `
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-8 space-y-6">
-                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="px-5 md:px-8 py-4 md:py-5 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
-                            <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest">Meus Ativos</h3>
-                            <button onclick="AppActions.addItem('${y}', '${m}', 'Investimento', 'Novo Ativo', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-8 space-y-6">
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="px-5 md:px-8 py-4 md:py-5 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
+                                <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest">Meus Ativos</h3>
+                                <button onclick="AppActions.addItem('${y}', '${m}', 'Investimento', 'Novo Ativo', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
+                            </div>
+                            <div class="overflow-x-auto p-2">
+                                <table class="w-full text-sm text-left text-slate-500 min-w-full">
+                                    <thead class="hidden sm:table-header-group text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                        <tr>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Ativo</th>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Instituição</th>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Tipo</th>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right">Aporte (Mês)</th>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-emerald-600">Rendimento (Mês)</th>
+                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-blue-600">Total Acumulado</th>
+                                            <th class="px-2 sm:px-3 py-4"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="flex flex-col sm:table-row-group">
+                                        ${list.map(i => { 
+                                            const inputId = `input-inv-${safeId(i.cat)}-${safeId(i.name)}`; 
+                                            const yieldId = `input-yield-${safeId(i.cat)}-${safeId(i.name)}`; 
+                                            const nameInputId = `input-name-${safeId(i.cat)}-${safeId(i.name)}`; 
+                                            return `
+                                            <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-medium text-slate-900 bg-transparent outline-none w-full sm:min-w-[120px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left"></div></td>
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full sm:min-w-[100px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left" placeholder="Ex: Itaú..."></div></td>
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[10px] font-bold px-2 py-1.5 rounded outline-none uppercase ${i.type==='reserva'?'bg-blue-100 text-blue-700':i.type==='fixa'?'bg-emerald-100 text-emerald-700':'bg-purple-100 text-purple-700'}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option></select></div></td>
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-slate-400 pointer-events-none">R$</span><input id="${inputId}" type="text" inputmode="numeric" value="${formatCurrencyInput(i.val)}" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-slate-100 bg-slate-50/50 focus:bg-white text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rendimento (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-emerald-400 pointer-events-none">R$</span><input id="${yieldId}" type="text" inputmode="numeric" value="${formatCurrencyInput(i.yieldVal)}" oninput="AppActions.handleYieldInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleYieldBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-emerald-100 bg-emerald-50/50 focus:bg-white text-emerald-700 text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
+                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-sm text-blue-600">${formatCurrency(i.accumulatedValue)}</span></td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-500 hover:text-rose-700 p-2 sm:p-1 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal"><i data-lucide="x" class="w-4 h-4"></i><span class="sm:hidden">Excluir</span></button></td>
+                                            </tr>`
+                                        }).join('')}
+                                        ${list.length===0?'<tr><td colspan="7" class="py-8 text-center text-slate-400 italic text-xs sm:text-sm">Nenhum investimento registrado.</td></tr>':''}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="px-5 md:px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center"><span class="text-xs md:text-sm font-bold text-slate-700">Total Investido Acumulado (Exclui Reserva)</span><span class="text-xs md:text-sm font-bold text-blue-600">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                         </div>
-                        <div class="overflow-x-auto p-2">
-                            <table class="w-full text-sm text-left text-slate-500 min-w-full">
-                                <thead class="hidden sm:table-header-group text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                                    <tr>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold">Ativo</th>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold">Instituição</th>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold">Tipo</th>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold text-right">Aporte (Mês)</th>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-emerald-600">Rendimento (Mês)</th>
-                                        <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-blue-600">Total Acumulado</th>
-                                        <th class="px-2 sm:px-3 py-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="flex flex-col sm:table-row-group">
-                                    ${list.map(i => { 
-                                        const inputId = `input-inv-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                        const yieldId = `input-yield-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                        const nameInputId = `input-name-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                        return `
-                                        <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-medium text-slate-900 bg-transparent outline-none w-full sm:min-w-[120px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left"></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full sm:min-w-[100px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left" placeholder="Ex: Itaú..."></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[10px] font-bold px-2 py-1.5 rounded outline-none uppercase ${i.type==='reserva'?'bg-blue-100 text-blue-700':i.type==='fixa'?'bg-emerald-100 text-emerald-700':'bg-purple-100 text-purple-700'}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option></select></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-slate-400 pointer-events-none">R$</span><input id="${inputId}" type="text" inputmode="numeric" value="${formatCurrencyInput(i.val)}" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-slate-100 bg-slate-50/50 focus:bg-white text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rendimento (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-emerald-400 pointer-events-none">R$</span><input id="${yieldId}" type="text" inputmode="numeric" value="${formatCurrencyInput(i.yieldVal)}" oninput="AppActions.handleYieldInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleYieldBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-emerald-100 bg-emerald-50/50 focus:bg-white text-emerald-700 text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-sm text-blue-600">${formatCurrency(i.accumulatedValue)}</span></td>
-                                            <td class="px-2 sm:px-3 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-500 hover:text-rose-700 p-2 sm:p-1 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal"><i data-lucide="x" class="w-4 h-4"></i><span class="sm:hidden">Excluir</span></button></td>
-                                        </tr>`
-                                    }).join('')}
-                                    ${list.length===0?'<tr><td colspan="7" class="py-8 text-center text-slate-400 italic text-xs sm:text-sm">Nenhum investimento registrado.</td></tr>':''}
-                                </tbody>
-                            </table>
+                        
+                        <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50">
+                            <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
+                            <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">${[{t:'1. RESERVA PRIMEIRO',d:'Garanta sua reserva de emergência antes de ir para a bolsa.'},{t:'2. DIVERSIFICAÇÃO',d:'Divida entre Renda Fixa e Variável.'},{t:'3. FOCO NO LONGO PRAZO',d:'Serve para multiplicar patrimônio no tempo, não ficar rico rápido.'},{t:'4. ESTUDE TAXAS E IR',d:'Taxas e impostos podem "comer" boa parte da sua rentabilidade.'}].map(x=>`<div class="bg-white p-4 rounded-2xl border border-blue-100/50"><h4 class="font-extrabold text-blue-800 text-[10px] md:text-[11px] uppercase tracking-wide mb-1.5">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500">${x.d}</p></div>`).join('')}</div>
                         </div>
-                        <div class="px-5 md:px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center"><span class="text-xs md:text-sm font-bold text-slate-700">Total Investido Acumulado (Exclui Reserva)</span><span class="text-xs md:text-sm font-bold text-blue-600">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                     </div>
-                    
-                    <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50">
-                        <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
-                        <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">${[{t:'1. RESERVA PRIMEIRO',d:'Garanta sua reserva de emergência antes de ir para a bolsa.'},{t:'2. DIVERSIFICAÇÃO',d:'Divida entre Renda Fixa e Variável.'},{t:'3. FOCO NO LONGO PRAZO',d:'Serve para multiplicar patrimônio no tempo, não ficar rico rápido.'},{t:'4. ESTUDE TAXAS E IR',d:'Taxas e impostos podem "comer" boa parte da sua rentabilidade.'}].map(x=>`<div class="bg-white p-4 rounded-2xl border border-blue-100/50"><h4 class="font-extrabold text-blue-800 text-[10px] md:text-[11px] uppercase tracking-wide mb-1.5">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500">${x.d}</p></div>`).join('')}</div>
+
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-full">
+                            <div class="mb-6"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
+                            <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
+                            <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
+                            <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-bold text-white">${formatCurrency(patLiq)}</p></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl">
-                        <div class="mb-6"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
-                        <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
-                        <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
-                        <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-bold text-white">${formatCurrency(patLiq)}</p></div>
-                    </div>
-                    
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-2">
                     ${renderPieChartCard('chart-inv-investido', 'Valor Investido', chartInvestidoData, colorsInvestido, 'pie')}
                     ${renderPieChartCard('chart-inv-rends', 'Rendimentos / Dividendos', chartRendimentosData, colorsRends, 'pie')}
                     ${renderPieChartCard('chart-inv-total', 'Investido + Rendimentos', chartTotalData, colorsTotal, 'pie')}
