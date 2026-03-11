@@ -542,7 +542,40 @@
         }
         function createEvolucaoInvestChart(canvasId, data) {
             const ctx = document.getElementById(canvasId); if (!ctx) return;
-            AppState.charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.name), datasets: [{ label: 'Total Acumulado', data: data.map(d => d.Acumulado), type: 'line', borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', borderWidth: 2, pointRadius: 3, fill: false, order: 1 }, { label: 'Aportes (Mês)', data: data.map(d => d.Aportes), backgroundColor: '#3b82f6', borderRadius: {topLeft: 4, topRight: 4}, order: 2 }, { label: 'Rendimentos (Mês)', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4}, order: 3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } }, plugins: { datalabels: { display: false }, legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } }, tooltip: { callbacks: { label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}` } } } } });
+            AppState.charts[canvasId] = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: data.map(d => d.name), 
+                    datasets: [
+                        { label: 'Total Aportado', data: data.map(d => d.AccAporte), backgroundColor: '#3b82f6', borderRadius: {bottomLeft: 4, bottomRight: 4} }, 
+                        { label: 'Total Rendimentos', data: data.map(d => d.AccRend), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4} }
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { grid: { display: false }, stacked: true }, 
+                        y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } }, stacked: true } 
+                    }, 
+                    plugins: { 
+                        datalabels: { display: false }, 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } }, 
+                        tooltip: { 
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: { 
+                                label: (ctx) => ` ${ctx.dataset.label}: R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}`,
+                                footer: (tooltipItems) => {
+                                    let total = 0;
+                                    tooltipItems.forEach(item => total += item.raw);
+                                    return `Acumulado do Mês: R$ ${formatCurrency(total).replace('R$', '').trim()}`;
+                                }
+                            } 
+                        } 
+                    } 
+                } 
+            });
         }
 
         function renderPieChartCard(id, title, data, colors, type = 'pie') {
@@ -742,32 +775,18 @@
 
             // Dados do gráfico de evolução (Mês a Mês do ano selecionado)
             const evolutionData = MONTHS.map((mesNome, index) => {
-                let aporte = 0, rendimento = 0, acumulado = 0;
+                let accAporte = 0, accRend = 0;
                 
-                // Pegar histórico acumulado até aquele mês exato
+                // Pegar histórico acumulado até aquele mês exato (usando o ano do filtro)
                 const accDetails = getAccumulatedAssetDetails(AppState.investFilterYear, index);
                 Object.entries(accDetails.assets).forEach(([name, data]) => {
                     if ((AppState.investFilterType === 'all' || AppState.investFilterType === data.type) &&
                         (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
-                        acumulado += (data.invested + data.yield);
+                        accAporte += data.invested;
+                        accRend += data.yield;
                     }
                 });
-
-                const yData = AppState.budgetData[AppState.investFilterYear];
-                if (yData && yData[mesNome]) {
-                    const mInvestCats = Object.keys(yData[mesNome]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (yData[mesNome].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
-                    mInvestCats.forEach(cat => {
-                        Object.entries(yData[mesNome][cat]).forEach(([name, val]) => {
-                            const type = yData[mesNome].itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel');
-                            if ((AppState.investFilterType === 'all' || AppState.investFilterType === type) &&
-                                (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
-                                aporte += Number(val) || 0;
-                                rendimento += Number(yData[mesNome].itemMetadata?.[cat]?.[`${name}_yield`]) || 0;
-                            }
-                        });
-                    });
-                }
-                return { name: mesNome.substring(0, 3), Aportes: aporte, Rendimentos: rendimento, Acumulado: acumulado };
+                return { name: mesNome.substring(0, 3), AccAporte: accAporte, AccRend: accRend };
             });
 
             let totalInvestidoAcumulado = 0; 
@@ -823,7 +842,7 @@
             return `
             <div class="space-y-6">
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div class="lg:col-span-8 space-y-6">
                         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                             <div class="px-4 md:px-6 py-4 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
@@ -894,7 +913,7 @@
                     </div>
 
                     <div class="lg:col-span-4 space-y-6">
-                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-full flex flex-col justify-center relative overflow-hidden">
+                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-fit sticky top-24 flex flex-col relative overflow-hidden border border-slate-700/50">
                             <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
                             <div class="absolute -left-6 -bottom-6 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"></div>
                             
@@ -915,7 +934,7 @@
                 <!-- Gráfico de Evolução com Filtros Movido para o Fundo -->
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
-                        <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Evolução dos Investimentos</h3>
+                        <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Evolução Patrimonial</h3>
                         <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
                             <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1 shrink-0"></i>
                             <select onchange="AppActions.changeInvestFilter('year', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300">
