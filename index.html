@@ -773,12 +773,21 @@
             }
             const uniqueAssets = Array.from(uniqueAssetsSet).sort();
 
+            // Limita a exibição do gráfico até o mês/ano selecionado no topo
+            let allowedMonths = MONTHS;
+            if (AppState.investFilterYear === AppState.currentYear) {
+                allowedMonths = MONTHS.slice(0, AppState.currentMonthIdx + 1);
+            } else if (parseInt(AppState.investFilterYear) > parseInt(AppState.currentYear)) {
+                allowedMonths = []; 
+            }
+
             // Dados do gráfico de evolução (Mês a Mês do ano selecionado)
-            const evolutionData = MONTHS.map((mesNome, index) => {
+            const evolutionData = allowedMonths.map((mesNome) => {
+                const monthActualIndex = MONTHS.indexOf(mesNome);
                 let accAporte = 0, accRend = 0;
                 
                 // Pegar histórico acumulado até aquele mês exato (usando o ano do filtro)
-                const accDetails = getAccumulatedAssetDetails(AppState.investFilterYear, index);
+                const accDetails = getAccumulatedAssetDetails(AppState.investFilterYear, monthActualIndex);
                 Object.entries(accDetails.assets).forEach(([name, data]) => {
                     if ((AppState.investFilterType === 'all' || AppState.investFilterType === data.type) &&
                         (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
