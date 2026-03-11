@@ -68,7 +68,7 @@
         // Cores Dinâmicas estendidas para suportar muitos ativos de investimento
         const EXTENDED_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6', '#f43f5e', '#6366f1', '#0ea5e9', '#84cc16', '#a855f7', '#d946ef'];
         
-        const FIXED_INVEST_COLORS = { 'Reserva': '#3b82f6', 'Renda Fixa': '#10b981', 'Renda Variável': '#8b5cf6' };
+        const FIXED_INVEST_COLORS = { 'Reserva': '#3b82f6', 'Renda Fixa': '#10b981', 'Renda Variável': '#8b5cf6', 'Criptomoedas': '#f59e0b' };
         
         const GOAL_COLORS = {
             blue: { text: 'text-blue-600', hex: '#3b82f6' }, pink: { text: 'text-pink-600', hex: '#ec4899' },
@@ -114,6 +114,7 @@
             user: null, budgetData: { [currentYearString]: generateEmptyYearData() }, currentYear: currentYearString,
             currentMonthIdx: new Date().getMonth(), activeTab: 'dashboard', loading: true, saving: false, errorMsg: null,
             confirmMonthChange: null, charts: {}, 
+            investFilterYear: currentYearString, investFilterType: 'all',
             get currentMonth() { return MONTHS[this.currentMonthIdx]; },
             get currentData() { return this.budgetData[this.currentYear][this.currentMonth]; }
         };
@@ -282,7 +283,39 @@
         window.AppActions = {
             sair: async () => { await supabaseClient.auth.signOut(); localStorage.removeItem("logado"); window.location.href = "login.html"; },
             changeTab: (tabId) => { AppState.activeTab = tabId; renderApp(); },
-            changeYear: (delta) => { const newYearStr = (parseInt(AppState.currentYear) + delta).toString(); if (!AppState.budgetData[newYearStr]) { AppState.budgetData[newYearStr] = generateEmptyYearData(); saveToDatabase(); } AppState.currentYear = newYearStr; renderApp(); },
+            changeYear: (delta) => { 
+                const newYearStr = (parseInt(AppState.currentYear) + delta).toString(); 
+                if (!AppState.budgetData[newYearStr]) { 
+                    // Copia a estrutura do último mês salvo para não gerar itens do zero, mas zera os valores
+                    let lastMonthData = null;
+                    const years = Object.keys(AppState.budgetData).sort();
+                    if (years.length > 0) {
+                        const lastYear = years[years.length - 1];
+                        lastMonthData = AppState.budgetData[lastYear]['Dezembro'] || AppState.budgetData[lastYear][MONTHS[11]];
+                    }
+                    
+                    let newData = {};
+                    MONTHS.forEach(m => {
+                        newData[m] = lastMonthData ? deepClone(lastMonthData) : generateEmptyYearData()['Janeiro'];
+                        // Zera os valores financeiros do novo ano
+                        Object.keys(newData[m]).forEach(cat => {
+                            if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) {
+                                Object.keys(newData[m][cat]).forEach(item => {
+                                    newData[m][cat][item] = 0;
+                                    if (newData[m].itemMetadata?.[cat]?.[`${item}_yield`] !== undefined) {
+                                        newData[m].itemMetadata[cat][`${item}_yield`] = 0;
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    AppState.budgetData[newYearStr] = newData; 
+                    saveToDatabase(); 
+                } 
+                AppState.currentYear = newYearStr; 
+                AppState.investFilterYear = newYearStr; // Atualiza o filtro de ano do grafico
+                renderApp(); 
+            },
             prevMonth: () => { if (AppState.currentMonthIdx > 0) { AppState.currentMonthIdx--; renderApp(); } },
             nextMonthConfirm: () => { if (AppState.currentMonthIdx < 11) { AppState.confirmMonthChange = AppState.currentMonthIdx + 1; renderModal(); } },
             closeModal: () => { AppState.confirmMonthChange = null; renderModal(); },
@@ -397,13 +430,40 @@
             },
             addCategory: (year, month) => { let name = 'Nova Categoria', c = 1; while (AppState.budgetData[year][month][name] !== undefined) { name = `Nova Categoria ${c}`; c++; } AppState.budgetData[year][month][name] = {}; if (!AppState.budgetData[year][month].itemMetadata[name]) AppState.budgetData[year][month].itemMetadata[name] = {}; AppState.budgetData[year][month].categoriesMetadata[name] = 'expense'; saveToDatabase(); renderApp(); },
             renameCategory: (year, month, old, el) => { const nw = el.value.trim(); if (old === nw || nw === '' || AppState.budgetData[year][month][nw] !== undefined) { el.value = old; return; } AppState.budgetData[year][month][nw] = AppState.budgetData[year][month][old]; delete AppState.budgetData[year][month][old]; if (AppState.budgetData[year][month].itemMetadata[old]) { AppState.budgetData[year][month].itemMetadata[nw] = AppState.budgetData[year][month].itemMetadata[old]; delete AppState.budgetData[year][month].itemMetadata[old]; } if (AppState.budgetData[year][month].categoriesMetadata[old]) { AppState.budgetData[year][month].categoriesMetadata[nw] = AppState.budgetData[year][month].categoriesMetadata[old]; delete AppState.budgetData[year][month].categoriesMetadata[old]; } saveToDatabase(); renderApp(); },
+            
             deleteCategory: (year, month, name) => { delete AppState.budgetData[year][month][name]; delete AppState.budgetData[year][month].itemMetadata[name]; delete AppState.budgetData[year][month].categoriesMetadata[name]; saveToDatabase(); renderApp(); },
-            addItem: (year, month, cat, def = 'Nova Conta', type = 'auto') => { if (!AppState.budgetData[year][month][cat]) { AppState.budgetData[year][month][cat] = {}; AppState.budgetData[year][month].categoriesMetadata[cat] = cat === 'Investimento' ? 'investment' : cat === 'Renda Familiar' ? 'income' : 'expense'; } let name = def, c = 1; while (AppState.budgetData[year][month][cat][name] !== undefined) { name = `${def} ${c}`; c++; } AppState.budgetData[year][month][cat][name] = 0; if (!AppState.budgetData[year][month].itemMetadata[cat]) AppState.budgetData[year][month].itemMetadata[cat] = {}; const catMetaType = AppState.budgetData[year][month].categoriesMetadata[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense'; if(type === 'auto') { AppState.budgetData[year][month].itemMetadata[cat][name] = catMetaType === 'investment' ? 'variavel' : (isDefaultFixed(name) ? 'fixed' : 'variable'); } else { AppState.budgetData[year][month].itemMetadata[cat][name] = type; } saveToDatabase(); renderApp(); },
+            
+            addItem: (year, month, cat, def = 'Nova Conta', type = 'auto') => { 
+                let name = def, c = 1; 
+                while (AppState.budgetData[year][month][cat] && AppState.budgetData[year][month][cat][name] !== undefined) { name = `${def} ${c}`; c++; } 
+                
+                const isInvest = cat === 'Investimento' || AppState.budgetData[year][month].categoriesMetadata?.[cat] === 'investment';
+
+                if (isInvest) {
+                    // Adiciona globalmente para todos os meses (passados e futuros) para manter o historico coeso
+                    Object.keys(AppState.budgetData).forEach(y => {
+                        Object.keys(AppState.budgetData[y]).forEach(m => {
+                            if (!AppState.budgetData[y][m][cat]) AppState.budgetData[y][m][cat] = {};
+                            if (!AppState.budgetData[y][m].itemMetadata[cat]) AppState.budgetData[y][m].itemMetadata[cat] = {};
+                            AppState.budgetData[y][m][cat][name] = 0;
+                            AppState.budgetData[y][m].itemMetadata[cat][name] = type === 'auto' ? 'variavel' : type;
+                        });
+                    });
+                } else {
+                    if (!AppState.budgetData[year][month][cat]) { AppState.budgetData[year][month][cat] = {}; AppState.budgetData[year][month].categoriesMetadata[cat] = cat === 'Renda Familiar' ? 'income' : 'expense'; } 
+                    AppState.budgetData[year][month][cat][name] = 0; 
+                    if (!AppState.budgetData[year][month].itemMetadata[cat]) AppState.budgetData[year][month].itemMetadata[cat] = {}; 
+                    const catMetaType = AppState.budgetData[year][month].categoriesMetadata[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense'; 
+                    if(type === 'auto') { AppState.budgetData[year][month].itemMetadata[cat][name] = isDefaultFixed(name) ? 'fixed' : 'variable'; } else { AppState.budgetData[year][month].itemMetadata[cat][name] = type; } 
+                }
+                saveToDatabase(); renderApp(); 
+            },
+            
             renameItem: (year, month, cat, old, el) => { 
                 const nw = el.value.trim(); 
                 if (old === nw || nw === '') { el.value = old; return; } 
                 let fn = nw, c = 1; 
-                while (AppState.budgetData[year][month][cat][fn] !== undefined && fn !== old) { fn = `${nw} ${c}`; c++; } 
+                while (AppState.budgetData[year][month][cat] && AppState.budgetData[year][month][cat][fn] !== undefined && fn !== old) { fn = `${nw} ${c}`; c++; } 
 
                 const isInvest = (AppState.budgetData[year][month].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
 
@@ -433,7 +493,40 @@
                 }
                 saveToDatabase(); renderApp(); 
             },
-            deleteItem: (year, month, cat, name) => { delete AppState.budgetData[year][month][cat][name]; if (AppState.budgetData[year][month].itemMetadata[cat]) { delete AppState.budgetData[year][month].itemMetadata[cat][name]; delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; } saveToDatabase(); renderApp(); }
+            
+            deleteItem: (year, month, cat, name) => { 
+                const isInvest = (AppState.budgetData[year][month].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
+                if (isInvest) {
+                    // Se for investimento, deleta de todos os meses de todos os anos para não recriar sozinho
+                    Object.keys(AppState.budgetData).forEach(y => {
+                        Object.keys(AppState.budgetData[y]).forEach(m => {
+                            if (AppState.budgetData[y][m][cat] && AppState.budgetData[y][m][cat][name] !== undefined) {
+                                delete AppState.budgetData[y][m][cat][name];
+                                if (AppState.budgetData[y][m].itemMetadata?.[cat]) {
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][name];
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_inst`];
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_yield`];
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    delete AppState.budgetData[year][month][cat][name]; 
+                    if (AppState.budgetData[year][month].itemMetadata[cat]) { 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][name]; 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; 
+                    } 
+                }
+                saveToDatabase(); renderApp(); 
+            },
+
+            // Função de Filtro de Evolução de Investimentos
+            changeInvestFilter: (filterName, value) => {
+                if (filterName === 'year') AppState.investFilterYear = value;
+                if (filterName === 'type') AppState.investFilterType = value;
+                renderApp();
+            }
         };
 
         // --- RENDERIZAÇÃO DE GRÁFICOS ---
@@ -446,6 +539,11 @@
             const ctx = document.getElementById(canvasId); if (!ctx) return;
             AppState.charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.name), datasets: [{ label: 'Rendimentos', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Gastos', data: data.map(d => d.Gastos), backgroundColor: '#f43f5e', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Investido (Mês)', data: data.map(d => d.Investido), backgroundColor: '#3b82f6', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Saldo', data: data.map(d => d.Saldo), backgroundColor: '#8b5cf6', borderRadius: {topLeft: 4, topRight: 4} }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } }, plugins: { datalabels: { display: false }, legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } }, tooltip: { callbacks: { label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}` } } } } });
         }
+        function createEvolucaoInvestChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId); if (!ctx) return;
+            AppState.charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.name), datasets: [{ label: 'Aportes (Mês)', data: data.map(d => d.Aportes), backgroundColor: '#3b82f6', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Rendimentos (Mês)', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4} }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } }, plugins: { datalabels: { display: false }, legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } }, tooltip: { callbacks: { label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}` } } } } });
+        }
+
         function renderPieChartCard(id, title, data, colors, type = 'pie') {
             const isEmpty = data.length === 0;
             return `<div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full"><h3 class="font-extrabold text-blue-700 uppercase text-xs tracking-widest text-center mb-4">${title}</h3>${!isEmpty ? `<div class="w-full flex justify-center pb-6 border-b border-slate-50"><div class="relative w-48 h-48 sm:w-64 sm:h-64"><canvas id="${id}"></canvas></div></div><div class="w-full mt-4 space-y-2">${data.map((entry, i) => { const pct = ((entry.value / data.reduce((a,b)=>a+b.value,0)) * 100).toFixed(1); return `<div class="flex justify-between text-xs items-center p-1.5 hover:bg-slate-50 rounded-lg"><div class="flex items-center gap-2 overflow-hidden mr-2"><div class="w-3 h-3 rounded-full shrink-0" style="background-color: ${colors[i % colors.length]}"></div><span class="text-slate-600 font-bold truncate">${entry.name}</span></div><div class="text-right"><span class="font-bold text-slate-800 block leading-none">${formatCurrency(entry.value)}</span><span class="text-[10px] text-slate-400 font-medium">${pct}%</span></div></div>`}).join('')}</div>` : `<div class="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs sm:text-sm italic min-h-[160px]">Nenhum dado registrado.</div>`}</div>`;
@@ -621,6 +719,25 @@
             // Inverte a lista para que ativos criados/editados mais recentemente fiquem no TOPO
             list.reverse();
 
+            // Dados do gráfico de evolução (Mês a Mês do ano selecionado)
+            const evolutionData = MONTHS.map(mesNome => {
+                let aporte = 0, rendimento = 0;
+                const yData = AppState.budgetData[AppState.investFilterYear];
+                if (yData && yData[mesNome]) {
+                    const mInvestCats = Object.keys(yData[mesNome]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (yData[mesNome].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
+                    mInvestCats.forEach(cat => {
+                        Object.entries(yData[mesNome][cat]).forEach(([name, val]) => {
+                            const type = yData[mesNome].itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel');
+                            if (AppState.investFilterType === 'all' || AppState.investFilterType === type) {
+                                aporte += Number(val) || 0;
+                                rendimento += Number(yData[mesNome].itemMetadata?.[cat]?.[`${name}_yield`]) || 0;
+                            }
+                        });
+                    });
+                }
+                return { name: mesNome.substring(0, 3), Aportes: aporte, Rendimentos: rendimento };
+            });
+
             let totalInvestidoAcumulado = 0; 
             let totalRendimentosAcumulado = 0; 
             let totalReservaAcumulado = 0; 
@@ -665,6 +782,7 @@
             const colorsTotal = chartTotalData.map(d => d.color);
 
             setTimeout(() => { 
+                createEvolucaoInvestChart('chart-inv-evolucao', evolutionData);
                 if(chartInvestidoData.length>0) createPieChart('chart-inv-investido', chartInvestidoData, colorsInvestido, 'pie'); 
                 if(chartRendimentosData.length>0) createPieChart('chart-inv-rends', chartRendimentosData, colorsRends, 'pie'); 
                 if(chartTotalData.length>0) createPieChart('chart-inv-total', chartTotalData, colorsTotal, 'pie'); 
@@ -672,24 +790,48 @@
 
             return `
             <div class="space-y-6">
+
+                <!-- Gráfico de Evolução com Filtros -->
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
+                        <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Evolução dos Investimentos</h3>
+                        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                            <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1"></i>
+                            <select onchange="AppActions.changeInvestFilter('year', this.value)" class="text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300">
+                                ${Object.keys(AppState.budgetData).sort().map(ano => `<option value="${ano}" ${AppState.investFilterYear === ano ? 'selected' : ''}>${ano}</option>`).join('')}
+                            </select>
+                            <select onchange="AppActions.changeInvestFilter('type', this.value)" class="text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer">
+                                <option value="all" ${AppState.investFilterType === 'all' ? 'selected' : ''}>Todos os Tipos</option>
+                                <option value="reserva" ${AppState.investFilterType === 'reserva' ? 'selected' : ''}>Reserva</option>
+                                <option value="fixa" ${AppState.investFilterType === 'fixa' ? 'selected' : ''}>Renda Fixa</option>
+                                <option value="variavel" ${AppState.investFilterType === 'variavel' ? 'selected' : ''}>Renda Variável</option>
+                                <option value="cripto" ${AppState.investFilterType === 'cripto' ? 'selected' : ''}>Criptomoedas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="h-[250px] md:h-[300px] w-full relative">
+                        <canvas id="chart-inv-evolucao"></canvas>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div class="lg:col-span-8 space-y-6">
                         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="px-5 md:px-8 py-4 md:py-5 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
+                            <div class="px-4 md:px-6 py-4 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
                                 <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest">Meus Ativos</h3>
                                 <button onclick="AppActions.addItem('${y}', '${m}', 'Investimento', 'Novo Ativo', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
                             </div>
-                            <div class="overflow-x-auto p-2">
+                            <div class="overflow-x-auto p-1">
                                 <table class="w-full text-sm text-left text-slate-500 min-w-full">
-                                    <thead class="hidden sm:table-header-group text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                    <thead class="hidden sm:table-header-group text-[9px] md:text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50">
                                         <tr>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Ativo</th>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Instituição</th>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold">Tipo</th>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right">Aporte (Mês)</th>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-emerald-600">Rendimento (Mês)</th>
-                                            <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-blue-600">Total Acumulado</th>
-                                            <th class="px-2 sm:px-3 py-4"></th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold rounded-tl-xl">Ativo</th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold">Instituição</th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-center">Tipo</th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right">Aporte (Mês)</th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right text-emerald-600">Rendimento (Mês)</th>
+                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right text-blue-600">Acumulado</th>
+                                            <th class="px-1 sm:px-2 py-3 rounded-tr-xl"></th>
                                         </tr>
                                     </thead>
                                     <tbody class="flex flex-col sm:table-row-group">
@@ -698,25 +840,41 @@
                                             const yieldId = `input-yield-${safeId(i.cat)}-${safeId(i.name)}`; 
                                             const nameInputId = `input-name-${safeId(i.cat)}-${safeId(i.name)}`; 
                                             
-                                            const displayVal = i.hasVal ? formatCurrencyInput(i.val) : '';
-                                            const displayYield = i.hasYield ? formatCurrencyInput(i.yieldVal) : '';
+                                            // Se não preencheu nada no mes, deixa a caixinha visualmente limpa pra ele preencher o aporte de agora
+                                            const displayVal = (i.hasVal && i.val !== 0) ? formatCurrencyInput(i.val) : '';
+                                            const displayYield = (i.hasYield && i.yieldVal !== 0) ? formatCurrencyInput(i.yieldVal) : '';
+                                            
+                                            const typeColorClass = i.type==='reserva' ? 'bg-blue-100 text-blue-700' : 
+                                                                   i.type==='fixa' ? 'bg-emerald-100 text-emerald-700' : 
+                                                                   i.type==='cripto' ? 'bg-amber-100 text-amber-700' : 
+                                                                   'bg-purple-100 text-purple-700';
 
                                             return `
                                             <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-medium text-slate-900 bg-transparent outline-none w-full sm:min-w-[120px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left"></div></td>
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full sm:min-w-[100px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left" placeholder="Ex: Itaú..."></div></td>
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[10px] font-bold px-2 py-1.5 rounded outline-none uppercase ${i.type==='reserva'?'bg-blue-100 text-blue-700':i.type==='fixa'?'bg-emerald-100 text-emerald-700':'bg-purple-100 text-purple-700'}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option></select></div></td>
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-slate-400 pointer-events-none">R$</span><input id="${inputId}" type="text" inputmode="numeric" value="${displayVal}" placeholder="0,00" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-slate-100 bg-slate-50/50 focus:bg-white text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rendimento (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-emerald-400 pointer-events-none">R$</span><input id="${yieldId}" type="text" inputmode="numeric" value="${displayYield}" placeholder="0,00" oninput="AppActions.handleYieldInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleYieldBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-emerald-100 bg-emerald-50/50 focus:bg-white text-emerald-700 text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
-                                                <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-sm text-blue-600">${formatCurrency(i.accumulatedValue)}</span></td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-500 hover:text-rose-700 p-2 sm:p-1 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal"><i data-lucide="x" class="w-4 h-4"></i><span class="sm:hidden">Excluir</span></button></td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-bold text-slate-800 bg-transparent outline-none w-full min-w-[80px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs text-right sm:text-left"></div></td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full min-w-[80px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs text-right sm:text-left" placeholder="Ex: Itaú"></div></td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-center"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-auto">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[9px] font-extrabold px-1.5 py-1 rounded outline-none uppercase cursor-pointer ${typeColorClass}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option><option value="cripto" ${i.type==='cripto'?'selected':''}>Cripto</option></select></div></td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span>
+                                                    <div class="relative w-full max-w-[100px] ml-auto">
+                                                        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 pointer-events-none">R$</span>
+                                                        <input id="${inputId}" type="text" inputmode="numeric" value="${displayVal}" placeholder="0,00" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-full pl-6 pr-2 py-1.5 border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-500 text-right font-bold text-xs rounded-lg outline-none transition-all">
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rendimento (Mês)</span>
+                                                    <div class="relative w-full max-w-[100px] ml-auto">
+                                                        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-emerald-400 pointer-events-none">R$</span>
+                                                        <input id="${yieldId}" type="text" inputmode="numeric" value="${displayYield}" placeholder="0,00" oninput="AppActions.handleYieldInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleYieldBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-full pl-6 pr-2 py-1.5 border border-emerald-100 bg-emerald-50/30 focus:bg-white focus:ring-1 focus:ring-emerald-500 text-emerald-700 text-right font-bold text-xs rounded-lg outline-none transition-all">
+                                                    </div>
+                                                </td>
+                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-xs text-blue-700">${formatCurrency(i.accumulatedValue)}</span></td>
+                                                <td class="px-1 sm:px-2 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-400 hover:text-rose-600 p-2 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal transition-colors" title="Excluir de todos os meses"><i data-lucide="x" class="w-3.5 h-3.5 md:w-4 md:h-4"></i><span class="sm:hidden">Excluir</span></button></td>
                                             </tr>`
                                         }).join('')}
-                                        ${list.length===0?'<tr><td colspan="7" class="py-8 text-center text-slate-400 italic text-xs sm:text-sm">Nenhum investimento registrado.</td></tr>':''}
+                                        ${list.length===0?'<tr><td colspan="7" class="py-10 text-center text-slate-400 italic text-xs">Nenhum investimento registrado. Clique em "Novo Ativo" acima.</td></tr>':''}
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="px-5 md:px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center"><span class="text-xs md:text-sm font-bold text-slate-700">Total Investido Acumulado (Exclui Reserva)</span><span class="text-xs md:text-sm font-bold text-blue-600">${formatCurrency(totalInvestidoAcumulado)}</span></div>
+                            <div class="px-4 md:px-6 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center"><span class="text-[11px] md:text-xs font-bold text-slate-600 uppercase tracking-wide">Total Investido (Exclui Reserva)</span><span class="text-sm md:text-base font-black text-blue-700">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                         </div>
                         
                         <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50">
@@ -727,11 +885,14 @@
                     </div>
 
                     <div class="lg:col-span-4 space-y-6">
-                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-full">
-                            <div class="mb-6"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
-                            <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
-                            <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
-                            <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-bold text-white">${formatCurrency(patLiq)}</p></div>
+                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-full flex flex-col justify-center relative overflow-hidden">
+                            <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
+                            <div class="absolute -left-6 -bottom-6 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"></div>
+                            
+                            <div class="mb-6 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
+                            <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-white"></div>Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
+                            <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
+                            <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-black text-white">${formatCurrency(patLiq)}</p></div>
                         </div>
                     </div>
                 </div>
