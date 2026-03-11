@@ -114,8 +114,9 @@
             user: null, budgetData: { [currentYearString]: generateEmptyYearData() }, currentYear: currentYearString,
             currentMonthIdx: new Date().getMonth(), activeTab: 'dashboard', loading: true, saving: false, errorMsg: null,
             showSyncSuccess: false, syncSuccessTimer: null,
-            confirmMonthChange: null, charts: {}, 
-            investFilterYear: currentYearString, investFilterType: 'all', investFilterAsset: 'all',
+            confirmMonthChange: null, confirmDeleteItem: null, charts: {}, 
+            investFilterYear: currentYearString, investFilterType: 'all', investFilterAsset: 'all', investFilterMetric: 'todos',
+            rendaFilterItem: 'all',
             get currentMonth() { return MONTHS[this.currentMonthIdx]; },
             get currentData() { return this.budgetData[this.currentYear][this.currentMonth]; }
         };
@@ -449,7 +450,50 @@
             addCategory: (year, month) => { let name = 'Nova Categoria', c = 1; while (AppState.budgetData[year][month][name] !== undefined) { name = `Nova Categoria ${c}`; c++; } AppState.budgetData[year][month][name] = {}; if (!AppState.budgetData[year][month].itemMetadata[name]) AppState.budgetData[year][month].itemMetadata[name] = {}; AppState.budgetData[year][month].categoriesMetadata[name] = 'expense'; saveToDatabase(); renderApp(); },
             renameCategory: (year, month, old, el) => { const nw = el.value.trim(); if (old === nw || nw === '' || AppState.budgetData[year][month][nw] !== undefined) { el.value = old; return; } AppState.budgetData[year][month][nw] = AppState.budgetData[year][month][old]; delete AppState.budgetData[year][month][old]; if (AppState.budgetData[year][month].itemMetadata[old]) { AppState.budgetData[year][month].itemMetadata[nw] = AppState.budgetData[year][month].itemMetadata[old]; delete AppState.budgetData[year][month].itemMetadata[old]; } if (AppState.budgetData[year][month].categoriesMetadata[old]) { AppState.budgetData[year][month].categoriesMetadata[nw] = AppState.budgetData[year][month].categoriesMetadata[old]; delete AppState.budgetData[year][month].categoriesMetadata[old]; } saveToDatabase(); renderApp(); },
             
-            deleteCategory: (year, month, name) => { delete AppState.budgetData[year][month][name]; delete AppState.budgetData[year][month].itemMetadata[name]; delete AppState.budgetData[year][month].categoriesMetadata[name]; saveToDatabase(); renderApp(); },
+            requestDeleteItem: (year, month, cat, name, accumulatedValue) => {
+                if (accumulatedValue > 0) {
+                    AppState.confirmDeleteItem = { year, month, cat, name, accumulatedValue };
+                    renderApp();
+                } else {
+                    AppActions.deleteItem(year, month, cat, name);
+                }
+            },
+            confirmDelete: () => {
+                const { year, month, cat, name } = AppState.confirmDeleteItem;
+                AppState.confirmDeleteItem = null;
+                AppActions.deleteItem(year, month, cat, name);
+            },
+            cancelDelete: () => {
+                AppState.confirmDeleteItem = null;
+                renderApp();
+            },
+            
+            deleteItem: (year, month, cat, name) => { 
+                const isInvest = (AppState.budgetData[year][month].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
+                if (isInvest) {
+                    // Se for investimento, deleta de todos os meses de todos os anos para não recriar sozinho
+                    Object.keys(AppState.budgetData).forEach(y => {
+                        Object.keys(AppState.budgetData[y]).forEach(m => {
+                            if (AppState.budgetData[y][m][cat] && AppState.budgetData[y][m][cat][name] !== undefined) {
+                                delete AppState.budgetData[y][m][cat][name];
+                                if (AppState.budgetData[y][m].itemMetadata?.[cat]) {
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][name];
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_inst`];
+                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_yield`];
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    delete AppState.budgetData[year][month][cat][name]; 
+                    if (AppState.budgetData[year][month].itemMetadata[cat]) { 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][name]; 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; 
+                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; 
+                    } 
+                }
+                saveToDatabase(); renderApp(); 
+            },
             
             addItem: (year, month, cat, def = 'Nova Conta', type = 'auto') => { 
                 let name = def, c = 1; 
@@ -511,39 +555,19 @@
                 }
                 saveToDatabase(); renderApp(); 
             },
-            
-            deleteItem: (year, month, cat, name) => { 
-                const isInvest = (AppState.budgetData[year][month].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
-                if (isInvest) {
-                    // Se for investimento, deleta de todos os meses de todos os anos para não recriar sozinho
-                    Object.keys(AppState.budgetData).forEach(y => {
-                        Object.keys(AppState.budgetData[y]).forEach(m => {
-                            if (AppState.budgetData[y][m][cat] && AppState.budgetData[y][m][cat][name] !== undefined) {
-                                delete AppState.budgetData[y][m][cat][name];
-                                if (AppState.budgetData[y][m].itemMetadata?.[cat]) {
-                                    delete AppState.budgetData[y][m].itemMetadata[cat][name];
-                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_inst`];
-                                    delete AppState.budgetData[y][m].itemMetadata[cat][`${name}_yield`];
-                                }
-                            }
-                        });
-                    });
-                } else {
-                    delete AppState.budgetData[year][month][cat][name]; 
-                    if (AppState.budgetData[year][month].itemMetadata[cat]) { 
-                        delete AppState.budgetData[year][month].itemMetadata[cat][name]; 
-                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; 
-                        delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; 
-                    } 
-                }
-                saveToDatabase(); renderApp(); 
-            },
 
             // Função de Filtro de Evolução de Investimentos
             changeInvestFilter: (filterName, value) => {
                 if (filterName === 'year') AppState.investFilterYear = value;
                 if (filterName === 'type') { AppState.investFilterType = value; AppState.investFilterAsset = 'all'; } // Reseta o ativo ao mudar o tipo
                 if (filterName === 'asset') AppState.investFilterAsset = value;
+                if (filterName === 'metric') AppState.investFilterMetric = value;
+                renderApp();
+            },
+            
+            // Função de Filtro de Renda
+            changeRendaFilter: (value) => {
+                AppState.rendaFilterItem = value;
                 renderApp();
             }
         };
@@ -558,23 +582,30 @@
             const ctx = document.getElementById(canvasId); if (!ctx) return;
             AppState.charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.name), datasets: [{ label: 'Rendimentos', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Gastos', data: data.map(d => d.Gastos), backgroundColor: '#f43f5e', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Investido (Mês)', data: data.map(d => d.Investido), backgroundColor: '#3b82f6', borderRadius: {topLeft: 4, topRight: 4} }, { label: 'Saldo', data: data.map(d => d.Saldo), backgroundColor: '#8b5cf6', borderRadius: {topLeft: 4, topRight: 4} }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } }, plugins: { datalabels: { display: false }, legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: {size: 10} } }, tooltip: { callbacks: { label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}` } } } } });
         }
-        function createEvolucaoInvestChart(canvasId, data) {
+        
+        function createEvolucaoInvestChart(canvasId, data, metricFilter) {
             const ctx = document.getElementById(canvasId); if (!ctx) return;
+            
+            let datasets = [];
+            if (metricFilter === 'todos' || metricFilter === 'aportes') {
+                datasets.push({ label: 'Aportes (Mês)', data: data.map(d => d.Aportes), backgroundColor: '#3b82f6', borderRadius: 4 });
+            }
+            if (metricFilter === 'todos' || metricFilter === 'rendimentos') {
+                datasets.push({ label: 'Rendimentos (Mês)', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: 4 });
+            }
+            if (metricFilter === 'todos' || metricFilter === 'acumulado') {
+                datasets.push({ label: 'Total Acumulado', data: data.map(d => d.Acumulado), backgroundColor: '#8b5cf6', borderRadius: 4 });
+            }
+
             AppState.charts[canvasId] = new Chart(ctx, { 
                 type: 'bar', 
-                data: { 
-                    labels: data.map(d => d.name), 
-                    datasets: [
-                        { label: 'Total Aportado', data: data.map(d => d.AccAporte), backgroundColor: '#3b82f6', borderRadius: {bottomLeft: 4, bottomRight: 4} }, 
-                        { label: 'Total Rendimentos', data: data.map(d => d.AccRend), backgroundColor: '#10b981', borderRadius: {topLeft: 4, topRight: 4} }
-                    ] 
-                }, 
+                data: { labels: data.map(d => d.name), datasets: datasets }, 
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
                     scales: { 
-                        x: { grid: { display: false }, stacked: true }, 
-                        y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } }, stacked: true } 
+                        x: { grid: { display: false } }, 
+                        y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } 
                     }, 
                     plugins: { 
                         datalabels: { display: false }, 
@@ -583,18 +614,14 @@
                             mode: 'index',
                             intersect: false,
                             callbacks: { 
-                                label: (ctx) => ` ${ctx.dataset.label}: R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}`,
-                                footer: (tooltipItems) => {
-                                    let total = 0;
-                                    tooltipItems.forEach(item => total += item.raw);
-                                    return `Acumulado do Mês: R$ ${formatCurrency(total).replace('R$', '').trim()}`;
-                                }
+                                label: (ctx) => ` ${ctx.dataset.label}: R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}`
                             } 
                         } 
                     } 
                 } 
             });
         }
+        
         function createEvolucaoRendaChart(canvasId, data) {
             const ctx = document.getElementById(canvasId); if (!ctx) return;
             AppState.charts[canvasId] = new Chart(ctx, { 
@@ -602,7 +629,7 @@
                 data: { 
                     labels: data.map(d => d.name), 
                     datasets: [
-                        { label: 'Renda Mensal', data: data.map(d => d.Valor), backgroundColor: '#10b981', borderRadius: 4 } 
+                        { label: 'Renda', data: data.map(d => d.Valor), backgroundColor: '#10b981', borderRadius: 4 } 
                     ] 
                 }, 
                 options: { 
@@ -680,8 +707,8 @@
 
             let selectHTML = '';
             if (isInvestment) {
-                const colors = type === 'reserva' ? 'bg-blue-100 text-blue-700' : type === 'fixa' ? 'bg-emerald-100 text-emerald-700' : 'bg-purple-100 text-purple-700';
-                selectHTML = `<select onchange="AppActions.handleTypeChange('${y}', '${m}', '${category}', '${name}', this.value)" class="text-[9px] uppercase font-bold rounded px-1.5 py-1 outline-none cursor-pointer transition-colors ${colors}"><option value="reserva" ${type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${type==='variavel'?'selected':''}>Var</option></select>`;
+                const colors = type === 'reserva' ? 'bg-blue-100 text-blue-700' : type === 'fixa' ? 'bg-emerald-100 text-emerald-700' : type === 'cripto' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700';
+                selectHTML = `<select onchange="AppActions.handleTypeChange('${y}', '${m}', '${category}', '${name}', this.value)" class="text-[9px] uppercase font-bold rounded px-1.5 py-1 outline-none cursor-pointer transition-colors ${colors}"><option value="reserva" ${type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${type==='variavel'?'selected':''}>Var</option><option value="cripto" ${type==='cripto'?'selected':''}>Cripto</option></select>`;
             } else if (!isIncome) {
                 const colors = type === 'fixed' ? 'bg-rose-100 text-rose-700' : 'bg-orange-100 text-orange-700';
                 selectHTML = `<select onchange="AppActions.handleTypeChange('${y}', '${m}', '${category}', '${name}', this.value)" class="text-[9px] uppercase font-bold rounded px-1.5 py-1 outline-none cursor-pointer transition-colors ${colors}"><option value="fixed" ${type==='fixed'?'selected':''}>Fixo</option><option value="variable" ${type==='variable'?'selected':''}>Var</option></select>`;
@@ -696,6 +723,22 @@
             const totalRenda = getCategoryTotal(AppState.currentYear, AppState.currentMonth, 'Renda Familiar');
             const isMonthEmpty = totals.renda === 0 && totals.gastos === 0 && (totals.investimentosMes + totals.reservaMesAtual) === 0;
 
+            let uniqueRendaItemsSet = new Set();
+            const yDataRendaFiltro = AppState.budgetData[AppState.currentYear];
+            if (yDataRendaFiltro) {
+                MONTHS.forEach(mesLoop => {
+                    if (yDataRendaFiltro[mesLoop]) {
+                        const meta = yDataRendaFiltro[mesLoop].categoriesMetadata || DEFAULT_METADATA;
+                        Object.keys(yDataRendaFiltro[mesLoop]).forEach(cat => {
+                            if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (meta[cat] === 'income' || cat === 'Renda Familiar')) {
+                                Object.keys(yDataRendaFiltro[mesLoop][cat]).forEach(itemName => uniqueRendaItemsSet.add(itemName));
+                            }
+                        });
+                    }
+                });
+            }
+            const uniqueRendaItems = Array.from(uniqueRendaItemsSet).sort();
+
             let allowedMonthsRenda = MONTHS.slice(0, AppState.currentMonthIdx + 1);
             const rendaEvolutionData = allowedMonthsRenda.map((mesNome) => {
                 let totalMes = 0;
@@ -703,10 +746,12 @@
                 if (yData && yData[mesNome]) {
                     const meta = yData[mesNome].categoriesMetadata || DEFAULT_METADATA;
                     Object.keys(yData[mesNome]).forEach(cat => {
-                        if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) {
-                            if (meta[cat] === 'income' || cat === 'Renda Familiar') {
-                                totalMes += getCategoryTotal(AppState.currentYear, mesNome, cat);
-                            }
+                        if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (meta[cat] === 'income' || cat === 'Renda Familiar')) {
+                            Object.entries(yData[mesNome][cat]).forEach(([itemName, val]) => {
+                                if (AppState.rendaFilterItem === 'all' || AppState.rendaFilterItem === itemName) {
+                                    totalMes += Number(val) || 0;
+                                }
+                            });
                         }
                     });
                 }
@@ -728,6 +773,13 @@
             html += `<div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
                             <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i> Evolução da Renda em ${AppState.currentYear}</h3>
+                            <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                                <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1 shrink-0"></i>
+                                <select onchange="AppActions.changeRendaFilter(this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer max-w-[150px] truncate">
+                                    <option value="all" ${AppState.rendaFilterItem === 'all' ? 'selected' : ''}>Todas as Rendas</option>
+                                    ${uniqueRendaItems.map(a => `<option value="${a}" ${AppState.rendaFilterItem === a ? 'selected' : ''}>${a}</option>`).join('')}
+                                </select>
+                            </div>
                         </div>
                         <div class="h-[250px] md:h-[300px] w-full relative">
                             <canvas id="chart-renda-evolucao"></canvas>
@@ -868,18 +920,34 @@
             // Dados do gráfico de evolução (Mês a Mês do ano selecionado)
             const evolutionData = allowedMonths.map((mesNome) => {
                 const monthActualIndex = MONTHS.indexOf(mesNome);
-                let accAporte = 0, accRend = 0;
+                let mesAporte = 0, mesRend = 0, accTotal = 0;
                 
-                // Pegar histórico acumulado até aquele mês exato (usando o ano do filtro)
+                // Mês Específico:
+                const yData = AppState.budgetData[AppState.investFilterYear];
+                if (yData && yData[mesNome]) {
+                    const mInvestCats = Object.keys(yData[mesNome]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (yData[mesNome].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
+                    mInvestCats.forEach(cat => {
+                        Object.entries(yData[mesNome][cat]).forEach(([name, val]) => {
+                            const type = yData[mesNome].itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel');
+                            if ((AppState.investFilterType === 'all' || AppState.investFilterType === type) &&
+                                (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
+                                mesAporte += Number(val) || 0;
+                                mesRend += Number(yData[mesNome].itemMetadata?.[cat]?.[`${name}_yield`]) || 0;
+                            }
+                        });
+                    });
+                }
+
+                // Acumulado até aquele mês:
                 const accDetails = getAccumulatedAssetDetails(AppState.investFilterYear, monthActualIndex);
                 Object.entries(accDetails.assets).forEach(([name, data]) => {
                     if ((AppState.investFilterType === 'all' || AppState.investFilterType === data.type) &&
                         (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
-                        accAporte += data.invested;
-                        accRend += data.yield;
+                        accTotal += (data.invested + data.yield);
                     }
                 });
-                return { name: mesNome.substring(0, 3), AccAporte: accAporte, AccRend: accRend };
+
+                return { name: mesNome.substring(0, 3), Aportes: mesAporte, Rendimentos: mesRend, Acumulado: accTotal };
             });
 
             let totalInvestidoAcumulado = 0; 
@@ -926,7 +994,7 @@
             const colorsTotal = chartTotalData.map(d => d.color);
 
             setTimeout(() => { 
-                createEvolucaoInvestChart('chart-inv-evolucao', evolutionData);
+                createEvolucaoInvestChart('chart-inv-evolucao', evolutionData, AppState.investFilterMetric);
                 if(chartInvestidoData.length>0) createPieChart('chart-inv-investido', chartInvestidoData, colorsInvestido, 'pie'); 
                 if(chartRendimentosData.length>0) createPieChart('chart-inv-rends', chartRendimentosData, colorsRends, 'pie'); 
                 if(chartTotalData.length>0) createPieChart('chart-inv-total', chartTotalData, colorsTotal, 'pie'); 
@@ -988,7 +1056,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-xs text-blue-700">${formatCurrency(i.accumulatedValue)}</span></td>
-                                                <td class="px-1 sm:px-2 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-400 hover:text-rose-600 p-2 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal transition-colors" title="Excluir de todos os meses"><i data-lucide="x" class="w-3.5 h-3.5 md:w-4 md:h-4"></i><span class="sm:hidden">Excluir</span></button></td>
+                                                <td class="px-1 sm:px-2 py-2 sm:py-3 text-center"><button onclick="AppActions.requestDeleteItem('${y}', '${m}', '${i.cat}', '${i.name}', ${i.accumulatedValue})" class="text-rose-400 hover:text-rose-600 p-2 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal transition-colors" title="Excluir de todos os meses"><i data-lucide="x" class="w-3.5 h-3.5 md:w-4 md:h-4"></i><span class="sm:hidden">Excluir</span></button></td>
                                             </tr>`
                                         }).join('')}
                                         ${list.length===0?'<tr><td colspan="7" class="py-10 text-center text-slate-400 italic text-xs">Nenhum investimento registrado. Clique em "Novo Ativo" acima.</td></tr>':''}
@@ -1035,9 +1103,15 @@
                                 <option value="variavel" ${AppState.investFilterType === 'variavel' ? 'selected' : ''}>Renda Variável</option>
                                 <option value="cripto" ${AppState.investFilterType === 'cripto' ? 'selected' : ''}>Cripto</option>
                             </select>
-                            <select onchange="AppActions.changeInvestFilter('asset', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer max-w-[120px] truncate">
+                            <select onchange="AppActions.changeInvestFilter('asset', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300 max-w-[120px] truncate">
                                 <option value="all" ${AppState.investFilterAsset === 'all' ? 'selected' : ''}>Todos os Ativos</option>
                                 ${uniqueAssets.map(a => `<option value="${a}" ${AppState.investFilterAsset === a ? 'selected' : ''}>${a}</option>`).join('')}
+                            </select>
+                            <select onchange="AppActions.changeInvestFilter('metric', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer">
+                                <option value="todos" ${AppState.investFilterMetric === 'todos' ? 'selected' : ''}>Todos os Dados</option>
+                                <option value="aportes" ${AppState.investFilterMetric === 'aportes' ? 'selected' : ''}>Aportes (Mensal)</option>
+                                <option value="rendimentos" ${AppState.investFilterMetric === 'rendimentos' ? 'selected' : ''}>Rendimentos (Mensal)</option>
+                                <option value="acumulado" ${AppState.investFilterMetric === 'acumulado' ? 'selected' : ''}>Evolução (Acumulado)</option>
                             </select>
                         </div>
                     </div>
@@ -1148,6 +1222,20 @@
                         <div class="flex gap-3 justify-end">
                             <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
                             <button onclick="AppActions.confirmMonthChange()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Sim, fechar mês</button>
+                        </div>
+                    </div>
+                </div>`;
+            } else if (AppState.confirmDeleteItem !== null) {
+                const item = AppState.confirmDeleteItem;
+                root.innerHTML = `
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
+                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Excluir Ativo?</h3>
+                        <p class="text-xs md:text-sm text-slate-500 mb-6">Você tem <strong>${formatCurrency(item.accumulatedValue)}</strong> acumulados em <strong>${item.name}</strong>. Excluir este ativo apagará todo o seu histórico. Tem certeza?</p>
+                        <div class="flex gap-3 justify-end">
+                            <button onclick="AppActions.cancelDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+                            <button onclick="AppActions.confirmDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
                         </div>
                     </div>
                 </div>`;
