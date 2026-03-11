@@ -587,14 +587,14 @@
             const ctx = document.getElementById(canvasId); if (!ctx) return;
             
             let datasets = [];
+            if (metricFilter === 'todos' || metricFilter === 'acumulado') {
+                datasets.push({ label: 'Total Acumulado', data: data.map(d => d.Acumulado), backgroundColor: '#8b5cf6', borderRadius: 4 });
+            }
             if (metricFilter === 'todos' || metricFilter === 'aportes') {
                 datasets.push({ label: 'Aportes (Mês)', data: data.map(d => d.Aportes), backgroundColor: '#3b82f6', borderRadius: 4 });
             }
             if (metricFilter === 'todos' || metricFilter === 'rendimentos') {
                 datasets.push({ label: 'Rendimentos (Mês)', data: data.map(d => d.Rendimentos), backgroundColor: '#10b981', borderRadius: 4 });
-            }
-            if (metricFilter === 'todos' || metricFilter === 'acumulado') {
-                datasets.push({ label: 'Total Acumulado', data: data.map(d => d.Acumulado), backgroundColor: '#8b5cf6', borderRadius: 4 });
             }
 
             AppState.charts[canvasId] = new Chart(ctx, { 
@@ -731,7 +731,9 @@
                         const meta = yDataRendaFiltro[mesLoop].categoriesMetadata || DEFAULT_METADATA;
                         Object.keys(yDataRendaFiltro[mesLoop]).forEach(cat => {
                             if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (meta[cat] === 'income' || cat === 'Renda Familiar')) {
-                                Object.keys(yDataRendaFiltro[mesLoop][cat]).forEach(itemName => uniqueRendaItemsSet.add(itemName));
+                                Object.entries(yDataRendaFiltro[mesLoop][cat]).forEach(([itemName, val]) => {
+                                    if (Number(val) > 0) uniqueRendaItemsSet.add(itemName);
+                                });
                             }
                         });
                     }
@@ -1109,9 +1111,9 @@
                             </select>
                             <select onchange="AppActions.changeInvestFilter('metric', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer">
                                 <option value="todos" ${AppState.investFilterMetric === 'todos' ? 'selected' : ''}>Todos os Dados</option>
+                                <option value="acumulado" ${AppState.investFilterMetric === 'acumulado' ? 'selected' : ''}>Evolução (Acumulado)</option>
                                 <option value="aportes" ${AppState.investFilterMetric === 'aportes' ? 'selected' : ''}>Aportes (Mensal)</option>
                                 <option value="rendimentos" ${AppState.investFilterMetric === 'rendimentos' ? 'selected' : ''}>Rendimentos (Mensal)</option>
-                                <option value="acumulado" ${AppState.investFilterMetric === 'acumulado' ? 'selected' : ''}>Evolução (Acumulado)</option>
                             </select>
                         </div>
                     </div>
