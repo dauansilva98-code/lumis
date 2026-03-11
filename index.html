@@ -636,7 +636,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="px-5 md:px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center"><span class="text-xs md:text-sm font-bold text-slate-700">Total Investido Acumulado (Exclui Reserva)</span><span class="text-xs md:text-sm font-bold text-blue-600">${formatCurrency(totalInvAcumulado)}</span></div>
+                        <div class="px-5 md:px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center"><span class="text-xs md:text-sm font-bold text-slate-700">Total Investido Acumulado (Exclui Reserva)</span><span class="text-xs md:text-sm font-bold text-blue-600">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                     </div>
                     
                     <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50">
@@ -648,7 +648,7 @@
 
                 <div class="lg:col-span-4 space-y-6">
                     <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl">
-                        <div class="mb-6"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalResAcumulado)}</p></div>
+                        <div class="mb-6"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
                         <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
                         <div class="mb-6 pt-6 border-t border-slate-800"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
                         <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-bold text-white">${formatCurrency(patLiq)}</p></div>
