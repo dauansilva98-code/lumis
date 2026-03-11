@@ -595,6 +595,35 @@
                 } 
             });
         }
+        function createEvolucaoRendaChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId); if (!ctx) return;
+            AppState.charts[canvasId] = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: data.map(d => d.name), 
+                    datasets: [
+                        { label: 'Renda Mensal', data: data.map(d => d.Valor), backgroundColor: '#10b981', borderRadius: 4 } 
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { grid: { display: false } }, 
+                        y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } 
+                    }, 
+                    plugins: { 
+                        datalabels: { display: false }, 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}`
+                            } 
+                        } 
+                    } 
+                } 
+            });
+        }
 
         function renderPieChartCard(id, title, data, colors, type = 'pie') {
             const isEmpty = data.length === 0;
@@ -667,13 +696,45 @@
             const totalRenda = getCategoryTotal(AppState.currentYear, AppState.currentMonth, 'Renda Familiar');
             const isMonthEmpty = totals.renda === 0 && totals.gastos === 0 && (totals.investimentosMes + totals.reservaMesAtual) === 0;
 
-            let html = '<div class="max-w-2xl mx-auto">';
+            let allowedMonthsRenda = MONTHS.slice(0, AppState.currentMonthIdx + 1);
+            const rendaEvolutionData = allowedMonthsRenda.map((mesNome) => {
+                let totalMes = 0;
+                const yData = AppState.budgetData[AppState.currentYear];
+                if (yData && yData[mesNome]) {
+                    const meta = yData[mesNome].categoriesMetadata || DEFAULT_METADATA;
+                    Object.keys(yData[mesNome]).forEach(cat => {
+                        if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) {
+                            if (meta[cat] === 'income' || cat === 'Renda Familiar') {
+                                totalMes += getCategoryTotal(AppState.currentYear, mesNome, cat);
+                            }
+                        }
+                    });
+                }
+                return { name: mesNome.substring(0, 3), Valor: totalMes };
+            });
+
+            setTimeout(() => { 
+                if (rendaEvolutionData.length > 0) createEvolucaoRendaChart('chart-renda-evolucao', rendaEvolutionData);
+            }, 0);
+
+            let html = '<div class="space-y-6 max-w-4xl mx-auto">';
             if (isMonthEmpty && (AppState.currentMonthIdx > 0 || parseInt(AppState.currentYear) > 2020)) {
                 let pMonth = AppState.currentMonthIdx - 1; let pYear = AppState.currentYear;
                 if (pMonth < 0) { pMonth = 11; pYear = (parseInt(AppState.currentYear) - 1).toString(); }
-                html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
+                html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth()" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
             }
-            html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-8"><div class="flex flex-wrap gap-2 justify-between items-center mb-6"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-widest">Minhas Rendas</h3><button onclick="AppActions.addItem('${y}', '${m}', 'Renda Familiar', 'Nova Renda', 'income')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar</button></div><div class="space-y-3 min-h-[120px]">${entries.length === 0 ? '<div class="flex items-center justify-center h-full text-slate-400 italic text-xs md:text-sm py-10">Nenhuma renda cadastrada.</div>' : entries.map(([name, val]) => renderEditableRowHTML(name, val, 'income', true, false, 'Renda Familiar')).join('')}</div><div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-end"><span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Total Recebido:</span><span class="text-2xl md:text-3xl font-bold text-emerald-600">${formatCurrency(totalRenda)}</span></div></div></div>`;
+            html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-8"><div class="flex flex-wrap gap-2 justify-between items-center mb-6"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-widest">Minhas Rendas</h3><button onclick="AppActions.addItem('${y}', '${m}', 'Renda Familiar', 'Nova Renda', 'income')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar</button></div><div class="space-y-3 min-h-[120px]">${entries.length === 0 ? '<div class="flex items-center justify-center h-full text-slate-400 italic text-xs md:text-sm py-10">Nenhuma renda cadastrada.</div>' : entries.map(([name, val]) => renderEditableRowHTML(name, val, 'income', true, false, 'Renda Familiar')).join('')}</div><div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-end"><span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Total Recebido:</span><span class="text-2xl md:text-3xl font-bold text-emerald-600">${formatCurrency(totalRenda)}</span></div></div>`;
+            
+            html += `<div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
+                            <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i> Evolução da Renda em ${AppState.currentYear}</h3>
+                        </div>
+                        <div class="h-[250px] md:h-[300px] w-full relative">
+                            <canvas id="chart-renda-evolucao"></canvas>
+                        </div>
+                    </div>`;
+
+            html += '</div>';
             return html;
         }
 
@@ -937,11 +998,6 @@
                             <div class="px-4 md:px-6 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center"><span class="text-[11px] md:text-xs font-bold text-slate-600 uppercase tracking-wide">Total Investido (Exclui Reserva)</span><span class="text-sm md:text-base font-black text-blue-700">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                         </div>
                         
-                        <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50">
-                            <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
-                            <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">${[{t:'1. RESERVA PRIMEIRO',d:'Garanta sua reserva de emergência antes de ir para a bolsa.'},{t:'2. DIVERSIFICAÇÃO',d:'Divida entre Renda Fixa e Variável.'},{t:'3. FOCO NO LONGO PRAZO',d:'Serve para multiplicar patrimônio no tempo, não ficar rico rápido.'},{t:'4. ESTUDE TAXAS E IR',d:'Taxas e impostos podem "comer" boa parte da sua rentabilidade.'}].map(x=>`<div class="bg-white p-4 rounded-2xl border border-blue-100/50"><h4 class="font-extrabold text-blue-800 text-[10px] md:text-[11px] uppercase tracking-wide mb-1.5">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500">${x.d}</p></div>`).join('')}</div>
-                        </div>
                     </div>
 
                     <div class="lg:col-span-4 space-y-6">
@@ -988,6 +1044,12 @@
                     <div class="h-[250px] md:h-[300px] w-full relative">
                         <canvas id="chart-inv-evolucao"></canvas>
                     </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50 mt-6">
+                    <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
+                    <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">${[{t:'1. RESERVA PRIMEIRO',d:'Garanta sua reserva de emergência antes de ir para a bolsa.'},{t:'2. DIVERSIFICAÇÃO',d:'Divida entre Renda Fixa e Variável.'},{t:'3. FOCO NO LONGO PRAZO',d:'Serve para multiplicar patrimônio no tempo, não ficar rico rápido.'},{t:'4. ESTUDE TAXAS E IR',d:'Taxas e impostos podem "comer" boa parte da sua rentabilidade.'}].map(x=>`<div class="bg-white p-4 rounded-2xl border border-blue-100/50"><h4 class="font-extrabold text-blue-800 text-[10px] md:text-[11px] uppercase tracking-wide mb-1.5">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500">${x.d}</p></div>`).join('')}</div>
                 </div>
             </div>`;
         }
