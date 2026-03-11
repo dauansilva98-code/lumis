@@ -113,6 +113,7 @@
         const AppState = {
             user: null, budgetData: { [currentYearString]: generateEmptyYearData() }, currentYear: currentYearString,
             currentMonthIdx: new Date().getMonth(), activeTab: 'dashboard', loading: true, saving: false, errorMsg: null,
+            showSyncSuccess: false, syncSuccessTimer: null,
             confirmMonthChange: null, charts: {}, 
             investFilterYear: currentYearString, investFilterType: 'all', investFilterAsset: 'all',
             get currentMonth() { return MONTHS[this.currentMonthIdx]; },
@@ -219,7 +220,16 @@
         // --- BANCO DE DADOS (SUPABASE) ---
         function updateSyncUI() {
             const headerDesk = document.getElementById('sync-status-desktop'); const headerMob = document.getElementById('sync-status-mobile');
-            let statusHTML = AppState.errorMsg ? `<span class="flex items-center gap-1 text-rose-500"><i data-lucide="alert-circle" class="w-4 h-4"></i> <span class="hidden lg:inline">${AppState.errorMsg}</span></span>` : AppState.saving ? `<span class="flex items-center gap-1 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden lg:inline">Salvando...</span></span>` : `<span class="flex items-center gap-1 text-emerald-600"><i data-lucide="save" class="w-4 h-4"></i> <span class="hidden lg:inline">Sincronizado</span></span>`;
+            let statusHTML = '';
+            
+            if (AppState.errorMsg) {
+                statusHTML = `<span class="flex items-center gap-1 text-rose-500"><i data-lucide="alert-circle" class="w-4 h-4"></i> <span class="hidden lg:inline">${AppState.errorMsg}</span></span>`;
+            } else if (AppState.saving) {
+                statusHTML = `<span class="flex items-center gap-1 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden lg:inline">Salvando...</span></span>`;
+            } else if (AppState.showSyncSuccess) {
+                statusHTML = `<span class="flex items-center gap-1 text-emerald-600 transition-opacity duration-300"><i data-lucide="check-circle-2" class="w-4 h-4"></i> <span class="hidden lg:inline">Salvo</span></span>`;
+            }
+            
             if (headerDesk) headerDesk.innerHTML = statusHTML; if (headerMob) headerMob.innerHTML = statusHTML; lucide.createIcons();
         }
 
@@ -261,11 +271,19 @@
         }
 
         async function saveToDatabase() {
-            AppState.saving = true; AppState.errorMsg = null; updateSyncUI();
+            AppState.saving = true; AppState.errorMsg = null; AppState.showSyncSuccess = false; updateSyncUI();
             try {
                 if (!AppState.user) return;
                 const { error } = await supabaseClient.from('dados_financeiros').upsert({ id: AppState.user.id, payload: AppState.budgetData, updated_at: new Date() });
                 if (error) throw error;
+                
+                AppState.showSyncSuccess = true;
+                clearTimeout(AppState.syncSuccessTimer);
+                AppState.syncSuccessTimer = setTimeout(() => {
+                    AppState.showSyncSuccess = false;
+                    updateSyncUI();
+                }, 3000);
+
             } catch (error) { AppState.errorMsg = "Falha ao salvar."; } finally { AppState.saving = false; updateSyncUI(); }
         }
 
@@ -703,7 +721,12 @@
             
             let totalGoal = 0; goalEntries.forEach(([id, g]) => totalGoal += Number(g.value));
             const isExc = totalGoal > 100;
-            const chartData = goalEntries.map(([id, g]) => ({ name: g.label, value: g.value, hex: GOAL_COLORS[g.color]?.hex || '#94a3b8' })).filter(d => d.value > 0);
+            const chartData = goalEntries.map(([id, g]) => ({ 
+                name: g.label, 
+                value: (g.value / 100) * totals.renda, 
+                hex: GOAL_COLORS[g.color]?.hex || '#94a3b8' 
+            })).filter(d => d.value > 0);
+            
             const chartColors = chartData.map(d => d.hex);
 
             setTimeout(() => { if(chartData.length>0) createPieChart('chart-plan', chartData, chartColors, 'doughnut'); }, 0);
@@ -999,9 +1022,13 @@
             const tabs = [ { id: 'dashboard', label: 'Dashboard' }, { id: 'renda', label: 'Renda' }, { id: 'gastos', label: 'Gastos' }, { id: 'planejamento', label: 'Planejamento' }, { id: 'investimento', label: 'Investimentos' }, { id: 'historico', label: 'Reserva e Histórico' } ];
             
             let statusHTML = '';
-            if (AppState.errorMsg) statusHTML = `<span class="flex items-center gap-1 text-rose-500"><i data-lucide="alert-circle" class="w-4 h-4"></i> <span class="hidden lg:inline">${AppState.errorMsg}</span></span>`;
-            else if (AppState.saving) statusHTML = `<span class="flex items-center gap-1 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden lg:inline">Salvando...</span></span>`;
-            else statusHTML = `<span class="flex items-center gap-1 text-emerald-600"><i data-lucide="save" class="w-4 h-4"></i> <span class="hidden lg:inline">Sincronizado</span></span>`;
+            if (AppState.errorMsg) {
+                statusHTML = `<span class="flex items-center gap-1 text-rose-500"><i data-lucide="alert-circle" class="w-4 h-4"></i> <span class="hidden lg:inline">${AppState.errorMsg}</span></span>`;
+            } else if (AppState.saving) {
+                statusHTML = `<span class="flex items-center gap-1 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span class="hidden lg:inline">Salvando...</span></span>`;
+            } else if (AppState.showSyncSuccess) {
+                statusHTML = `<span class="flex items-center gap-1 text-emerald-600 transition-opacity duration-300"><i data-lucide="check-circle-2" class="w-4 h-4"></i> <span class="hidden lg:inline">Salvo</span></span>`;
+            }
 
             return `
             <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
@@ -1010,7 +1037,7 @@
                         <div class="flex items-center h-10 md:h-12 relative w-32 md:w-44">
                             <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
                         </div>
-                        <div class="flex lg:hidden items-center gap-1.5 text-[10px] font-medium" id="sync-status-mobile">${statusHTML}</div>
+                        <div class="flex lg:hidden items-center gap-1.5 text-[10px] font-medium min-w-[80px] justify-end" id="sync-status-mobile">${statusHTML}</div>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
@@ -1026,10 +1053,17 @@
                                 <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1 md:p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                             </div>
                         </div>
-                        <div class="hidden lg:flex items-center gap-2 text-xs font-medium whitespace-nowrap px-2" id="sync-status-desktop">${statusHTML}</div>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <a href="COLE_SEU_LINK_DO_PORTAL_AQUI" target="_blank" class="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-3 md:px-4 py-2 border rounded-lg text-xs md:text-sm font-bold transition-colors bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"><i data-lucide="credit-card" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Assinatura</a>
-                            <button onclick="AppActions.sair()" class="flex-1 sm:flex-none flex justify-center items-center gap-1.5 px-3 md:px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs md:text-sm font-bold hover:bg-rose-100 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Sair</button>
+                        
+                        <div class="hidden lg:flex items-center gap-2 text-xs font-medium whitespace-nowrap px-2 min-w-[100px] justify-end" id="sync-status-desktop">${statusHTML}</div>
+                        
+                        <div class="relative w-full sm:w-auto" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
+                            <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" class="flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold transition-colors w-full sm:w-auto">
+                                <i data-lucide="user" class="w-4 h-4"></i> Perfil <i data-lucide="chevron-down" class="w-3 h-3 ml-1 opacity-50"></i>
+                            </button>
+                            <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 flex-col overflow-hidden origin-top-right">
+                                <a href="COLE_SEU_LINK_DO_PORTAL_AQUI" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="credit-card" class="w-4 h-4 text-blue-500"></i> Assinatura</a>
+                                <button onclick="AppActions.sair()" class="flex items-center gap-2 px-4 py-3 hover:bg-rose-50 text-rose-600 text-sm font-bold text-left w-full transition-colors"><i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i> Sair da Conta</button>
+                            </div>
                         </div>
                     </div>
                 </div>
