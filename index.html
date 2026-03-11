@@ -65,12 +65,13 @@
         const COLORS_INCOME = ['#10b981', '#5444F2', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e', '#6366f1'];
         const COLORS_CC = ['#8b5cf6', '#f59e0b', '#ec4899', '#10b981', '#5444F2', '#f43f5e', '#14b8a6'];
         
-        // Cores padronizadas para Investimentos (Sincronizado entre abas)
+        // --- CORES FIXAS E SINCRONIZADAS PARA INVESTIMENTOS ---
         const FIXED_INVEST_COLORS = {
-            'Reserva': '#3b82f6', // Azul
-            'Renda Fixa': '#10b981', // Verde Esmeralda
+            'Reserva': '#3b82f6',     // Azul
+            'Renda Fixa': '#10b981',  // Verde Esmeralda
             'Renda Variável': '#8b5cf6' // Roxo
         };
+        const COLORS_INVEST = ['#3b82f6', '#10b981', '#8b5cf6'];
         
         const GOAL_COLORS = {
             blue: { text: 'text-[#5444F2]', hex: '#5444F2' }, pink: { text: 'text-pink-600', hex: '#ec4899' },
@@ -138,7 +139,7 @@
         function getCategoryIconAndColor(catName) { if (CATEGORIES_CONFIG[catName]) return { ...CATEGORIES_CONFIG[catName], color: 'text-slate-600', bg: 'bg-slate-100' }; return { icon: 'Receipt', color: 'text-slate-600', bg: 'bg-slate-100', type: 'expense' }; }
         function getCategoryTotal(year, month, category) { if (!AppState.budgetData[year] || !AppState.budgetData[year][month] || !AppState.budgetData[year][month][category]) return 0; return Object.values(AppState.budgetData[year][month][category]).reduce((acc, val) => acc + (Number(val) || 0), 0); }
 
-        // --- FUNÇÕES DE CÁLCULO DE ACUMULADO (A MÁGICA DOS INVESTIMENTOS) ---
+        // --- CÁLCULO DE ACÚMULO DE INVESTIMENTOS ---
         function getAccumulatedInvestments(upToYearStr, upToMonthIdx) {
             let accReserva = 0, accFixa = 0, accVariavel = 0;
             const allYears = Object.keys(AppState.budgetData).sort();
@@ -188,8 +189,8 @@
         // --- CÁLCULOS E MÉTRICAS ---
         function calculateMetrics() {
             const calcMonth = (y, m) => {
-                let renda = 0, gastos = 0, fixos = 0, variaveis = 0, investimentosMes = 0, reservaMesAtual = 0;
-                if(!AppState.budgetData[y] || !AppState.budgetData[y][m]) return { renda, gastos, saldo: 0, fixos, variaveis, investimentosMes, reservaMesAtual };
+                let renda = 0, gastos = 0, fixos = 0, variaveis = 0, investimentos = 0, reservaAtual = 0;
+                if(!AppState.budgetData[y] || !AppState.budgetData[y][m]) return { renda, gastos, saldo: 0, fixos, variaveis, investimentos, reservaAtual };
 
                 Object.keys(AppState.budgetData[y][m]).forEach(cat => {
                     if (['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) return;
@@ -202,8 +203,9 @@
                         Object.entries(AppState.budgetData[y][m][cat]).forEach(([item, val]) => {
                             const numVal = Number(val) || 0;
                             const type = AppState.budgetData[y][m].itemMetadata?.[cat]?.[item] || (item.toLowerCase().includes('reserva') ? 'reserva' : item.toLowerCase().includes('fixa') ? 'fixa' : 'variavel');
-                            if(type === 'reserva') reservaMesAtual += numVal;
-                            else investimentosMes += numVal;
+                            // No calculo mensal, salvamos o aporte do mês
+                            if(type === 'reserva') reservaAtual += numVal;
+                            else investimentos += numVal;
                         });
                     } else {
                         Object.entries(AppState.budgetData[y][m][cat]).forEach(([item, val]) => {
@@ -214,16 +216,7 @@
                         });
                     }
                 });
-                // Saldo mensal deduz apenas o APORTE (investimentosMes)
-                return { 
-                    renda, 
-                    gastos, 
-                    saldo: renda - (gastos + investimentosMes + reservaMesAtual), 
-                    fixos, 
-                    variaveis, 
-                    investimentosMes, 
-                    reservaMesAtual 
-                };
+                return { renda, gastos, saldo: renda - (gastos + investimentos + reservaAtual), fixos, variaveis, investimentos, reservaAtual };
             };
 
             const current = calcMonth(AppState.currentYear, AppState.currentMonth);
@@ -233,15 +226,15 @@
             for (let i = 0; i < 12; i++) {
                 const mData = calcMonth(AppState.currentYear, MONTHS[i]);
                 acumulado += mData.saldo;
-                historyList.push({ month: MONTHS[i], renda: mData.renda, gastos: mData.gastos, investido: mData.investimentosMes + mData.reservaMesAtual, saldo: mData.saldo });
+                historyList.push({ month: MONTHS[i], renda: mData.renda, gastos: mData.gastos, investido: mData.investimentos + mData.reservaAtual, saldo: mData.saldo });
             }
 
             const custoDeVida = current.fixos;
-            const totalReservaAcumulada = getAccumulatedInvestments(AppState.currentYear, 11)['Reserva']; // Calcula reserva do ano todo para as metas
-            
+            const reservaTotalAcumulada = getAccumulatedInvestments(AppState.currentYear, 11)['Reserva'];
+
             return {
                 totals: { ...current, acumulado },
-                metrics: { custoDeVida, metaReserva6m: custoDeVida * 6, metaReserva12m: custoDeVida * 12, reservaTotalAcumulada: totalReservaAcumulada },
+                metrics: { custoDeVida, metaReserva6m: custoDeVida * 6, metaReserva12m: custoDeVida * 12, reservaTotalAcumulada },
                 historyData: historyList
             };
         }
@@ -632,7 +625,7 @@
         function renderDashboard() {
             const { totals, metrics, historyData } = calculateMetrics();
             
-            // Puxar investimentos ACUMULADOS para usar no Dashboard, criando o sincronismo que pediu.
+            // Puxar investimentos ACUMULADOS para usar no Dashboard
             const accInvest = getAccumulatedInvestments(AppState.currentYear, AppState.currentMonthIdx);
             const totalPatrimonioAcumulado = accInvest['Reserva'] + accInvest['Renda Fixa'] + accInvest['Renda Variável'];
 
@@ -651,7 +644,7 @@
                 if (cat.toLowerCase().includes('cartão') || cat.toLowerCase().includes('cartao')) ccData.push(...items);
             });
 
-            // GERAÇÃO DOS DADOS DO GRÁFICO DE INVESTIMENTO DO DASHBOARD (SINCRONIZADO E ACUMULADO)
+            // Gráfico do Dashboard agora usa as mesmas cores fixas da aba Investimento
             const dashInvestData = [
                 {name: 'Reserva', value: accInvest['Reserva']},
                 {name: 'Renda Fixa', value: accInvest['Renda Fixa']},
@@ -782,7 +775,7 @@
                     const type = AppState.currentData.itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel'); 
                     const inst = AppState.currentData.itemMetadata?.[cat]?.[`${name}_inst`] || ''; 
                     
-                    // BUSCA O VALOR ACUMULADO
+                    // BUSCA O VALOR ACUMULADO PARA EXIBIR NA TABELA
                     const accumulatedValue = getAccumulatedPerAsset(y, AppState.currentMonthIdx, cat, name);
                     list.push({cat, name, val: Number(val), type, inst, accumulatedValue}); 
                 }); 
@@ -819,7 +812,6 @@
                                         <th class="px-4 sm:px-6 py-4 font-extrabold">Ativo</th>
                                         <th class="px-4 sm:px-6 py-4 font-extrabold">Instituição</th>
                                         <th class="px-4 sm:px-6 py-4 font-extrabold">Tipo</th>
-                                        <!-- NOVO CABEÇALHO PARA APORTE E ACUMULADO -->
                                         <th class="px-4 sm:px-6 py-4 font-extrabold text-right">Aporte (Mês)</th>
                                         <th class="px-4 sm:px-6 py-4 font-extrabold text-right text-[#5444F2]">Total Acumulado</th>
                                         <th class="px-2 sm:px-3 py-4"></th>
@@ -833,7 +825,7 @@
                                         <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
                                             <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-medium text-slate-900 bg-transparent outline-none w-full sm:min-w-[120px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left"></div></td>
                                             <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full sm:min-w-[100px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs sm:text-sm text-right sm:text-left" placeholder="Ex: Itaú..."></div></td>
-                                            <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[10px] font-bold px-2 py-1.5 rounded outline-none uppercase ${i.type==='reserva'?'bg-blue-100 text-blue-700':i.type==='fixa'?'bg-emerald-100 text-emerald-700':'bg-purple-100 text-purple-700'}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option></select></div></td>
+                                            <td class="px-2 sm:px-6 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[10px] font-bold px-2 py-1.5 rounded outline-none uppercase ${i.type==='reserva'?'bg-[#f0f0fe] text-[#5444F2]':i.type==='fixa'?'bg-emerald-100 text-emerald-700':'bg-purple-100 text-purple-700'}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option></select></div></td>
                                             <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span><div class="relative inline-flex items-center justify-end"><span class="absolute right-[80px] sm:right-[110px] text-[9px] sm:text-[10px] font-bold text-slate-400 pointer-events-none">R$</span><input id="${inputId}" type="text" inputmode="numeric" value="${formatCurrencyInput(i.val)}" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-20 sm:w-24 !pl-4 sm:!pl-6 !pr-2 !py-1 border border-slate-100 bg-slate-50/50 focus:bg-white text-right font-bold text-xs sm:text-sm rounded-lg outline-none"></div></td>
                                             <td class="px-2 sm:px-6 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-sm text-[#5444F2]">${formatCurrency(i.accumulatedValue)}</span></td>
                                             <td class="px-2 sm:px-3 py-2 sm:py-3 text-center"><button onclick="AppActions.deleteItem('${y}', '${m}', '${i.cat}', '${i.name}')" class="text-rose-500 hover:text-rose-700 p-2 sm:p-1 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal"><i data-lucide="x" class="w-4 h-4"></i><span class="sm:hidden">Excluir</span></button></td>
@@ -896,8 +888,9 @@
             <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 py-2 md:py-3 flex flex-col lg:flex-row justify-between items-center gap-3 md:gap-4">
                     <div class="flex items-center justify-between w-full lg:w-auto">
-                        <div class="flex items-center h-10 md:h-12">
-                            <img src="logo.png" alt="Lumis Logo" class="h-full w-auto object-contain">
+                        <!-- O TRUQUE DO LOGO: Definimos a largura, a altura fica automática, e usamos absolute para ele não empurrar o layout -->
+                        <div class="flex items-center h-10 md:h-12 relative w-32 md:w-44">
+                            <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
                         </div>
                         <div class="flex lg:hidden items-center gap-1.5 text-[10px] font-medium" id="sync-status-mobile">${statusHTML}</div>
                     </div>
@@ -991,28 +984,37 @@
 
         // --- INICIALIZAÇÃO ---
         async function initAuth() {
-            if (isLocalMode) {
-                AppState.user = { uid: 'dev-local' };
-                setupDatabaseListener();
-                return;
-            }
-
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    AppActions.sair();
+                    return;
+                }
+                
+                // Validação de Assinatura (Bloqueio do App)
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('subscription_status')
+                    .eq('id', user.id)
+                    .single();
+
+                if (!profile || profile.subscription_status !== 'active') {
+                    alert("Acesso restrito para assinantes. Redirecionando para ativação da conta!");
+                    window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${user.id}`;
+                    return;
+                }
+
+                AppState.user = user;
+                
+                // Sucesso! Busca os dados e renderiza.
+                await loadDatabaseData();
+                
             } catch (error) {
                 console.error("Auth error:", error);
-                AppState.errorMsg = "Erro na autenticação.";
+                AppState.errorMsg = "Erro na autenticação. Tente novamente.";
                 AppState.loading = false;
                 renderApp();
             }
-        }
-
-        if (!isLocalMode) {
-            onAuthStateChanged(auth, (user) => {
-                AppState.user = user;
-                if (user) setupDatabaseListener();
-            });
         }
 
         // Inicia a aplicação
