@@ -550,14 +550,18 @@
             let totalRendimentosAcumulado = 0; 
             let totalReservaAcumulado = 0; 
             let totalRendimentoReserva = 0;
-            let chartTipoData = { 'Reserva': 0, 'Renda Fixa': 0, 'Renda Variável': 0 };
-            let chartRendimentosData = [];
 
-            Object.entries(accDetailsCurrent.assets).forEach(([assetName, data]) => {
+            let chartInvestidoData = [];
+            let chartRendimentosData = [];
+            let chartTotalData = [];
+
+            // Ordenar ativos para que a cor baseada no índice seja consistente em todos os gráficos
+            const sortedAssets = Object.entries(accDetailsCurrent.assets).sort((a,b) => (b[1].invested+b[1].yield) - (a[1].invested+a[1].yield));
+
+            sortedAssets.forEach(([assetName, data], index) => {
                 const valTotal = data.invested + data.yield;
-                if (valTotal > 0) {
-                    chartTipoData[data.type === 'reserva' ? 'Reserva' : data.type === 'fixa' ? 'Renda Fixa' : 'Renda Variável'] += valTotal;
-                }
+                // Atribui uma cor fixa da nossa paleta para esse ativo específico
+                const color = EXTENDED_COLORS[index % EXTENDED_COLORS.length];
                 
                 if (data.type === 'reserva') {
                     totalReservaAcumulado += valTotal;
@@ -567,32 +571,28 @@
                     totalRendimentosAcumulado += data.yield;
                 }
 
+                // Populando os arrays de dados dos 3 gráficos
+                if (data.invested > 0) {
+                    chartInvestidoData.push({ name: assetName, value: data.invested, color: color });
+                }
                 if (data.yield > 0) {
-                    chartRendimentosData.push({ name: assetName, value: data.yield });
+                    chartRendimentosData.push({ name: assetName, value: data.yield, color: color });
+                }
+                if (valTotal > 0) {
+                    chartTotalData.push({ name: assetName, value: valTotal, color: color });
                 }
             });
 
             const patLiq = totalReservaAcumulado + totalInvestidoAcumulado + totalRendimentosAcumulado;
 
-            const chartAlocacaoTipo = [
-                {name: 'Reserva', value: chartTipoData['Reserva']},
-                {name: 'Renda Fixa', value: chartTipoData['Renda Fixa']},
-                {name: 'Renda Variável', value: chartTipoData['Renda Variável']}
-            ].filter(d=>d.value>0);
-            const colorsAlocacaoTipo = chartAlocacaoTipo.map(d => FIXED_INVEST_COLORS[d.name]);
-
-            const chartEvolucaoPatrimonio = [
-                {name: 'Total Aportado', value: totalInvestidoAcumulado + (totalReservaAcumulado - totalRendimentoReserva)},
-                {name: 'Total Rendimentos', value: totalRendimentosAcumulado + totalRendimentoReserva}
-            ].filter(d=>d.value>0);
-
-            chartRendimentosData = chartRendimentosData.sort((a,b)=>b.value-a.value);
-            const colorsRendimentos = chartRendimentosData.map((d,i) => EXTENDED_COLORS[i % EXTENDED_COLORS.length]);
+            const colorsInvestido = chartInvestidoData.map(d => d.color);
+            const colorsRends = chartRendimentosData.map(d => d.color);
+            const colorsTotal = chartTotalData.map(d => d.color);
 
             setTimeout(() => { 
-                if(chartAlocacaoTipo.length>0) createPieChart('chart-inv-tipo', chartAlocacaoTipo, colorsAlocacaoTipo, 'doughnut'); 
-                if(chartEvolucaoPatrimonio.length>0) createPieChart('chart-inv-comp', chartEvolucaoPatrimonio, ['#3b82f6', '#10b981'], 'pie'); 
-                if(chartRendimentosData.length>0) createPieChart('chart-inv-rends', chartRendimentosData, colorsRendimentos, 'doughnut'); 
+                if(chartInvestidoData.length>0) createPieChart('chart-inv-investido', chartInvestidoData, colorsInvestido, 'pie'); 
+                if(chartRendimentosData.length>0) createPieChart('chart-inv-rends', chartRendimentosData, colorsRends, 'pie'); 
+                if(chartTotalData.length>0) createPieChart('chart-inv-total', chartTotalData, colorsTotal, 'pie'); 
             }, 0);
 
             return `
@@ -654,9 +654,9 @@
                         <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-bold text-white">${formatCurrency(patLiq)}</p></div>
                     </div>
                     
-                    ${renderPieChartCard('chart-inv-tipo', 'Alocação por Tipo', chartAlocacaoTipo, colorsAlocacaoTipo, 'doughnut')}
-                    ${renderPieChartCard('chart-inv-comp', 'Aportes vs Rendimentos', chartEvolucaoPatrimonio, ['#3b82f6', '#10b981'], 'pie')}
-                    ${renderPieChartCard('chart-inv-rends', 'Rendimentos por Ativo', chartRendimentosData, colorsRendimentos, 'doughnut')}
+                    ${renderPieChartCard('chart-inv-investido', 'Valor Investido', chartInvestidoData, colorsInvestido, 'pie')}
+                    ${renderPieChartCard('chart-inv-rends', 'Rendimentos / Dividendos', chartRendimentosData, colorsRends, 'pie')}
+                    ${renderPieChartCard('chart-inv-total', 'Investido + Rendimentos', chartTotalData, colorsTotal, 'pie')}
                 </div>
             </div>`;
         }
