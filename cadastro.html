@@ -11,7 +11,6 @@
         
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Correção CRUCIAL: Permite rolar a página no celular e evita corte lateral */
             overflow-x: hidden;
             overflow-y: auto; 
             background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
@@ -24,7 +23,6 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        /* Animação das esferas de fundo bem sutis */
         .blob {
             position: absolute;
             width: 600px;
@@ -40,7 +38,6 @@
             to { transform: translate(15%, 15%) scale(1.1); }
         }
 
-        /* Estilos para animação do Toast */
         .toast-enter {
             transform: translateY(100%);
             opacity: 0;
@@ -61,39 +58,52 @@
         }
     </style>
 </head>
-<!-- flex-col aqui permite o crescimento do conteúdo sem cortar -->
 <body class="min-h-[100dvh] w-full flex flex-col p-4 sm:p-6 relative">
     
-    <!-- Container para Notificações (Toasts) -->
     <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
     <div class="blob top-0 left-0 fixed"></div>
     <div class="blob bottom-0 right-0 fixed" style="animation-direction: alternate-reverse; animation-duration: 30s;"></div>
 
-    <!-- m-auto centraliza de forma inteligente: fica no meio no PC, mas scrolla no celular -->
-    <main class="w-full max-w-[420px] m-auto z-10 flex flex-col items-center justify-center py-6 sm:py-8">
+    <main class="relative z-10 w-full max-w-[420px] m-auto flex flex-col items-center justify-center py-6 sm:py-8">
 
         <div class="clean-card w-full p-6 sm:p-10">
             
-            <!-- Cabeçalho movido para DENTRO do cartão branco -->
             <div class="text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
-                
-                <!-- Logo dentro da parte em branco, centralizada e sem margens negativas -->
                 <img src="logo.png" alt="Lumis Logo" class="w-40 sm:w-48 h-auto object-contain mx-auto mb-1">
-                
-                <!-- Texto Organizador Financeiro na cor da paleta e com espaçamento seguro -->
                 <h2 class="w-full text-center text-[11px] sm:text-[12px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] mb-6">
                     Organizador Financeiro
                 </h2>
-
                 <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">Crie sua conta Premium</h3>
-                <p class="text-[13px] sm:text-sm text-slate-500 font-medium">Organize suas finanças com o poder total da Lumis.</p>
+                <p id="plano-selecionado-texto" class="text-[13px] sm:text-sm text-slate-500 font-medium">Selecione o seu plano e organize as suas finanças.</p>
+            </div>
+
+            <!-- Seleção de Plano -->
+            <div class="flex gap-3 sm:gap-4 mb-8 w-full">
+                <!-- Botão Mensal -->
+                <button type="button" id="btn-plano-mensal" onclick="selecionarPlano('mensal')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md">
+                    <div class="flex flex-col items-center justify-center h-full pointer-events-none">
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Mensal</span>
+                        <span class="text-[10px] sm:text-xs text-slate-400 line-through font-medium leading-none mb-1">de R$ 19,90</span>
+                        <span class="text-xl sm:text-2xl font-black text-[#0040A1] leading-none">R$ 9,90</span>
+                    </div>
+                </button>
+                
+                <!-- Botão Anual -->
+                <button type="button" id="btn-plano-anual" onclick="selecionarPlano('anual')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:border-slate-300">
+                    <div class="flex flex-col items-center justify-center h-full pointer-events-none">
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Anual</span>
+                        <span class="text-[10px] sm:text-xs text-slate-400 line-through font-medium leading-none mb-1">de R$ 190,90</span>
+                        <span class="text-xl sm:text-2xl font-black text-[#0040A1] leading-none">R$ 99,90</span>
+                        <span class="text-[9px] sm:text-[10px] font-bold text-emerald-600 mt-1.5 leading-none bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">R$ 8,33 / mês</span>
+                    </div>
+                </button>
             </div>
 
             <div class="space-y-5 sm:space-y-6 w-full text-left">
                 
                 <div class="input-group w-full">
-                    <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Seu melhor E-mail</label>
+                    <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">O seu melhor E-mail</label>
                     <div class="relative group w-full">
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="mail" class="w-5 h-5"></i>
@@ -124,7 +134,6 @@
                     </div>
                 </div>
 
-                <!-- Novo campo de Confirmação de Senha -->
                 <div class="input-group w-full">
                     <label for="senha_confirmacao" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Confirme a Senha</label>
                     <div class="relative group w-full">
@@ -143,7 +152,6 @@
                             </svg>
                         </button>
                     </div>
-                    <!-- Aviso de erro dinâmico em vermelho -->
                     <p id="senhaErro" class="text-red-500 text-xs font-bold mt-2 hidden text-left pl-1 transition-all">As senhas não coincidem</p>
                 </div>
 
@@ -155,7 +163,7 @@
         </div>
         
         <div class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
-            <span>Já possui uma conta?</span>
+            <span>Já tem uma conta?</span>
             <br>
             <a href="index.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
                 Fazer Login ➔
@@ -171,14 +179,51 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-      // Inicializa ícones Lucide
       lucide.createIcons();
 
-      // Configurações do Supabase e Stripe
-      const supabaseUrl = 'https://izmdjkalwgupuehrbcxm.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss';
+      // Configurações do Supabase (Garanta que coloca as de produção aqui)
+      const supabaseUrl = 'COLOQUE_SUA_URL_DO_SUPABASE_AQUI';
+      const supabaseKey = 'COLOQUE_SUA_CHAVE_ANON_DO_SUPABASE_AQUI';
       const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-      const LINK_DO_STRIPE = "https://buy.stripe.com/8x29ATe0PbI8bT00h800000";
+      
+      // LINKS DE PRODUÇÃO DO STRIPE
+      const LINK_MENSAL = "https://buy.stripe.com/8x29ATe0PbI8bT00h800000";
+      const LINK_ANUAL = "https://buy.stripe.com/dRmcN52i79A08GOfc200001";
+
+      // Variável global para armazenar o plano selecionado
+      let planoAtivo = 'mensal';
+
+      // Função totalmente segura para atualizar os botões sem remover classes importantes
+      function selecionarPlano(plano) {
+          planoAtivo = plano;
+          
+          const btnMensal = document.getElementById('btn-plano-mensal');
+          const btnAnual = document.getElementById('btn-plano-anual');
+          const textoPlano = document.getElementById('plano-selecionado-texto');
+
+          // Reescrevemos as classes de forma bruta e segura para garantir a troca visual
+          const cssAtivo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100";
+          const cssInativo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:opacity-100 hover:border-slate-300 scale-100";
+
+          if (plano === 'mensal') {
+              btnMensal.className = cssAtivo;
+              btnAnual.className = cssInativo;
+              
+              textoPlano.innerHTML = "Está prestes a assinar o <b>Plano Mensal</b>.";
+          } else {
+              btnAnual.className = cssAtivo;
+              btnMensal.className = cssInativo;
+              
+              textoPlano.innerHTML = "Excelente escolha! <b>Plano Anual</b> com desconto.";
+          }
+      }
+
+      // Ao carregar a página, deteta a URL e clica visualmente no botão correto
+      document.addEventListener("DOMContentLoaded", () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const planoInicial = urlParams.get('plano') === 'anual' ? 'anual' : 'mensal';
+          selecionarPlano(planoInicial);
+      });
 
       // Sistema Customizado de Notificação (Toast)
       function showToast(message, type = 'error') {
@@ -220,7 +265,6 @@
           }, 4000);
       }
 
-      // Alternar visualização da senha
       function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -234,7 +278,6 @@
         }
       }
 
-      // Validação de senha em tempo real ao digitar
       function checarSenhas() {
           const senha = document.getElementById('senha').value;
           const senhaConf = document.getElementById('senha_confirmacao').value;
@@ -247,7 +290,6 @@
           }
       }
 
-      // Função de Cadastro
       async function criarContaEPagar() {
         const email = document.getElementById('email').value.trim();
         const senha = document.getElementById('senha').value;
@@ -259,13 +301,11 @@
             return;
         }
 
-        // Validação se as senhas coincidem
         if (senha !== senhaConfirmacao) {
             showToast("As senhas não coincidem. Verifique e tente novamente.", "error");
             return;
         }
 
-        // Estado de Loading no botão
         const originalContent = btn.innerHTML;
         btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Criando conta...</span>`;
         btn.disabled = true;
@@ -278,7 +318,6 @@
             });
 
             if (error) {
-                // Tratamento específico de e-mail já existente
                 if (error.message.includes("already registered") || error.message.includes("already exists")) {
                     showToast("Esse e-mail já está cadastrado. Faça login!", "warning");
                     setTimeout(() => { window.location.href = "index.html"; }, 2500);
@@ -293,17 +332,21 @@
             
             if (data?.user?.id) {
                 const usuarioId = data.user.id;
+                
+                // Define para qual link o usuário vai baseado na variável planoAtivo (que muda quando ele clica no topo)
+                const linkCorretoStripe = planoAtivo === 'anual' ? LINK_ANUAL : LINK_MENSAL;
+                
                 setTimeout(() => {
-                    window.location.href = `${LINK_DO_STRIPE}?client_reference_id=${usuarioId}`;
+                    window.location.href = `${linkCorretoStripe}?client_reference_id=${usuarioId}`;
                 }, 1500);
             } else {
-                showToast("Verifique seu e-mail para confirmar a conta!", "warning");
+                showToast("Verifique o seu e-mail para confirmar a conta!", "warning");
                 restaurarBotao();
             }
 
         } catch (err) {
             console.error(err);
-            showToast("Erro de conexão. Verifique sua internet.", "error");
+            showToast("Erro de ligação. Verifique a sua internet.", "error");
             restaurarBotao();
         }
 
@@ -311,11 +354,10 @@
             btn.innerHTML = originalContent;
             btn.disabled = false;
             btn.classList.remove('opacity-90', 'cursor-not-allowed');
-            lucide.createIcons(); // Recriar o ícone da seta
+            lucide.createIcons();
         }
       }
 
-      // Permitir cadastro ao pressionar a tecla Enter
       document.addEventListener('keypress', (e) => { 
           if (e.key === 'Enter') criarContaEPagar(); 
       });
