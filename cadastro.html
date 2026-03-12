@@ -181,44 +181,45 @@
     <script>
       lucide.createIcons();
 
-      // Configurações do Supabase (Garanta que coloca as de produção aqui)
-      const supabaseUrl = 'COLOQUE_SUA_URL_DO_SUPABASE_AQUI';
-      const supabaseKey = 'COLOQUE_SUA_CHAVE_ANON_DO_SUPABASE_AQUI';
-      const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+      // Configurações do Supabase (O formato precisa parecer um link válido para o JS não quebrar)
+      const supabaseUrl = 'https://izmdjkalwgupuehrbcxm.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss';
       
-      // LINKS DE PRODUÇÃO DO STRIPE
+      let supabaseClient;
+      try {
+          supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+      } catch(e) {
+          console.error("Supabase não inicializado. Verifique as chaves.");
+      }
+      
+      // LINKS DE PRODUÇÃO DO STRIPE CORRETOS
       const LINK_MENSAL = "https://buy.stripe.com/8x29ATe0PbI8bT00h800000";
       const LINK_ANUAL = "https://buy.stripe.com/dRmcN52i79A08GOfc200001";
 
-      // Variável global para armazenar o plano selecionado
+      // Variável global para armazenar o plano selecionado (mensal por padrão)
       let planoAtivo = 'mensal';
 
-      // Função totalmente segura para atualizar os botões sem remover classes importantes
+      // Função que troca as cores do botão
       function selecionarPlano(plano) {
           planoAtivo = plano;
           
           const btnMensal = document.getElementById('btn-plano-mensal');
           const btnAnual = document.getElementById('btn-plano-anual');
-          const textoPlano = document.getElementById('plano-selecionado-texto');
 
-          // Reescrevemos as classes de forma bruta e segura para garantir a troca visual
+          // Textos exatos com as classes visuais para Tailwind
           const cssAtivo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100";
           const cssInativo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:opacity-100 hover:border-slate-300 scale-100";
 
           if (plano === 'mensal') {
               btnMensal.className = cssAtivo;
               btnAnual.className = cssInativo;
-              
-              textoPlano.innerHTML = "Está prestes a assinar o <b>Plano Mensal</b>.";
           } else {
               btnAnual.className = cssAtivo;
               btnMensal.className = cssInativo;
-              
-              textoPlano.innerHTML = "Excelente escolha! <b>Plano Anual</b> com desconto.";
           }
       }
 
-      // Ao carregar a página, deteta a URL e clica visualmente no botão correto
+      // Ao carregar a página, deteta se o utilizador veio através de um link com '?plano=anual'
       document.addEventListener("DOMContentLoaded", () => {
           const urlParams = new URLSearchParams(window.location.search);
           const planoInicial = urlParams.get('plano') === 'anual' ? 'anual' : 'mensal';
@@ -296,6 +297,12 @@
         const senhaConfirmacao = document.getElementById('senha_confirmacao').value;
         const btn = document.getElementById('btnCadastro');
 
+        // PROTEÇÃO: Avisa se você esqueceu de colocar as chaves no VS Code
+        if (supabaseUrl.includes('sua-url')) {
+            showToast("Atenção! Você precisa colocar as chaves reais do Supabase no código para prosseguir.", "warning");
+            return;
+        }
+
         if (!email || !senha || !senhaConfirmacao) {
             showToast("Por favor, preencha todos os campos para continuar.", "warning");
             return;
@@ -333,7 +340,7 @@
             if (data?.user?.id) {
                 const usuarioId = data.user.id;
                 
-                // Define para qual link o usuário vai baseado na variável planoAtivo (que muda quando ele clica no topo)
+                // Define para qual link o usuário vai baseado na variável planoAtivo que muda ao clicar nos botões
                 const linkCorretoStripe = planoAtivo === 'anual' ? LINK_ANUAL : LINK_MENSAL;
                 
                 setTimeout(() => {
