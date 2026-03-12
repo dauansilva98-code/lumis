@@ -1329,70 +1329,6 @@
             }
         }
 
-        // --- ECRÃ DE PAGAMENTO (PAYWALL) ---
-        function renderPaywall(userId) {
-            const root = document.getElementById('app-root');
-            // Os seus links reais do Stripe com o ID do utilizador para automação
-            const linkMensal = `https://buy.stripe.com/8x29ATe0PbI8bT00h800000?client_reference_id=${userId}`;
-            const linkAnual = `https://buy.stripe.com/dRmcN52i79A08GOfc200001?client_reference_id=${userId}`;
-
-            root.innerHTML = `
-                <div class="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4">
-                    <div class="max-w-4xl w-full mt-8 md:mt-0">
-                        <div class="text-center mb-10 md:mb-12">
-                            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                                <i data-lucide="lock" class="w-8 h-8"></i>
-                            </div>
-                            <h1 class="text-2xl md:text-4xl font-black text-slate-800 mb-4 tracking-tight">Escolha o seu plano</h1>
-                            <p class="text-slate-500 text-sm md:text-base max-w-xl mx-auto">Para continuar usando o Organizador Financeiro Lumis e ter o controle total da sua vida financeira, ative uma assinatura abaixo.</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto items-center">
-                            <!-- Mensal -->
-                            <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col order-2 md:order-1">
-                                <h3 class="text-lg font-bold text-slate-600 uppercase tracking-widest mb-2">Plano Mensal</h3>
-                                <div class="mb-6 flex items-baseline gap-1">
-                                    <span class="text-4xl font-black text-slate-800">R$ 9,90</span>
-                                    <span class="text-slate-500 font-medium">/mês</span>
-                                </div>
-                                <ul class="space-y-4 mb-8 flex-1">
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500 shrink-0"></i><span class="text-sm text-slate-600">Acesso completo à plataforma</span></li>
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500 shrink-0"></i><span class="text-sm text-slate-600">Gestão de Metas e Orçamento</span></li>
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500 shrink-0"></i><span class="text-sm text-slate-600">Acompanhamento de Investimentos</span></li>
-                                </ul>
-                                <a href="${linkMensal}" class="block w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm text-center rounded-xl transition-colors">Assinar Mensal</a>
-                            </div>
-
-                            <!-- Anual -->
-                            <div class="bg-blue-600 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col relative md:-translate-y-4 border border-blue-500 order-1 md:order-2">
-                                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-400 to-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md whitespace-nowrap">
-                                    Mais Vantajoso (2 meses grátis)
-                                </div>
-                                <h3 class="text-lg font-bold text-blue-200 uppercase tracking-widest mb-2">Plano Anual</h3>
-                                <div class="mb-6 flex items-baseline gap-1">
-                                    <span class="text-4xl font-black text-white">R$ 99,90</span>
-                                    <span class="text-blue-200 font-medium">/ano</span>
-                                </div>
-                                <ul class="space-y-4 mb-8 flex-1">
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i><span class="text-sm text-blue-50">Tudo do plano mensal</span></li>
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i><span class="text-sm text-blue-50">Economia de R$ 18,90 ao ano</span></li>
-                                    <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i><span class="text-sm text-blue-50">Renovação sem preocupações</span></li>
-                                </ul>
-                                <a href="${linkAnual}" class="block w-full py-3.5 bg-white hover:bg-blue-50 text-blue-700 font-bold text-sm text-center rounded-xl transition-colors shadow-sm">Assinar Anual</a>
-                            </div>
-                        </div>
-
-                        <div class="text-center mt-12 pb-10">
-                            <button onclick="AppActions.sair()" class="text-slate-400 hover:text-slate-600 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2">
-                                <i data-lucide="log-out" class="w-4 h-4"></i> Sair da conta
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
         // --- INICIALIZAÇÃO ---
         async function initAuth() {
             try {
@@ -1402,22 +1338,9 @@
                     return;
                 }
                 
-                // Validação de Assinatura (Bloqueio do App)
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('subscription_status')
-                    .eq('id', user.id)
-                    .single();
-
-                if (!profile || profile.subscription_status !== 'active') {
-                    // Substituímos o alert e redirecionamento automático pelo novo ecrã
-                    renderPaywall(user.id);
-                    return;
-                }
-
                 AppState.user = user;
                 
-                // Sucesso! Busca os dados e renderiza.
+                // Sucesso! Busca os dados e renderiza. (O bloqueio de paywall foi removido)
                 await loadDatabaseData();
                 
             } catch (error) {
