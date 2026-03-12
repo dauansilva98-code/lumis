@@ -178,7 +178,6 @@
       const supabaseUrl = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss';
       const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-      const LINK_DO_STRIPE = "https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800";
 
       // Sistema Customizado de Notificação (Toast)
       function showToast(message, type = 'error') {
@@ -289,12 +288,11 @@
                 return;
             }
 
-            showToast("Sucesso! Redirecionando para o pagamento...", "success");
+            showToast("Sucesso! Redirecionando para os planos...", "success");
             
             if (data?.user?.id) {
-                const usuarioId = data.user.id;
                 setTimeout(() => {
-                    window.location.href = `${LINK_DO_STRIPE}?client_reference_id=${usuarioId}`;
+                    window.location.href = "index.html";
                 }, 1500);
             } else {
                 showToast("Verifique seu e-mail para confirmar a conta!", "warning");
