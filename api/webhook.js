@@ -1,71 +1,78 @@
-const { createClient } = require('@supabase/supabase-js');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
-// Conecta ao Supabase com as chaves que você já salvou na Vercel
+// Inicializa o Stripe e o Supabase usando as chaves secretas da Vercel
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Apenas POST permitido');
+// Essa configuração avisa a Vercel para não mexer no formato da mensagem do Stripe
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
 
+// Função para ler a mensagem crua do Stripe
+async function buffer(readable) {
+    const chunks = [];
+    for await (const chunk of readable) {
+        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).send('Método não permitido. O Stripe só manda POST.');
+    }
+
+    const buf = await buffer(req);
     const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
     let event;
 
     try {
-        const buf = await new Promise((resolve, reject) => {
-            let data = '';
-            req.on('data', chunk => data += chunk);
-            req.on('end', () => resolve(Buffer.from(data)));
-            req.on('error', reject);
-        });
-
-        // Valida se a mensagem é realmente do Stripe
-        event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        // Valida se a mensagem veio mesmo do Stripe
+        event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (err) {
-        return res.status(400).send(`Erro de Assinatura: ${err.message}`);
+        console.error('Erro na assinatura do Stripe:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // --- LOGICA DE ATIVAÇÃO (QUANDO O CLIENTE PAGA) ---
-    if (event.type === 'checkout.session.completed' || event.type === 'invoice.paid') {
-        const session = event.data.object;
-        
-        // Identifica o usuário pelo ID que enviamos no cadastro
-        const userId = session.client_reference_id || (session.metadata && session.metadata.user_id);
-
-        if (userId) {
-            console.log(`Ativando usuário: ${userId}`);
-
-            // ATUALIZAÇÃO NO SUPABASE: Tabela 'profiles', coluna 'subscription_status'
-            await supabase
-                .from('profiles') 
-                .update({ 
-                    subscription_status: 'active', // Muda de inactive para active
-                    stripe_customer_id: session.customer,
-                    stripe_subscription_id: session.subscription,
-                    updated_at: new Date()
-                })
-                .eq('id', userId);
-        }
-    }
-
-    // --- LOGICA DE BLOQUEIO (CANCELAMENTO OU FALHA) ---
-    if (event.type === 'customer.subscription.deleted' || event.type === 'invoice.payment_failed') {
-        const obj = event.data.object;
-        const userId = (obj.metadata && obj.metadata.user_id);
-
-        if (userId) {
+    // Se a assinatura for válida, vamos ver o que aconteceu
+    try {
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
             
-            await supabase
-                .from('profiles')
-                .update({ 
-                    subscription_status: 'inactive',
-                    updated_at: new Date() 
-                })
-                .eq('id', userId);
-        }
-    }
+            // Pega o ID do usuário que enviamos lá no cadastro.html
+            const userId = session.client_reference_id; 
 
-    res.status(200).json({ received: true });
+            if (userId) {
+                // Manda o Supabase atualizar o status para ativo
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ subscription_status: 'active' })
+                    .eq('id', userId);
+
+                if (error) {
+                    console.error('Erro do Supabase:', error);
+                    throw error;
+                }
+                
+                console.log(`Sucesso! Usuário ${userId} foi ativado.`);
+            } else {
+                console.log('Pagamento aprovado, mas não achamos o client_reference_id.');
+            }
+        }
+
+        // Responde ao Stripe que deu tudo certo
+        res.status(200).json({ received: true });
+    } catch (error) {
+        console.error('Erro geral no Webhook:', error);
+        res.status(500).json({ error: 'Erro interno' });
+    }
 }
