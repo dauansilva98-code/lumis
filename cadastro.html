@@ -74,13 +74,11 @@
                 <h2 class="w-full text-center text-[11px] sm:text-[12px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] mb-6">
                     Organizador Financeiro
                 </h2>
-                <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">Crie sua conta Premium</h3>
+                <h3 id="titulo-pagina" class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">Crie sua conta Premium</h3>
                 <p id="plano-selecionado-texto" class="text-[13px] sm:text-sm text-slate-500 font-medium">Excelente escolha! <b>Plano Anual</b> com desconto.</p>
             </div>
 
-            <!-- Seleção de Plano -->
             <div class="flex gap-3 sm:gap-4 mb-8 w-full">
-                <!-- Botão Mensal (Inativo por Padrão) -->
                 <button type="button" id="btn-plano-mensal" onclick="selecionarPlano('mensal')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:border-slate-300">
                     <div class="flex flex-col items-center justify-center h-full pointer-events-none">
                         <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Mensal</span>
@@ -89,7 +87,6 @@
                     </div>
                 </button>
                 
-                <!-- Botão Anual (Ativo por Padrão) -->
                 <button type="button" id="btn-plano-anual" onclick="selecionarPlano('anual')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100">
                     <div class="flex flex-col items-center justify-center h-full pointer-events-none">
                         <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Anual</span>
@@ -100,7 +97,7 @@
                 </button>
             </div>
 
-            <div class="space-y-5 sm:space-y-6 w-full text-left">
+            <div id="formulario-cadastro" class="space-y-5 sm:space-y-6 w-full text-left">
                 
                 <div class="input-group w-full">
                     <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">O seu melhor E-mail</label>
@@ -154,15 +151,16 @@
                     </div>
                     <p id="senhaErro" class="text-red-500 text-xs font-bold mt-2 hidden text-left pl-1 transition-all">As senhas não coincidem</p>
                 </div>
-
-                <button onclick="criarContaEPagar()" id="btnCadastro" class="w-full py-3.5 sm:py-4 mt-4 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[14px] sm:text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
-                    <span>Continuar para Pagamento</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                </button>
             </div>
+
+            <button onclick="processarAcao()" id="btnCadastro" class="w-full py-3.5 sm:py-4 mt-6 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[14px] sm:text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
+                <span>Continuar para Pagamento</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+
         </div>
         
-        <div class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
+        <div id="area-login" class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
             <span>Já tem uma conta?</span>
             <br>
             <a href="index.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
@@ -181,7 +179,7 @@
     <script>
       lucide.createIcons();
 
-      // Configurações do Supabase (O formato precisa parecer um link válido para o JS não quebrar)
+      // Configurações do Supabase
       const supabaseUrl = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss';
       
@@ -196,10 +194,11 @@
       const LINK_MENSAL = "https://buy.stripe.com/8x29ATe0PbI8bT00h800000";
       const LINK_ANUAL = "https://buy.stripe.com/dRmcN52i79A08GOfc200001";
 
-      // Variável global para armazenar o plano selecionado (anual por padrão agora)
       let planoAtivo = 'anual';
+      
+      // Armazena o ID do usuário se ele já estiver logado
+      let usuarioLogadoId = null;
 
-      // Função que troca as cores do botão
       function selecionarPlano(plano) {
           planoAtivo = plano;
           
@@ -207,7 +206,6 @@
           const btnAnual = document.getElementById('btn-plano-anual');
           const textoPlano = document.getElementById('plano-selecionado-texto');
 
-          // Textos exatos com as classes visuais para Tailwind
           const cssAtivo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100";
           const cssInativo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:opacity-100 hover:border-slate-300 scale-100";
 
@@ -222,35 +220,15 @@
           }
       }
 
-      // Ao carregar a página, mantém "anual" por padrão, mas respeita a URL se enviar explicitly para "mensal"
-      document.addEventListener("DOMContentLoaded", () => {
-          const urlParams = newSearchParams(window.location.search);
-          const planoInicial = urlParams.get('plano') === 'mensal' ? 'mensal' : 'anual';
-          selecionarPlano(planoInicial);
-      });
-
-      // Sistema Customizado de Notificação (Toast)
       function showToast(message, type = 'error') {
           const container = document.getElementById('toast-container');
           const toast = document.createElement('div');
           
-          const bgColors = {
-              error: 'bg-red-500',
-              success: 'bg-emerald-500',
-              warning: 'bg-amber-500'
-          };
-          
-          const icons = {
-              error: 'alert-circle',
-              success: 'check-circle',
-              warning: 'alert-triangle'
-          };
+          const bgColors = { error: 'bg-red-500', success: 'bg-emerald-500', warning: 'bg-amber-500' };
+          const icons = { error: 'alert-circle', success: 'check-circle', warning: 'alert-triangle' };
 
           toast.className = `${bgColors[type]} text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 font-medium text-sm toast-enter w-max max-w-sm ml-auto`;
-          toast.innerHTML = `
-            <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i> 
-            <span>${message}</span>
-          `;
+          toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i> <span>${message}</span>`;
           
           container.appendChild(toast);
           lucide.createIcons();
@@ -263,16 +241,13 @@
           setTimeout(() => {
               toast.classList.remove('toast-enter-active');
               toast.classList.add('toast-leave-active');
-              setTimeout(() => {
-                  toast.remove();
-              }, 300);
+              setTimeout(() => toast.remove(), 300);
           }, 4000);
       }
 
       function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
-        
         if (input.type === 'password') {
             input.type = 'text';
             icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>';
@@ -286,42 +261,46 @@
           const senha = document.getElementById('senha').value;
           const senhaConf = document.getElementById('senha_confirmacao').value;
           const erroMsg = document.getElementById('senhaErro');
-          
-          if (senhaConf.length > 0 && senha !== senhaConf) {
-              erroMsg.classList.remove('hidden');
-          } else {
-              erroMsg.classList.add('hidden');
-          }
+          if (senhaConf.length > 0 && senha !== senhaConf) erroMsg.classList.remove('hidden');
+          else erroMsg.classList.add('hidden');
       }
 
-      async function criarContaEPagar() {
-        const email = document.getElementById('email').value.trim();
-        const senha = document.getElementById('senha').value;
-        const senhaConfirmacao = document.getElementById('senha_confirmacao').value;
+      // Função Principal que decide se cria conta ou só redireciona
+      async function processarAcao() {
         const btn = document.getElementById('btnCadastro');
-
-        // PROTEÇÃO: Avisa se você esqueceu de colocar as chaves no VS Code
-        if (supabaseUrl.includes('sua-url')) {
-            showToast("Atenção! Você precisa colocar as chaves reais do Supabase no código para prosseguir.", "warning");
-            return;
-        }
-
-        if (!email || !senha || !senhaConfirmacao) {
-            showToast("Por favor, preencha todos os campos para continuar.", "warning");
-            return;
-        }
-
-        if (senha !== senhaConfirmacao) {
-            showToast("As senhas não coincidem. Verifique e tente novamente.", "error");
-            return;
-        }
-
         const originalContent = btn.innerHTML;
-        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Criando conta...</span>`;
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Processando...</span>`;
         btn.disabled = true;
         btn.classList.add('opacity-90', 'cursor-not-allowed');
 
         try {
+            // CENA 1: Usuário já está logado (veio da tela de login para reativar a assinatura)
+            if (usuarioLogadoId) {
+                showToast("Redirecionando para o pagamento...", "success");
+                const linkCorretoStripe = planoAtivo === 'anual' ? LINK_ANUAL : LINK_MENSAL;
+                setTimeout(() => {
+                    window.location.href = `${linkCorretoStripe}?client_reference_id=${usuarioLogadoId}`;
+                }, 1500);
+                return; // Para a execução aqui
+            }
+
+            // CENA 2: Usuário novo criando conta
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            const senhaConfirmacao = document.getElementById('senha_confirmacao').value;
+
+            if (!email || !senha || !senhaConfirmacao) {
+                showToast("Por favor, preencha todos os campos para continuar.", "warning");
+                restaurarBotao();
+                return;
+            }
+
+            if (senha !== senhaConfirmacao) {
+                showToast("As senhas não coincidem. Verifique e tente novamente.", "error");
+                restaurarBotao();
+                return;
+            }
+
             const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: senha
@@ -329,8 +308,8 @@
 
             if (error) {
                 if (error.message.includes("already registered") || error.message.includes("already exists")) {
-                    showToast("Esse e-mail já está cadastrado. Faça login!", "warning");
-                    setTimeout(() => { window.location.href = "index.html"; }, 2500);
+                    showToast("Esse e-mail já está cadastrado. Faça login para reativar!", "warning");
+                    setTimeout(() => { window.location.href = "login.html"; }, 2500);
                 } else {
                     showToast("Erro ao criar conta: " + error.message, "error");
                 }
@@ -341,16 +320,12 @@
             showToast("Sucesso! Redirecionando para o pagamento...", "success");
             
             if (data?.user?.id) {
-                const usuarioId = data.user.id;
-                
-                // Define para qual link o usuário vai baseado na variável planoAtivo que muda ao clicar nos botões
                 const linkCorretoStripe = planoAtivo === 'anual' ? LINK_ANUAL : LINK_MENSAL;
-                
                 setTimeout(() => {
-                    window.location.href = `${linkCorretoStripe}?client_reference_id=${usuarioId}`;
+                    window.location.href = `${linkCorretoStripe}?client_reference_id=${data.user.id}`;
                 }, 1500);
             } else {
-                showToast("Verifique o seu e-mail para confirmar a conta!", "warning");
+                showToast("Erro inesperado ao capturar o ID do usuário.", "error");
                 restaurarBotao();
             }
 
@@ -368,8 +343,33 @@
         }
       }
 
+      // Ao carregar a página
+      document.addEventListener("DOMContentLoaded", async () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const planoInicial = urlParams.get('plano') === 'mensal' ? 'mensal' : 'anual';
+          selecionarPlano(planoInicial);
+
+          // Verifica se o usuário já está logado
+          const { data: { user } } = await supabaseClient.auth.getUser();
+          
+          if (user) {
+              // Se tiver logado, salva o ID para usar no pagamento e esconde o formulário
+              usuarioLogadoId = user.id;
+              
+              document.getElementById('titulo-pagina').innerText = "Reative sua assinatura";
+              document.getElementById('formulario-cadastro').style.display = 'none';
+              document.getElementById('area-login').style.display = 'none'; // Esconde o texto "Já tem uma conta?"
+              
+              // Mostra um aviso bonitinho
+              const avisoHtml = document.createElement('div');
+              avisoHtml.className = 'text-center p-4 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm mb-6';
+              avisoHtml.innerHTML = `Você já está logado como <b>${user.email}</b>.<br>Escolha o seu plano abaixo para continuar.`;
+              document.getElementById('formulario-cadastro').parentNode.insertBefore(avisoHtml, document.getElementById('btnCadastro'));
+          }
+      });
+
       document.addEventListener('keypress', (e) => { 
-          if (e.key === 'Enter') criarContaEPagar(); 
+          if (e.key === 'Enter') processarAcao(); 
       });
     </script>
 </body>
