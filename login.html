@@ -254,15 +254,12 @@
                 localStorage.setItem("logado", "sim");
                 
                 setTimeout(() => {
-                    window.location.href = "index.html"; 
+                    window.location.href = "painel.html"; // <-- MUDANÇA FEITA AQUI
                 }, 1500);
             } else {
-                // Modificado aqui: Se ele for inativo, mandamos de volta para o cadastro para escolher o plano.
                 showToast("Assinatura inativa ou pendente. Escolha um plano...", "warning");
                 
                 setTimeout(() => {
-                    // Manda para a página de cadastro. Como ele já tem conta criada, 
-                    // lá dentro teremos que ajustar para ele pular a criação se já estiver logado.
                     window.location.href = "cadastro.html";
                 }, 2000);
             }
