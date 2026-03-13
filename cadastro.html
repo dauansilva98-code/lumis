@@ -264,6 +264,13 @@
           if (senhaConf.length > 0 && senha !== senhaConf) erroMsg.classList.remove('hidden');
           else erroMsg.classList.add('hidden');
       }
+      
+      // Nova função de Sair e Voltar para o Login
+      async function sairEVoltarParaLogin() {
+          await supabaseClient.auth.signOut();
+          localStorage.removeItem("logado");
+          window.location.href = "login.html";
+      }
 
       // Função Principal que decide se cria conta ou só redireciona
       async function processarAcao() {
@@ -358,12 +365,19 @@
               
               document.getElementById('titulo-pagina').innerText = "Reative sua assinatura";
               document.getElementById('formulario-cadastro').style.display = 'none';
-              document.getElementById('area-login').style.display = 'none'; // Esconde o texto "Já tem uma conta?"
+              document.getElementById('area-login').style.display = 'none'; 
               
-              // Mostra um aviso bonitinho
+              // Mostra o aviso e a rota de fuga para trocar de conta
               const avisoHtml = document.createElement('div');
-              avisoHtml.className = 'text-center p-4 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm mb-6';
-              avisoHtml.innerHTML = `Você já está logado como <b>${user.email}</b>.<br>Escolha o seu plano abaixo para continuar.`;
+              avisoHtml.className = 'text-center flex flex-col gap-4 mb-6';
+              avisoHtml.innerHTML = `
+                  <div class="p-4 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm border border-emerald-100">
+                      Você está logado como <b>${user.email}</b>.<br>Escolha o seu plano abaixo para reativar o acesso.
+                  </div>
+                  <button onclick="sairEVoltarParaLogin()" class="text-xs font-bold text-slate-400 hover:text-[#0040A1] transition-colors underline decoration-dashed underline-offset-4">
+                      Não é você? Sair e entrar com outra conta
+                  </button>
+              `;
               document.getElementById('formulario-cadastro').parentNode.insertBefore(avisoHtml, document.getElementById('btnCadastro'));
           }
       });
