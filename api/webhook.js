@@ -1,5 +1,5 @@
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+const Stripe = require('stripe');
+const { createClient } = require('@supabase/supabase-js');
 
 // Inicializa o Stripe e o Supabase usando as chaves secretas da Vercel
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 
 // Essa configuração avisa a Vercel para não mexer no formato da mensagem do Stripe
-export const config = {
+const config = {
     api: {
         bodyParser: false,
     },
@@ -24,7 +24,7 @@ async function buffer(readable) {
     return Buffer.concat(chunks);
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).send('Método não permitido. O Stripe só manda POST.');
     }
@@ -76,3 +76,6 @@ export default async function handler(req, res) {
         res.status(500).json({ error: 'Erro interno' });
     }
 }
+
+module.exports = handler;
+module.exports.config = config;
