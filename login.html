@@ -1,395 +1,285 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumis - O seu Organizador Financeiro Pessoal</title>
+    <title>Login | Lumis - Organizador Financeiro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         
-        html, body { 
-            max-width: 100vw;
-            overflow-x: hidden; /* Impede rolagem horizontal */
+        body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #0D152B; 
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto; 
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+        }
+        
+        .clean-card {
+            background: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 20px 0 rgba(255, 255, 255, 0.5) inset;
+            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        .glow-bg {
+        .blob {
             position: absolute;
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(13, 21, 43, 0) 70%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 64, 161, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
             border-radius: 50%;
             z-index: -1;
-            pointer-events: none;
+            animation: move 25s infinite alternate ease-in-out;
         }
 
-        .dark-card {
-            background: #111827; 
-            border: 1px solid #1E293B;
-            border-radius: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .dark-card:hover {
-            border-color: #3B82F6;
-            box-shadow: 0 10px 40px -10px rgba(59, 130, 246, 0.1);
+        @keyframes move {
+            from { transform: translate(-10%, -10%) scale(1); }
+            to { transform: translate(15%, 15%) scale(1.1); }
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .toast-enter {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        .toast-enter-active {
+            transform: translateY(0);
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast-leave {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-leave-active {
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="relative w-full antialiased selection:bg-blue-500/30">
+<body class="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 relative">
+    
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
-    <div class="glow-bg top-[-10%] left-[-10%]"></div>
-    <div class="glow-bg top-[40%] right-[-20%]"></div>
-    <div class="glow-bg bottom-[-10%] left-[20%]"></div>
+    <div class="blob top-0 left-0 fixed"></div>
+    <div class="blob bottom-0 right-0 fixed" style="animation-direction: alternate-reverse; animation-duration: 30s;"></div>
 
-    <header class="fixed top-0 left-0 w-full px-4 sm:px-6 py-4 z-50 bg-[#0D152B]/90 backdrop-blur-md border-b border-white/5 shadow-lg">
-        <div class="max-w-5xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <img src="logo.png" alt="Lumis Logo" class="h-8 object-contain">
+    <main class="w-full max-w-[420px] m-auto z-10 flex flex-col items-center justify-center py-6 sm:py-8">
+
+        <div class="w-full text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
+            <img src="logo.png" alt="Lumis Logo" class="w-48 sm:w-56 h-auto object-contain mx-auto">
+            <h2 class="w-full text-center text-[12px] sm:text-[13px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] relative z-10 mt-2 sm:mt-3">
+                Organizador Financeiro
+            </h2>
+        </div>
+
+        <div class="clean-card w-full p-6 sm:p-10">
+            
+            <div class="text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
+                <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">Acesse sua conta</h3>
+                <p class="text-[13px] sm:text-sm text-slate-500 font-medium">Bem-vindo de volta ao seu painel financeiro.</p>
             </div>
-            
-            <nav class="hidden md:flex items-center gap-8 text-[13px] font-medium text-slate-400">
-                <a href="#funcionalidades" class="hover:text-white transition-colors">Funcionalidades</a>
-                <a href="#planos" class="hover:text-white transition-colors">Preços</a>
-                <a href="#faq" class="hover:text-white transition-colors">Perguntas frequentes</a>
-            </nav>
-            
-            <div class="flex items-center gap-3 flex-shrink-0">
-                <a href="login.html" class="px-5 py-2 rounded-full border border-[#1e3a8a] bg-transparent text-[#93c5fd] hover:text-white text-[12px] sm:text-[13px] font-medium hover:bg-[#1e3a8a]/30 transition-colors">Entrar</a>
-                <a href="cadastro.html" class="px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-[12px] sm:text-[13px] font-semibold transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)] whitespace-nowrap">Assinar Agora</a>
+
+            <div class="space-y-5 sm:space-y-6 w-full text-left">
+                
+                <div class="input-group w-full">
+                    <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">E-mail de acesso</label>
+                    <div class="relative group w-full">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </span>
+                        <input type="email" id="email" 
+                            class="block w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
+                            placeholder="exemplo@email.com">
+                    </div>
+                </div>
+
+                <div class="input-group w-full">
+                    <label for="senha" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Senha</label>
+                    <div class="relative group w-full">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </span>
+                        
+                        <input type="password" id="senha" 
+                            class="block w-full pl-12 pr-12 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
+                            placeholder="••••••••">
+                            
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-[#0040A1] cursor-pointer focus:outline-none transition-colors">
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs px-1 pt-1 w-full">
+                    <label class="flex items-center text-slate-500 cursor-pointer group hover:text-slate-700 transition-colors">
+                        <input type="checkbox" class="mr-2.5 h-4 w-4 rounded border-slate-300 text-[#0040A1] focus:ring-[#0040A1] transition-all cursor-pointer">
+                        <span>Manter sessão</span>
+                    </label>
+                    <a href="recuperar-senha.html" class="text-[#0040A1] font-bold hover:text-[#002b70] transition-colors">Esqueceu a senha?</a>
+                </div>
+
+                <button onclick="entrar()" id="btnLogin" class="w-full py-3.5 sm:py-4 mt-2 bg-gradient-to-b from-[#060A1F] to-[#0040A1] text-white rounded-2xl font-bold text-[14px] sm:text-[15px] shadow-lg shadow-[#0040A1]/30 hover:to-[#003080] hover:from-[#040714] hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center gap-3 group">
+                    <span>Acessar Painel</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                </button>
             </div>
         </div>
-    </header>
-
-    <main class="w-full flex flex-col items-center pt-24">
         
-        <section class="w-full max-w-4xl mx-auto px-4 min-h-[calc(100vh-6rem)] flex flex-col justify-center items-center text-center pb-16">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111827] border border-slate-800 text-slate-300 text-[10px] sm:text-xs font-medium mb-6">
-                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-[#3B82F6]"></i>
-                +200 usuários organizando suas finanças
-            </div>
-            
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] mb-6">
-                Sua vida financeira<br>
-                <span class="text-[#3B82F6]">mais organizada</span>
-            </h1>
-            
-            <p class="text-sm md:text-base text-slate-400 font-normal mb-8 max-w-xl leading-relaxed">
-                Controle receitas, despesas e investimentos em um único painel. Tome decisões financeiras inteligentes com dados claros e organizados.
+        <div class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
+            <span>Ainda não é assinante?</span>
+            <br>
+            <a href="cadastro.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
+                Criar conta e Assinar ➔
+            </a>
+        </div>
+
+        <div class="mt-8 sm:mt-10 w-full text-center">
+            <p class="text-[#64748b] text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-extrabold">
+                © 2026 Lumis
             </p>
-            
-            <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                <a href="cadastro.html" class="w-full sm:w-auto px-8 py-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                    Assinar Agora <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </a>
-                <a href="#funcionalidades" class="w-full sm:w-auto px-8 py-3.5 bg-[#111827] hover:bg-[#1F2937] text-white border border-slate-800 rounded-xl text-[14px] font-semibold transition-colors flex items-center justify-center">
-                    Ver Funcionalidades
-                </a>
-            </div>
-        </section>
-
-        <section class="w-full max-w-5xl mx-auto px-4 py-10 flex flex-col items-center">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-3 text-center">Conheça a plataforma <span class="text-[#3B82F6]">por dentro</span></h2>
-            <p class="text-slate-400 text-xs md:text-sm mb-8 text-center">Veja como a Lumis organiza suas finanças com painéis claros e intuitivos.</p>
-            
-            <div class="flex items-center gap-2 overflow-x-auto w-full max-w-3xl no-scrollbar pb-2 mb-4">
-                <span class="px-4 py-1.5 bg-[#2563EB] text-white text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap">Painel</span>
-                <span class="px-4 py-1.5 bg-[#111827] text-slate-400 text-[10px] sm:text-xs font-medium rounded-full border border-slate-800 whitespace-nowrap">Gráficos</span>
-                <span class="px-4 py-1.5 bg-[#111827] text-slate-400 text-[10px] sm:text-xs font-medium rounded-full border border-slate-800 whitespace-nowrap">Renda</span>
-                <span class="px-4 py-1.5 bg-[#111827] text-slate-400 text-[10px] sm:text-xs font-medium rounded-full border border-slate-800 whitespace-nowrap">Gastos</span>
-                <span class="px-4 py-1.5 bg-[#111827] text-slate-400 text-[10px] sm:text-xs font-medium rounded-full border border-slate-800 whitespace-nowrap">Categorias</span>
-                <span class="px-4 py-1.5 bg-[#111827] text-slate-400 text-[10px] sm:text-xs font-medium rounded-full border border-slate-800 whitespace-nowrap">Investimentos</span>
-            </div>
-
-            <div class="w-full rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
-                <div class="w-full aspect-video bg-[#0B1121] flex items-center justify-center text-slate-600">
-                    <img src="dashboard-preview.png" alt="Preview do Painel" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div style="display:none;" class="flex-col items-center gap-2 p-6 text-center">
-                        <i data-lucide="image" class="w-8 h-8 mb-2"></i>
-                        <span class="text-[10px] sm:text-[13px]">Tire um print do seu painel.html e salve como dashboard-preview.png</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="funcionalidades" class="w-full max-w-5xl mx-auto px-4 py-16 md:py-20">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-3 text-center">Tudo o que você precisa para <span class="text-[#3B82F6]">organizar suas finanças</span></h2>
-            <p class="text-slate-400 text-xs md:text-sm mb-12 text-center max-w-xl mx-auto">Planejamento, investimentos e reserva de emergência em um único painel simples e poderoso.</p>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="wallet" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Controle de Receitas e Despesas</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Registre todas as suas rendas e contas do custo de vida. Veja exatamente quanto sobra no final do mês.</p>
-                </div>
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="target" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Metas por Categoria</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Defina metas percentuais para cada tipo de gasto e acompanhe o uso do orçamento em tempo real.</p>
-                </div>
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="pie-chart" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Gráficos de Distribuição</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Visualize para onde vai seu dinheiro com gráficos claros de distribuição planejada e alocação de ativos.</p>
-                </div>
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="trending-up" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Gestão de Investimentos</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Cadastre seus ativos, acompanhe o patrimônio líquido e veja a alocação entre renda fixa e variável.</p>
-                </div>
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="shield" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Reserva de Emergência</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Acompanhe o progresso da sua reserva com metas de 6 e 12 meses de segurança financeira.</p>
-                </div>
-                <div class="dark-card p-6">
-                    <div class="w-9 h-9 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-4">
-                        <i data-lucide="bell" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-white mb-2">Alertas e Histórico</h3>
-                    <p class="text-[12px] md:text-[13px] text-slate-400 leading-relaxed">Receba alertas de categorias e feche o mês para salvar no histórico com renda, gastos e saldo.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="w-full max-w-5xl mx-auto px-4 py-16">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-10 md:mb-12 text-center">O que nossos <span class="text-[#3B82F6]">usuários dizem</span></h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                <div class="dark-card p-6 flex flex-col justify-between">
-                    <div>
-                        <div class="flex text-[#3B82F6] mb-4 gap-1">
-                            <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                        </div>
-                        <p class="text-[12px] md:text-[13px] text-slate-300 italic mb-6">"Finalmente consegui ter controle das minhas finanças pessoais e do meu negócio. A plataforma é extremamente fácil de usar!"</p>
-                    </div>
-                    <div>
-                        <p class="font-bold text-white text-[13px]">Ana Carolina</p>
-                        <p class="text-[11px] text-slate-500">Empreendedora</p>
-                    </div>
-                </div>
-                <div class="dark-card p-6 flex flex-col justify-between">
-                    <div>
-                        <div class="flex text-[#3B82F6] mb-4 gap-1">
-                            <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                        </div>
-                        <p class="text-[12px] md:text-[13px] text-slate-300 italic mb-6">"Uso há 6 meses e já economizei mais de R$3.000 só para ter visibilidade dos meus gastos. Recomendo demais!"</p>
-                    </div>
-                    <div>
-                        <p class="font-bold text-white text-[13px]">Rafael Mendes</p>
-                        <p class="text-[11px] text-slate-500">Desenvolvedor</p>
-                    </div>
-                </div>
-                <div class="dark-card p-6 flex flex-col justify-between">
-                    <div>
-                        <div class="flex text-[#3B82F6] mb-4 gap-1">
-                            <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                        </div>
-                        <p class="text-[12px] md:text-[13px] text-slate-300 italic mb-6">"Os gráficos são lindos e claros. Pela primeira vez, entendo exatamente para onde vai meu salário todo mês."</p>
-                    </div>
-                    <div>
-                        <p class="font-bold text-white text-[13px]">Juliana Santos</p>
-                        <p class="text-[11px] text-slate-500">Designer</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="planos" class="w-full max-w-4xl mx-auto px-4 py-16 md:py-20">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-3 text-center">Escolha o plano <span class="text-[#3B82F6]">ideal para você</span></h2>
-            <p class="text-slate-400 text-xs md:text-sm mb-8 text-center">Todas as ferramentas que você precisa para organizar sua vida financeira.</p>
-
-            <div class="w-full max-w-2xl mx-auto bg-[#111827] border border-slate-800 rounded-xl py-2 px-4 flex justify-center items-center gap-2 mb-8 text-[11px] sm:text-[13px] text-center">
-                <i data-lucide="clock" class="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0"></i>
-                <span class="text-[#3B82F6] font-semibold whitespace-nowrap">Oferta limitada</span> 
-                <span class="text-slate-400">— para os primeiros <strong class="text-white">500 usuários</strong></span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 items-stretch">
-                <div class="dark-card p-6 sm:p-8 flex flex-col text-center">
-                    <p class="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-3">FLEXIBILIDADE</p>
-                    <h3 class="text-lg font-bold text-white mb-4">Plano Mensal</h3>
-                    
-                    <div class="mb-4">
-                        <span class="text-slate-500 line-through text-[11px] sm:text-xs block mb-1">R$ 19,90/mês</span>
-                        <div class="flex items-baseline justify-center gap-1">
-                            <span class="text-3xl font-extrabold text-white">R$ 9,90</span>
-                            <span class="text-slate-500 text-xs">/mês</span>
-                        </div>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mb-1">Cancele quando quiser</p>
-                    <p class="text-[11px] text-slate-500 flex items-center justify-center gap-1 mb-6"><i data-lucide="shield" class="w-3 h-3"></i> Garantia de 7 dias</p>
-
-                    <ul class="text-left space-y-3 text-[12px] sm:text-[13px] text-slate-300 mb-8 flex-1">
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Controle completo de receitas e despesas</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Definição de metas por categoria (%)</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Gráficos de distribuição planejados</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Alertas de categoria</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Gestão de investimentos e ações</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Reserva de emergência com progresso</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Histórico mensal completo</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Dicas de educação financeira</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Acesso em qualquer dispositivo</span></li>
-                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>prioritário</span></li>
-                    </ul>
-
-                    <a href="cadastro.html?plano=mensal" class="w-full py-3.5 bg-[#111827] border border-slate-700 hover:border-[#3B82F6] text-white rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">Assinar Mensal <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
-                </div>
-
-                <div class="relative dark-card border-[#2563EB] flex flex-col text-center overflow-hidden">
-                    <div class="w-full bg-[#2563EB] text-white py-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                        <i data-lucide="crown" class="w-3 h-3"></i> Mais Popular — Economize 50%
-                    </div>
-                    
-                    <div class="p-6 sm:p-8 flex flex-col flex-1">
-                        <p class="text-[10px] font-bold tracking-widest text-[#3B82F6] uppercase mb-3">MELHOR CUSTO-BENEFÍCIO</p>
-                        <h3 class="text-lg font-bold text-white mb-4">Plano Anual</h3>
-                        
-                        <div class="mb-4">
-                            <span class="text-slate-500 line-through text-[11px] sm:text-xs block mb-1">R$ 190,90/ano</span>
-                            <div class="flex items-baseline justify-center gap-1">
-                                <span class="text-3xl font-extrabold text-[#3B82F6]">R$ 99,90</span>
-                                <span class="text-slate-500 text-xs">/ano</span>
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-[#3B82F6] font-bold mb-1 flex items-center justify-center gap-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i> Apenas R$ 8,33/mês</p>
-                        <p class="text-[10px] text-slate-500 flex items-center justify-center gap-1 mb-6"><i data-lucide="shield" class="w-3 h-3"></i> Garantia de 7 dias — não gostei, devolvemos seu dinheiro</p>
-
-                        <ul class="text-left space-y-3 text-[12px] sm:text-[13px] text-slate-300 mb-6 flex-1">
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Controle completo de receitas e despesas</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Definição de metas por categoria (%)</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Gráficos de distribuição planejados</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Alertas de categoria</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Gestão de investimentos e ações</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Reserva de emergência com progresso</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Histórico mensal completo</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Dicas de educação financeira</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>Acesso em qualquer dispositivo</span></li>
-                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5"></i> <span>prioritário</span></li>
-                        </ul>
-
-                        <div class="w-full bg-[#111827] rounded-xl p-3 mb-5 border border-slate-800 relative z-10">
-                            <div class="flex justify-between text-[10px] sm:text-[11px] mb-1.5">
-                                <span class="font-bold text-white flex items-center gap-1"><i data-lucide="users" class="w-3 h-3 text-[#3B82F6]"></i> +150 usuários</span>
-                                <span class="text-slate-400">— restam poucas vagas!</span>
-                            </div>
-                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-[#3B82F6] h-1.5 rounded-full" style="width: 75%"></div>
-                            </div>
-                        </div>
-
-                        <a href="cadastro.html?plano=anual" class="w-full py-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-semibold transition-colors shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 relative z-10">Assinar Anual — R$ 99,90 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
-                        <a href="login.html" class="text-[11px] text-slate-500 mt-3 hover:text-white transition-colors relative z-10">Já tem conta? <span class="text-[#3B82F6]">Entrar</span></a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="faq" class="w-full max-w-2xl mx-auto px-4 py-16 md:py-20 relative z-10">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-8 md:mb-10 text-center">Perguntas <span class="text-[#3B82F6]">frequentes</span></h2>
-            
-            <div class="space-y-3">
-                <div class="dark-card overflow-hidden cursor-pointer faq-item" onclick="toggleFaq(this)">
-                    <div class="p-4 flex items-center justify-between">
-                        <h4 class="font-bold text-[13px] text-white pr-4">Posso testar antes de assinar?</h4>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 faq-icon transition-transform flex-shrink-0"></i>
-                    </div>
-                    <div class="faq-content hidden px-4 pb-4 text-[13px] text-slate-400 leading-relaxed border-t border-slate-800/50 pt-3">
-                        Temos uma garantia incondicional de 7 dias. Você pode assinar, testar todas as funcionalidades premium e, se não gostar, devolvemos 100% do seu dinheiro sem perguntas.
-                    </div>
-                </div>
-                <div class="dark-card overflow-hidden cursor-pointer faq-item" onclick="toggleFaq(this)">
-                    <div class="p-4 flex items-center justify-between">
-                        <h4 class="font-bold text-[13px] text-white pr-4">Meus dados financeiros estão seguros?</h4>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 faq-icon transition-transform flex-shrink-0"></i>
-                    </div>
-                    <div class="faq-content hidden px-4 pb-4 text-[13px] text-slate-400 leading-relaxed border-t border-slate-800/50 pt-3">
-                        Sim! Utilizamos criptografia de ponta e infraestrutura de servidores de nível internacional. Ninguém além de você tem acesso aos seus dados financeiros com o seu login e senha.
-                    </div>
-                </div>
-                <div class="dark-card overflow-hidden cursor-pointer faq-item" onclick="toggleFaq(this)">
-                    <div class="p-4 flex items-center justify-between">
-                        <h4 class="font-bold text-[13px] text-white pr-4">Posso cancelar a qualquer momento?</h4>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 faq-icon transition-transform flex-shrink-0"></i>
-                    </div>
-                    <div class="faq-content hidden px-4 pb-4 text-[13px] text-slate-400 leading-relaxed border-t border-slate-800/50 pt-3">
-                        Completamente. Através do nosso portal do cliente integrado com a Stripe, você cancela a sua assinatura com 2 cliques, sem taxas escondidas e sem precisar falar com atendentes.
-                    </div>
-                </div>
-                <div class="dark-card overflow-hidden cursor-pointer faq-item" onclick="toggleFaq(this)">
-                    <div class="p-4 flex items-center justify-between">
-                        <h4 class="font-bold text-[13px] text-white pr-4">Funciona no celular?</h4>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 faq-icon transition-transform flex-shrink-0"></i>
-                    </div>
-                    <div class="faq-content hidden px-4 pb-4 text-[13px] text-slate-400 leading-relaxed border-t border-slate-800/50 pt-3">
-                        Sim, a plataforma Lumis é 100% responsiva. Você consegue acessar o seu painel, lançar despesas e ver gráficos perfeitamente pelo navegador do seu smartphone (Android ou iOS).
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="w-full max-w-4xl mx-auto px-4 py-16 relative z-10">
-            <div class="w-full bg-gradient-to-br from-[#0B142B] to-[#0A1124] border border-[#1E293B] rounded-2xl p-8 md:p-12 text-center shadow-[0_0_50px_rgba(37,99,235,0.1)]">
-                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-3">Pronto para organizar suas <span class="text-[#3B82F6]">finanças?</span></h2>
-                <p class="text-slate-400 text-[13px] md:text-sm mb-8 max-w-lg mx-auto">Junte-se a mais de 200 pessoas que já transformaram sua relação com o dinheiro. Aproveite a promoção de lançamento.</p>
-                <a href="cadastro.html" class="inline-flex items-center gap-2 px-6 py-3.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-semibold transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] whitespace-nowrap">
-                    Assinar Agora — R$ 9,90/mês <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </a>
-            </div>
-        </section>
-
+        </div>
     </main>
 
-    <footer class="w-full border-t border-[#1E293B] bg-[#0D152B] relative z-10 mt-auto">
-        <div class="max-w-5xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-5 text-[11px] text-slate-500 font-medium">
-            <div class="flex items-center gap-2">
-                <img src="logo.png" alt="Lumis" class="h-5 opacity-50 grayscale">
-                <span>© 2026 Lumis. Todos os direitos reservados.</span>
-            </div>
-            <div class="flex gap-5">
-                <a href="#" class="hover:text-white transition-colors">Privacidade</a>
-                <a href="#" class="hover:text-white transition-colors">Termos</a>
-                <a href="login.html" class="text-[#3B82F6] hover:text-white transition-colors font-semibold">Acessar Painel</a>
-            </div>
-        </div>
-    </footer>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        lucide.createIcons();
+      lucide.createIcons();
 
-        function toggleFaq(element) {
-            const content = element.querySelector('.faq-content');
-            const icon = element.querySelector('.faq-icon');
-            
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
-                element.style.borderColor = '#3B82F6';
-            } else {
-                content.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-                element.style.borderColor = '#1E293B';
-            }
+      const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
+
+      let supabaseClient = null;
+      if (SUPABASE_KEY) {
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      }
+
+      function showToast(message, type = 'error') {
+          const container = document.getElementById('toast-container');
+          const toast = document.createElement('div');
+          
+          const bgColors = {
+              error: 'bg-red-500',
+              success: 'bg-emerald-500',
+              warning: 'bg-amber-500'
+          };
+          
+          const icons = {
+              error: 'alert-circle',
+              success: 'check-circle',
+              warning: 'alert-triangle'
+          };
+
+          toast.className = `${bgColors[type]} text-white px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-3 font-medium text-sm toast-enter w-max max-w-sm ml-auto`;
+          toast.innerHTML = `
+            <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i> 
+            <span>${message}</span>
+          `;
+          
+          container.appendChild(toast);
+          lucide.createIcons();
+
+          requestAnimationFrame(() => {
+              toast.classList.remove('toast-enter');
+              toast.classList.add('toast-enter-active');
+          });
+
+          setTimeout(() => {
+              toast.classList.remove('toast-enter-active');
+              toast.classList.add('toast-leave-active');
+              setTimeout(() => {
+                  toast.remove();
+              }, 300);
+          }, 4000);
+      }
+
+      function togglePassword() {
+        const input = document.getElementById('senha');
+        const icon = document.getElementById('eyeIcon');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>';
+        } else {
+            input.type = 'password';
+            icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
         }
+      }
+
+      async function entrar() {
+        if (!SUPABASE_KEY) {
+            showToast("Configurações do banco de dados ausentes.", "error");
+            return;
+        }
+
+        const email = document.getElementById('email').value.trim();
+        const senha = document.getElementById('senha').value;
+        const btn = document.getElementById('btnLogin');
+
+        if (!email || !senha) {
+            showToast("Por favor, preencha todos os campos para continuar.", "warning");
+            return;
+        }
+
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Autenticando...</span>`;
+        btn.disabled = true;
+        btn.classList.add('opacity-90', 'cursor-not-allowed');
+
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+            
+            if (error) {
+                let errorMsg = error.message;
+                if (errorMsg.includes("Invalid login credentials")) {
+                    errorMsg = "E-mail ou senha incorretos.";
+                }
+                showToast(errorMsg, "error");
+                restaurarBotao();
+                return;
+            }
+
+            const userId = data.user.id;
+            const { data: profile, error: profileError } = await supabaseClient
+                .from('profiles')
+                .select('subscription_status')
+                .eq('id', userId)
+                .single();
+
+            if (profile && profile.subscription_status === 'active') {
+                showToast("Login realizado com sucesso! Redirecionando...", "success");
+                localStorage.setItem("logado", "sim");
+                
+                setTimeout(() => {
+                    window.location.href = "painel.html"; // <-- MUDANÇA FEITA AQUI
+                }, 1500);
+            } else {
+                showToast("Assinatura inativa ou pendente. Escolha um plano...", "warning");
+                
+                setTimeout(() => {
+                    window.location.href = "cadastro.html";
+                }, 2000);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Erro de conexão. Verifique sua internet ou tente mais tarde.", "error");
+            restaurarBotao();
+        }
+
+        function restaurarBotao() {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            btn.classList.remove('opacity-90', 'cursor-not-allowed');
+            lucide.createIcons();
+        }
+      }
+
+      document.addEventListener('keypress', (e) => { 
+          if (e.key === 'Enter') entrar(); 
+      });
     </script>
 </body>
 </html>
