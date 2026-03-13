@@ -11,10 +11,8 @@
         
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Correção: Permite rolar a página no celular e evita corte lateral */
             overflow-x: hidden;
             overflow-y: auto; 
-            /* Fundo sutil e elegante inspirado no seu mockup */
             background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
         }
         
@@ -25,7 +23,6 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        /* Animação das esferas de fundo bem sutis */
         .blob {
             position: absolute;
             width: 600px;
@@ -41,7 +38,6 @@
             to { transform: translate(15%, 15%) scale(1.1); }
         }
 
-        /* Estilos para animação do Toast */
         .toast-enter {
             transform: translateY(100%);
             opacity: 0;
@@ -64,23 +60,15 @@
 </head>
 <body class="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 relative">
     
-    <!-- Container para Notificações (Toasts) -->
     <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
-    <!-- Bolhas agora com 'fixed' para acompanhar a tela ao rolar no celular -->
     <div class="blob top-0 left-0 fixed"></div>
     <div class="blob bottom-0 right-0 fixed" style="animation-direction: alternate-reverse; animation-duration: 30s;"></div>
 
-    <!-- m-auto centraliza de forma inteligente: fica no meio no PC, mas scrolla no celular -->
     <main class="w-full max-w-[420px] m-auto z-10 flex flex-col items-center justify-center py-6 sm:py-8">
 
-        <!-- Logo e Título movidos para FORA do cartão branco -->
         <div class="w-full text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
-            
-            <!-- Logo ajustada fora do card -->
             <img src="logo.png" alt="Lumis Logo" class="w-48 sm:w-56 h-auto object-contain mx-auto">
-            
-            <!-- Texto Organizador Financeiro com azul da paleta e margem normal (removidas as margens negativas para evitar sobreposição) -->
             <h2 class="w-full text-center text-[12px] sm:text-[13px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] relative z-10 mt-2 sm:mt-3">
                 Organizador Financeiro
             </h2>
@@ -88,19 +76,16 @@
 
         <div class="clean-card w-full p-6 sm:p-10">
             
-            <!-- Apenas os textos de boas-vindas permanecem DENTRO do cartão branco -->
             <div class="text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
                 <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2">Acesse sua conta</h3>
                 <p class="text-[13px] sm:text-sm text-slate-500 font-medium">Bem-vindo de volta ao seu painel financeiro.</p>
             </div>
 
-            <!-- text-left aqui garante que os campos e os textos se alinhem à esquerda -->
             <div class="space-y-5 sm:space-y-6 w-full text-left">
                 
                 <div class="input-group w-full">
                     <label for="email" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">E-mail de acesso</label>
                     <div class="relative group w-full">
-                        <!-- A tag span do ícone que estava faltando foi restaurada -->
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="mail" class="w-5 h-5"></i>
                         </span>
@@ -162,10 +147,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-      // Inicializa ícones Lucide
       lucide.createIcons();
 
-      // Configurações do Supabase (Mantidas do original)
       const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
 
@@ -174,7 +157,6 @@
           supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       }
 
-      // Sistema Customizado de Notificação (Toast) para substituir os alert()
       function showToast(message, type = 'error') {
           const container = document.getElementById('toast-container');
           const toast = document.createElement('div');
@@ -200,13 +182,11 @@
           container.appendChild(toast);
           lucide.createIcons();
 
-          // Animação de entrada
           requestAnimationFrame(() => {
               toast.classList.remove('toast-enter');
               toast.classList.add('toast-enter-active');
           });
 
-          // Remoção após 4 segundos
           setTimeout(() => {
               toast.classList.remove('toast-enter-active');
               toast.classList.add('toast-leave-active');
@@ -216,7 +196,6 @@
           }, 4000);
       }
 
-      // Alternar visualização da senha
       function togglePassword() {
         const input = document.getElementById('senha');
         const icon = document.getElementById('eyeIcon');
@@ -230,7 +209,6 @@
         }
       }
 
-      // Função de login
       async function entrar() {
         if (!SUPABASE_KEY) {
             showToast("Configurações do banco de dados ausentes.", "error");
@@ -246,7 +224,6 @@
             return;
         }
 
-        // Estado de Loading no botão
         const originalContent = btn.innerHTML;
         btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Autenticando...</span>`;
         btn.disabled = true;
@@ -256,7 +233,6 @@
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
             
             if (error) {
-                // Mensagem customizada para credenciais inválidas
                 let errorMsg = error.message;
                 if (errorMsg.includes("Invalid login credentials")) {
                     errorMsg = "E-mail ou senha incorretos.";
@@ -277,15 +253,17 @@
                 showToast("Login realizado com sucesso! Redirecionando...", "success");
                 localStorage.setItem("logado", "sim");
                 
-                // Pequeno delay para exibir o toast de sucesso antes de redirecionar
                 setTimeout(() => {
                     window.location.href = "index.html"; 
                 }, 1500);
             } else {
-                showToast("Assinatura inativa. Redirecionando para o pagamento...", "warning");
+                // Modificado aqui: Se ele for inativo, mandamos de volta para o cadastro para escolher o plano.
+                showToast("Assinatura inativa ou pendente. Escolha um plano...", "warning");
                 
                 setTimeout(() => {
-                    window.location.href = `https://buy.stripe.com/test_28E4gB89g0EN075gaqcs800?client_reference_id=${userId}`;
+                    // Manda para a página de cadastro. Como ele já tem conta criada, 
+                    // lá dentro teremos que ajustar para ele pular a criação se já estiver logado.
+                    window.location.href = "cadastro.html";
                 }, 2000);
             }
         } catch (err) {
@@ -298,11 +276,10 @@
             btn.innerHTML = originalContent;
             btn.disabled = false;
             btn.classList.remove('opacity-90', 'cursor-not-allowed');
-            lucide.createIcons(); // Recriar o ícone da seta
+            lucide.createIcons();
         }
       }
 
-      // Permitir login ao pressionar a tecla Enter
       document.addEventListener('keypress', (e) => { 
           if (e.key === 'Enter') entrar(); 
       });
