@@ -1,9 +1,6 @@
 {
   "name": "lumis-saas",
   "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'Construindo a API...' && npm install"
-  },
   "dependencies": {
     "stripe": "^14.14.0",
     "@supabase/supabase-js": "^2.39.0"
