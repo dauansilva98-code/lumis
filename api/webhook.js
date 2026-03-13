@@ -1,21 +1,18 @@
-const Stripe = require('stripe');
-const { createClient } = require('@supabase/supabase-js');
+import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
-// Inicializa o Stripe e o Supabase usando as chaves secretas da Vercel
+// Inicializa o Stripe e o Supabase
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Essa configuração avisa a Vercel para não mexer no formato da mensagem do Stripe
-const config = {
-    api: {
-        bodyParser: false,
-    },
+// Avisa a Vercel para não quebrar a mensagem do Stripe
+export const config = {
+    api: { bodyParser: false },
 };
 
-// Função para ler a mensagem crua do Stripe
 async function buffer(readable) {
     const chunks = [];
     for await (const chunk of readable) {
@@ -24,9 +21,10 @@ async function buffer(readable) {
     return Buffer.concat(chunks);
 }
 
-async function handler(req, res) {
+// A Vercel AMA essa linha abaixo: "export default"
+export default async function handler(req, res) {
     if (req.method !== 'POST') {
-        return res.status(405).send('Método não permitido. O Stripe só manda POST.');
+        return res.status(405).send('Só aceita requisições POST do Stripe.');
     }
 
     const buf = await buffer(req);
@@ -36,46 +34,31 @@ async function handler(req, res) {
     let event;
 
     try {
-        // Valida se a mensagem veio mesmo do Stripe
         event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (err) {
-        console.error('Erro na assinatura do Stripe:', err.message);
+        console.error('Erro de assinatura:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Se a assinatura for válida, vamos ver o que aconteceu
     try {
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
-            
-            // Pega o ID do usuário que enviamos lá no cadastro.html
             const userId = session.client_reference_id; 
 
             if (userId) {
-                // Manda o Supabase atualizar o status para ativo
                 const { error } = await supabase
                     .from('profiles')
                     .update({ subscription_status: 'active' })
                     .eq('id', userId);
 
-                if (error) {
-                    console.error('Erro do Supabase:', error);
-                    throw error;
-                }
-                
-                console.log(`Sucesso! Usuário ${userId} foi ativado.`);
-            } else {
-                console.log('Pagamento aprovado, mas não achamos o client_reference_id.');
+                if (error) throw error;
+                console.log(`Sucesso! Usuário ${userId} ativado.`);
             }
         }
 
-        // Responde ao Stripe que deu tudo certo
         res.status(200).json({ received: true });
     } catch (error) {
-        console.error('Erro geral no Webhook:', error);
+        console.error('Erro no processamento:', error);
         res.status(500).json({ error: 'Erro interno' });
     }
 }
-
-module.exports = handler;
-module.exports.config = config;
