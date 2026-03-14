@@ -7,7 +7,7 @@
     
     <script>
       if (localStorage.getItem("logado") !== "sim") {
-        window.location.href = "login.html";
+        window.location.href = "login.html"; // AJUSTADO: Redireciona para o login se não estiver logado
       }
     </script>
 
@@ -301,7 +301,7 @@
         let typingTimer;
 
         window.AppActions = {
-            sair: async () => { await supabaseClient.auth.signOut(); localStorage.removeItem("logado"); window.location.href = "login.html"; },
+            sair: async () => { await supabaseClient.auth.signOut(); localStorage.removeItem("logado"); window.location.href = "login.html"; }, // AJUSTADO: Volta para o login ao sair
             changeTab: (tabId) => { AppState.activeTab = tabId; renderApp(); },
             changeYear: (delta) => { 
                 const newYearStr = (parseInt(AppState.currentYear) + delta).toString(); 
@@ -1345,7 +1345,7 @@
                 // 2. A Lógica da Porta: Se der erro, se não tiver perfil ou se NÃO for 'active'
                 if (profileError || !profile || profile.subscription_status !== 'active') {
                     console.log("Acesso negado: Assinatura não está ativa.");
-                    // Fecha a porta e manda pra tela de pagamento/aviso
+                    // AJUSTADO: Fecha a porta e manda pra tela de pagamento (cadastro.html)
                     window.location.href = "cadastro.html"; 
                     return; 
                 }
