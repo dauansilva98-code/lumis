@@ -6,8 +6,9 @@
     <title>Lumis - Organizador Financeiro</title>
     
     <script>
-      if (localStorage.getItem("logado") !== "sim") {
-        window.location.href = "login.html"; // AJUSTADO: Redireciona para o login se não estiver logado
+      // AJUSTE AQUI: Verifica tanto a memória de longo prazo quanto a de curto prazo
+      if (localStorage.getItem("logado") !== "sim" && sessionStorage.getItem("logado") !== "sim") {
+        window.location.href = "login.html"; 
       }
     </script>
 
@@ -301,7 +302,13 @@
         let typingTimer;
 
         window.AppActions = {
-            sair: async () => { await supabaseClient.auth.signOut(); localStorage.removeItem("logado"); window.location.href = "login.html"; }, // AJUSTADO: Volta para o login ao sair
+            // AJUSTE AQUI: Limpa as duas chaves ao clicar em sair
+            sair: async () => { 
+                await supabaseClient.auth.signOut(); 
+                localStorage.removeItem("logado"); 
+                sessionStorage.removeItem("logado");
+                window.location.href = "login.html"; 
+            },
             changeTab: (tabId) => { AppState.activeTab = tabId; renderApp(); },
             changeYear: (delta) => { 
                 const newYearStr = (parseInt(AppState.currentYear) + delta).toString(); 
@@ -1345,7 +1352,7 @@
                 // 2. A Lógica da Porta: Se der erro, se não tiver perfil ou se NÃO for 'active'
                 if (profileError || !profile || profile.subscription_status !== 'active') {
                     console.log("Acesso negado: Assinatura não está ativa.");
-                    // AJUSTADO: Fecha a porta e manda pra tela de pagamento (cadastro.html)
+                    // Fecha a porta e manda pra tela de pagamento
                     window.location.href = "cadastro.html"; 
                     return; 
                 }

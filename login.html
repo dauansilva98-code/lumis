@@ -117,7 +117,7 @@
 
                 <div class="flex items-center justify-between text-xs px-1 pt-1 w-full">
                     <label class="flex items-center text-slate-500 cursor-pointer group hover:text-slate-700 transition-colors">
-                        <input type="checkbox" class="mr-2.5 h-4 w-4 rounded border-slate-300 text-[#0040A1] focus:ring-[#0040A1] transition-all cursor-pointer">
+                        <input type="checkbox" id="manterSessao" class="mr-2.5 h-4 w-4 rounded border-slate-300 text-[#0040A1] focus:ring-[#0040A1] transition-all cursor-pointer">
                         <span>Manter sessão</span>
                     </label>
                     <a href="recuperar-senha.html" class="text-[#0040A1] font-bold hover:text-[#002b70] transition-colors">Esqueceu a senha?</a>
@@ -148,6 +148,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       lucide.createIcons();
+
+      // TRAVA DE SEGURANÇA: Se já estiver logado (em qualquer uma das duas memórias), vai pro painel
+      if (localStorage.getItem("logado") === "sim" || sessionStorage.getItem("logado") === "sim") {
+        window.location.href = "painel.html";
+      }
 
       const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
@@ -251,7 +256,14 @@
 
             if (profile && profile.subscription_status === 'active') {
                 showToast("Login realizado com sucesso! Redirecionando...", "success");
-                localStorage.setItem("logado", "sim");
+                
+                // LÓGICA DO MANTER SESSÃO
+                const manterSessao = document.getElementById('manterSessao').checked;
+                if (manterSessao) {
+                    localStorage.setItem("logado", "sim"); // Dura mesmo fechando a aba
+                } else {
+                    sessionStorage.setItem("logado", "sim"); // Apaga ao fechar a aba
+                }
                 
                 setTimeout(() => {
                     window.location.href = "painel.html"; 

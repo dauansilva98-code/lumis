@@ -124,12 +124,6 @@
     <script>
       lucide.createIcons();
 
-      // CORREÇÃO DE SEGURANÇA: Se o usuário já estiver logado, não tem porque ele ver a tela de recuperar senha.
-      // Mandamos ele direto para o painel.html
-      if (localStorage.getItem("logado") === "sim") {
-        window.location.href = "painel.html";
-      }
-
       const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
 
