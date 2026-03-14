@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +10,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
         body { 
+            overflow-x: hidden; /* Mantém apenas a rolagem vertical principal, sem duplicar */
             font-family: 'Inter', sans-serif; 
             background-color: #0D152B; 
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
         }
 
         .glow-bg {
@@ -40,7 +44,7 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="relative w-full text-white antialiased selection:bg-blue-500/30 overflow-x-hidden flex flex-col min-h-screen">
+<body class="relative w-full antialiased selection:bg-blue-500/30 flex flex-col min-h-screen">
 
     <div class="glow-bg top-[-10%] left-[-10%]"></div>
     <div class="glow-bg top-[40%] right-[-20%]"></div>
@@ -48,12 +52,13 @@
 
     <header class="fixed top-0 left-0 w-full z-50 bg-[#0D152B]/90 backdrop-blur-md border-b border-white/5 shadow-lg">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-2 flex-shrink-0">
+            
+            <div class="flex items-center gap-2 flex-shrink-0 z-50">
                 <img src="logo.png" alt="Lumis Logo" class="h-8 md:h-10 object-contain">
             </div>
             
-            <div class="flex items-center gap-6 sm:gap-8">
-                <nav class="hidden md:flex items-center gap-6 text-[13px] font-medium text-slate-400">
+            <div class="hidden md:flex items-center gap-6 sm:gap-8">
+                <nav class="flex items-center gap-6 text-[13px] font-medium text-slate-400">
                     <a href="#funcionalidades" class="hover:text-white transition-colors">Funcionalidades</a>
                     <a href="#planos" class="hover:text-white transition-colors">Preços</a>
                     <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
@@ -64,13 +69,30 @@
                     <a href="cadastro.html" class="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-[13px] font-semibold transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)] whitespace-nowrap">Assinar Agora</a>
                 </div>
             </div>
+
+            <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white p-2 z-50 focus:outline-none">
+                <i id="mobile-icon" data-lucide="menu" class="w-7 h-7"></i>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full bg-[#0D152B]/95 backdrop-blur-xl border-b border-slate-800 shadow-2xl flex flex-col md:hidden transition-all">
+            <div class="flex flex-col px-6 py-6 gap-5">
+                <a href="#funcionalidades" onclick="toggleMobileMenu()" class="text-base font-medium text-slate-300 hover:text-white">Funcionalidades</a>
+                <a href="#planos" onclick="toggleMobileMenu()" class="text-base font-medium text-slate-300 hover:text-white">Preços</a>
+                <a href="#faq" onclick="toggleMobileMenu()" class="text-base font-medium text-slate-300 hover:text-white">FAQ</a>
+                
+                <div class="h-px w-full bg-slate-800 my-2"></div>
+                
+                <a href="login.html" class="w-full text-center py-3 rounded-xl border border-[#1e3a8a] text-[#93c5fd] font-medium text-base">Entrar</a>
+                <a href="cadastro.html" class="w-full text-center py-3 bg-[#2563EB] text-white rounded-xl font-bold text-base shadow-[0_0_15px_rgba(37,99,235,0.3)]">Assinar Agora</a>
+            </div>
         </div>
     </header>
 
     <main class="w-full flex-grow flex flex-col items-center">
         
-        <section class="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-12 flex flex-col justify-center items-center text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111827] border border-slate-800 text-slate-300 text-[10px] sm:text-xs font-medium mb-6">
+        <section class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col justify-center items-center text-center min-h-[100svh] pt-20 pb-12">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111827] border border-slate-800 text-slate-300 text-[10px] sm:text-xs font-medium mb-6 mt-10">
                 <i data-lucide="trending-up" class="w-3.5 h-3.5 text-[#3B82F6]"></i>
                 +200 usuários organizando suas finanças
             </div>
@@ -80,7 +102,7 @@
                 <span class="text-[#3B82F6]">mais organizada</span>
             </h1>
             
-            <p class="text-sm md:text-lg text-slate-400 font-normal mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-sm md:text-lg text-slate-400 font-normal mb-10 max-w-2xl mx-auto leading-relaxed">
                 Controle receitas, despesas e investimentos em um único painel. Tome decisões financeiras inteligentes com dados claros e organizados.
             </p>
             
@@ -372,6 +394,22 @@
     <script>
         lucide.createIcons();
 
+        // Função para o Menu Mobile
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('mobile-icon');
+            
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.setAttribute('data-lucide', 'x'); // Troca pra um 'X'
+            } else {
+                menu.classList.add('hidden');
+                icon.setAttribute('data-lucide', 'menu'); // Volta pras 3 linhas
+            }
+            lucide.createIcons();
+        }
+
+        // Função para o FAQ
         function toggleFaq(element) {
             const content = element.querySelector('.faq-content');
             const icon = element.querySelector('.faq-icon');
