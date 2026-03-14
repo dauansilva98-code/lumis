@@ -163,7 +163,7 @@
         <div id="area-login" class="mt-6 sm:mt-8 w-full text-center text-[12px] sm:text-[13px] text-slate-600">
             <span>Já tem uma conta?</span>
             <br>
-            <a href="index.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
+            <a href="login.html" class="text-[#0040A1] font-bold mt-1 inline-block hover:underline transition-all">
                 Fazer Login ➔
             </a>
         </div>
@@ -269,7 +269,7 @@
       async function sairEVoltarParaLogin() {
           await supabaseClient.auth.signOut();
           localStorage.removeItem("logado");
-          window.location.href = "login.html";
+          window.location.href = "login.html"; // JÁ ESTAVA CORRETO AQUI
       }
 
       // Função Principal que decide se cria conta ou só redireciona
@@ -316,6 +316,7 @@
             if (error) {
                 if (error.message.includes("already registered") || error.message.includes("already exists")) {
                     showToast("Esse e-mail já está cadastrado. Faça login para reativar!", "warning");
+                    // CORREÇÃO: Redireciona para login.html em vez de index.html
                     setTimeout(() => { window.location.href = "login.html"; }, 2500);
                 } else {
                     showToast("Erro ao criar conta: " + error.message, "error");
