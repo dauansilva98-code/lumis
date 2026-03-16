@@ -1331,7 +1331,7 @@
             }
         }
 
-        // --- INICIALIZAÇÃO ---
+        // --- INICIALIZAÇÃO COM FECHADURA DE SEGURANÇA ---
         async function initAuth() {
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
