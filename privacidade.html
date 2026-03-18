@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade | Lumis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0D152B; color: #ffffff; }
+    </style>
+</head>
+<body class="relative w-full antialiased flex flex-col min-h-screen">
+
+    <header class="w-full bg-[#0D152B]/90 backdrop-blur-md border-b border-white/5 shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html"><img src="logo.png" alt="Lumis Logo" class="h-8 object-contain"></a>
+            <a href="index.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Voltar ao Início</a>
+        </div>
+    </header>
+
+    <main class="w-full flex-grow max-w-3xl mx-auto px-6 py-12">
+        <div class="bg-[#111827] border border-[#1E293B] rounded-2xl p-8 md:p-12 shadow-xl">
+            <h1 class="text-3xl font-extrabold text-white mb-8">Política de Privacidade</h1>
+            
+            <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+                <p>Última atualização: Março de 2026</p>
+
+                <p>A sua privacidade é nossa prioridade. Esta Política de Privacidade descreve como a Lumis coleta, usa, protege e compartilha suas informações pessoais quando você utiliza nossa plataforma.</p>
+
+                <h2 class="text-xl font-bold text-white mt-8 mb-4">1. Informações que Coletamos</h2>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Dados de Cadastro:</strong> Nome, endereço de e-mail, número de telefone (WhatsApp) e senha.</li>
+                    <li><strong>Dados Financeiros:</strong> Informações sobre receitas, despesas, categorias de gastos e investimentos que você insere manualmente na plataforma.</li>
+                    <li><strong>Dados de Pagamento:</strong> Processados de forma segura pela Stripe. Não armazenamos os dados completos do seu cartão de crédito em nossos servidores.</li>
+                </ul>
+
+                <h2 class="text-xl font-bold text-white mt-8 mb-4">2. Como Usamos suas Informações</h2>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li>Para fornecer, manter e melhorar as funcionalidades do organizador financeiro.</li>
+                    <li>Para processar transações e gerenciar sua assinatura.</li>
+                    <li>Para enviar avisos técnicos, atualizações, alertas de segurança e mensagens de suporte (incluindo via WhatsApp).</li>
+                </ul>
+
+                <h2 class="text-xl font-bold text-white mt-8 mb-4">3. Proteção de Dados</h2>
+                <p>Utilizamos infraestrutura de ponta (Supabase) com criptografia padrão da indústria para proteger seus dados contra acesso não autorizado. Seus dados financeiros são estritamente confidenciais e atrelados unicamente à sua conta, protegidos por regras de segurança no nível do banco de dados (Row Level Security).</p>
+                
+                <h2 class="text-xl font-bold text-white mt-8 mb-4">4. Compartilhamento de Dados</h2>
+                <p>Nós <strong>não vendemos, alugamos ou comercializamos</strong> seus dados pessoais ou financeiros para terceiros sob nenhuma circunstância. Só compartilhamos dados com provedores de serviço essenciais (como a Stripe para pagamentos e a Vercel para hospedagem), estritamente para o funcionamento da plataforma.</p>
+
+                <h2 class="text-xl font-bold text-white mt-8 mb-4">5. Seus Direitos</h2>
+                <p>Você tem o direito de acessar, corrigir ou excluir seus dados pessoais a qualquer momento. Caso deseje a exclusão permanente da sua conta e de todo o seu histórico financeiro, basta solicitar o cancelamento e a exclusão da conta através da plataforma ou de nossos canais de suporte.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full border-t border-[#1E293B] bg-[#0D152B] mt-auto">
+        <div class="max-w-4xl mx-auto px-6 py-6 text-center text-xs text-slate-500">
+            © 2026 Lumis. Todos os direitos reservados.
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
