@@ -112,6 +112,18 @@
                 </div>
 
                 <div class="input-group w-full">
+                    <label for="telefone" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">WhatsApp</label>
+                    <div class="relative group w-full">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                            <i data-lucide="phone" class="w-5 h-5"></i>
+                        </span>
+                        <input type="tel" id="telefone" 
+                            class="block w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
+                            placeholder="(11) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="input-group w-full">
                     <label for="senha" class="block text-left text-[11px] font-extrabold uppercase tracking-wider text-[#64748b] mb-2">Crie uma Senha</label>
                     <div class="relative group w-full">
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
@@ -269,7 +281,7 @@
       async function sairEVoltarParaLogin() {
           await supabaseClient.auth.signOut();
           localStorage.removeItem("logado");
-          window.location.href = "login.html"; // JÁ ESTAVA CORRETO AQUI
+          window.location.href = "login.html";
       }
 
       // Função Principal que decide se cria conta ou só redireciona
@@ -293,10 +305,11 @@
 
             // CENA 2: Usuário novo criando conta
             const email = document.getElementById('email').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
             const senha = document.getElementById('senha').value;
             const senhaConfirmacao = document.getElementById('senha_confirmacao').value;
 
-            if (!email || !senha || !senhaConfirmacao) {
+            if (!email || !telefone || !senha || !senhaConfirmacao) {
                 showToast("Por favor, preencha todos os campos para continuar.", "warning");
                 restaurarBotao();
                 return;
@@ -310,13 +323,17 @@
 
             const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
-                password: senha
+                password: senha,
+                options: {
+                    data: {
+                        telefone: telefone
+                    }
+                }
             });
 
             if (error) {
                 if (error.message.includes("already registered") || error.message.includes("already exists")) {
                     showToast("Esse e-mail já está cadastrado. Faça login para reativar!", "warning");
-                    // CORREÇÃO: Redireciona para login.html em vez de index.html
                     setTimeout(() => { window.location.href = "login.html"; }, 2500);
                 } else {
                     showToast("Erro ao criar conta: " + error.message, "error");
@@ -328,6 +345,9 @@
             showToast("Sucesso! Redirecionando para o pagamento...", "success");
             
             if (data?.user?.id) {
+                // Salva o telefone na tabela profiles antes de redirecionar
+                await supabaseClient.from('profiles').update({ telefone: telefone }).eq('id', data.user.id);
+                
                 const linkCorretoStripe = planoAtivo === 'anual' ? LINK_ANUAL : LINK_MENSAL;
                 setTimeout(() => {
                     window.location.href = `${linkCorretoStripe}?client_reference_id=${data.user.id}`;
