@@ -117,7 +117,7 @@
                         <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                             <i data-lucide="phone" class="w-5 h-5"></i>
                         </span>
-                        <input type="tel" id="telefone" 
+                        <input type="tel" id="telefone" oninput="mascaraTelefone(this)" maxlength="15"
                             class="block w-full pl-12 pr-4 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-0 focus:border-[#0040A1] transition-colors placeholder:text-slate-300 placeholder:font-normal" 
                             placeholder="(11) 99999-9999">
                     </div>
@@ -275,6 +275,25 @@
           const erroMsg = document.getElementById('senhaErro');
           if (senhaConf.length > 0 && senha !== senhaConf) erroMsg.classList.remove('hidden');
           else erroMsg.classList.add('hidden');
+      }
+
+      // Função para formatar o telefone (Máscara Automática)
+      function mascaraTelefone(input) {
+          // Remove tudo que não é número
+          let v = input.value.replace(/\D/g, ""); 
+          
+          // Limita a 11 dígitos no máximo
+          if (v.length > 11) v = v.substring(0, 11);
+          
+          let res = v;
+          if (v.length > 2) {
+              res = `(${v.substring(0, 2)}) ${v.substring(2)}`;
+          }
+          if (v.length > 7) {
+              res = `(${v.substring(0, 2)}) ${v.substring(2, 7)}-${v.substring(7)}`;
+          }
+          
+          input.value = res;
       }
       
       // Nova função de Sair e Voltar para o Login
