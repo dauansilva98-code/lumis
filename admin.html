@@ -152,8 +152,8 @@
 
                         // Formatação Link WhatsApp
                         let btnWhats = `<span class="text-slate-300 text-xs">Sem número</span>`;
-                        if (cliente.phone) {
-                            const numLimpo = cliente.phone.replace(/\D/g, ''); // Tira tudo que não é número
+                        if (cliente.telefone) { // <--- Ajustado para telefone
+                            const numLimpo = cliente.telefone.replace(/\D/g, ''); // <--- Ajustado para telefone
                             btnWhats = `
                                 <a href="https://wa.me/55${numLimpo}?text=Olá%20${cliente.full_name || ''},%20aqui%20é%20da%20equipe%20Lumis!" 
                                    target="_blank" 
@@ -171,8 +171,7 @@
                                 <p class="font-bold text-slate-800">${cliente.full_name || 'Sem nome'}</p>
                                 <p class="text-xs text-slate-500">${cliente.email || '—'}</p>
                             </td>
-                            <td class="px-6 py-4 text-slate-600 font-medium">${cliente.phone || '—'}</td>
-                            <td class="px-6 py-4 text-slate-600">${dataCadastro}</td>
+                            <td class="px-6 py-4 text-slate-600 font-medium">${cliente.telefone || '—'}</td> <td class="px-6 py-4 text-slate-600">${dataCadastro}</td>
                             <td class="px-6 py-4 text-slate-600">${ultimoPagamento}</td>
                             <td class="px-6 py-4">${statusBadge}</td>
                             <td class="px-6 py-4">${btnWhats}</td>
