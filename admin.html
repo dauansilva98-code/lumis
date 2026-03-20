@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin CRM | Lumis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .table-row:hover { background-color: #f1f5f9; }
+    </style>
+</head>
+<body class="min-h-screen hidden" id="adminBody">
+
+    <header class="bg-[#0D152B] text-white py-4 px-6 shadow-md flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="shield-check" class="w-6 h-6 text-blue-400"></i>
+            <h1 class="text-lg font-bold">Lumis | Central de Gestão (CRM)</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="adminName" class="text-sm text-slate-300 font-medium"></span>
+            <button onclick="sair()" class="text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors border border-white/10">Sair</button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm text-slate-500 font-medium mb-1">Total de Clientes</p>
+                <h3 id="totalClientes" class="text-3xl font-bold text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm text-slate-500 font-medium mb-1">Assinaturas Ativas</p>
+                <h3 id="clientesAtivos" class="text-3xl font-bold text-emerald-600">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <p class="text-sm text-slate-500 font-medium mb-1">Inativos / Pendentes</p>
+                <h3 id="clientesInativos" class="text-3xl font-bold text-red-500">0</h3>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Banco de Clientes</h2>
+                <button onclick="carregarClientes()" class="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Dados
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
+                            <th class="px-6 py-4 font-bold">Cliente (Nome e E-mail)</th>
+                            <th class="px-6 py-4 font-bold">Telefone</th>
+                            <th class="px-6 py-4 font-bold">Data de Cadastro</th>
+                            <th class="px-6 py-4 font-bold">Último Pagamento</th>
+                            <th class="px-6 py-4 font-bold">Status</th>
+                            <th class="px-6 py-4 font-bold text-center">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaClientes" class="text-sm divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                                <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500"></i>
+                                Carregando banco de dados...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        lucide.createIcons();
+
+        // Conexão com Supabase (Suas chaves da Lumis)
+        const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ==========================================
+        // 🔒 TRAVA DE SEGURANÇA (COLOQUE SEU E-MAIL AQUI)
+        // ==========================================
+        const EMAILS_ADMIN = ['dauansilva98@gmail.com'];
+
+        async function verificarAcesso() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const userEmail = session.user.email;
+            
+            if (!EMAILS_ADMIN.includes(userEmail)) {
+                // Se não for o dono, chuta pro painel do cliente
+                window.location.href = 'painel.html';
+            } else {
+                // Se for o dono, mostra a página e carrega os dados
+                document.getElementById('adminBody').classList.remove('hidden');
+                document.getElementById('adminName').innerText = userEmail;
+                carregarClientes();
+            }
+        }
+
+        async function carregarClientes() {
+            try {
+                // Busca todos os clientes na tabela profiles
+                const { data: clientes, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('tabelaClientes');
+                tbody.innerHTML = ''; // Limpa a tabela
+
+                let ativos = 0;
+                let inativos = 0;
+
+                if (clientes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">Nenhum cliente encontrado.</td></tr>`;
+                } else {
+                    clientes.forEach(cliente => {
+                        // Contadores
+                        if (cliente.subscription_status === 'active') ativos++;
+                        else inativos++;
+
+                        // Formatação de Datas
+                        const dataCadastro = new Date(cliente.created_at).toLocaleDateString('pt-BR');
+                        // Se não tiver data de pagamento específico salva, usamos o update_at ou um traço
+                        const ultimoPagamento = cliente.updated_at ? new Date(cliente.updated_at).toLocaleDateString('pt-BR') : '—';
+                        
+                        // Formatação de Status
+                        let statusBadge = '';
+                        if (cliente.subscription_status === 'active') {
+                            statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> Ativo</span>`;
+                        } else if (cliente.subscription_status === 'canceled' || cliente.subscription_status === 'past_due') {
+                            statusBadge = `<span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> Inativo / Cancelou</span>`;
+                        } else {
+                            statusBadge = `<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-max"><div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Pendente</span>`;
+                        }
+
+                        // Formatação Link WhatsApp
+                        let btnWhats = `<span class="text-slate-300 text-xs">Sem número</span>`;
+                        if (cliente.phone) {
+                            const numLimpo = cliente.phone.replace(/\D/g, ''); // Tira tudo que não é número
+                            btnWhats = `
+                                <a href="https://wa.me/55${numLimpo}?text=Olá%20${cliente.full_name || ''},%20aqui%20é%20da%20equipe%20Lumis!" 
+                                   target="_blank" 
+                                   class="bg-[#25D366] hover:bg-[#1ebd5a] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 mx-auto w-max shadow-sm">
+                                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Chamar
+                                </a>
+                            `;
+                        }
+
+                        // Monta a Linha da Tabela
+                        const tr = document.createElement('tr');
+                        tr.className = 'table-row transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-slate-800">${cliente.full_name || 'Sem nome'}</p>
+                                <p class="text-xs text-slate-500">${cliente.email || '—'}</p>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 font-medium">${cliente.phone || '—'}</td>
+                            <td class="px-6 py-4 text-slate-600">${dataCadastro}</td>
+                            <td class="px-6 py-4 text-slate-600">${ultimoPagamento}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4">${btnWhats}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                // Atualiza os Cards
+                document.getElementById('totalClientes').innerText = clientes.length;
+                document.getElementById('clientesAtivos').innerText = ativos;
+                document.getElementById('clientesInativos').innerText = inativos;
+                
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Erro ao buscar clientes:", error);
+                document.getElementById('tabelaClientes').innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500 font-medium">Erro ao carregar dados. (Verifique as permissões do banco).</td></tr>`;
+            }
+        }
+
+        async function sair() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Inicia a verificação de segurança assim que a página abre
+        verificarAcesso();
+    </script>
+</body>
+</html>
