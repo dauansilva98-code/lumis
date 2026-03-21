@@ -1228,6 +1228,7 @@
                                     <i data-lucide="user" class="w-4 h-4"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
                                 </button>
                                 <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 flex-col overflow-hidden origin-top-right">
+                                    <a href="admin.html" id="btn-admin-secreto" class="hidden flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i> Admin CRM</a>
                                     <a href="https://wa.me/5511946358213" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="message-circle" class="w-4 h-4 text-emerald-500"></i> Suporte WhatsApp</a>
                                     <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="credit-card" class="w-4 h-4 text-blue-500"></i> Gerenciar assinatura</a>
                                     <button onclick="AppActions.sair()" class="flex items-center gap-2 px-4 py-3 hover:bg-rose-50 text-rose-600 text-sm font-bold text-left w-full transition-colors"><i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i> Sair da Conta</button>
@@ -1342,6 +1343,15 @@
                 }
                 
                 AppState.user = user;
+
+                // --- NOVO: REVELA O BOTÃO SECRETO SE FOR O ADMIN ---
+                if (user.email === 'dauan.silva98@gmail.com') {
+                    // Espera 1 segundo para a tela renderizar e tira o hidden do botão
+                    setTimeout(() => {
+                        const btnAdmin = document.getElementById('btn-admin-secreto');
+                        if (btnAdmin) btnAdmin.classList.remove('hidden');
+                    }, 500);
+                }
                 
                 // 1. Vai na tabela profiles conferir se a porta deve abrir
                 const { data: profile, error: profileError } = await supabaseClient
