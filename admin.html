@@ -106,13 +106,13 @@
             </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[800px]">
+                <table class="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                         <tr class="bg-slate-50 text-slate-400 text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-slate-100">
                             <th class="px-6 py-4 font-bold">Cliente</th>
                             <th class="px-6 py-4 font-bold">Telefone</th>
-                            <th class="px-6 py-4 font-bold">Data de Cadastro</th>
-                            <th class="px-6 py-4 font-bold">Último Pgto</th>
+                            <th class="px-6 py-4 font-bold">Último Acesso</th>
+                            <th class="px-6 py-4 font-bold">Data Cadastro</th>
                             <th class="px-6 py-4 font-bold">Status</th>
                             <th class="px-6 py-4 font-bold text-center">Ação</th>
                         </tr>
@@ -148,15 +148,12 @@
     <script>
         lucide.createIcons();
 
-        // Conexão com Supabase
         const SUPABASE_URL = 'https://izmdjkalwgupuehrbcxm.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6bWRqa2Fsd2d1cHVlaHJiY3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDkwNTUsImV4cCI6MjA4NTgyNTA1NX0.w3FW5oORqiEjT0Xj3d3777KfE0xl2zm0ogezpfN3Gss'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 🔒 TRAVA DE SEGURANÇA
         const EMAILS_ADMIN = ['dauan.silva98@gmail.com'];
 
-        // Variáveis Globais (Para Filtros, Paginação e Exportação)
         let todosOsClientes = []; 
         let clientesFiltradosGlobais = []; 
         let paginaAtual = 1;
@@ -178,7 +175,6 @@
 
         async function carregarClientes() {
             try {
-                // Estado de carregamento
                 document.getElementById('tabelaClientes').innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-500"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3 text-[#2563EB]"></i>Sincronizando...</td></tr>`;
                 lucide.createIcons();
 
@@ -190,7 +186,7 @@
                 if (error) throw error;
                 
                 todosOsClientes = clientes || [];
-                filtrarClientes(); // Renderiza a tabela aplicando filtros e paginação inicial
+                filtrarClientes(); 
 
             } catch (error) {
                 console.error("Erro ao buscar clientes:", error);
@@ -198,25 +194,12 @@
             }
         }
 
-        // ==========================================
-        // NOVA FUNÇÃO: EXTRAIR NOME LIMPO
-        // ==========================================
         function extrairNomeDoEmail(email) {
             if (!email) return 'Sem nome';
-            
-            // Pega só o que vem antes do @
             let parteLocal = email.split('@')[0];
-            
-            // 1. Remove todos os números
             parteLocal = parteLocal.replace(/\d+/g, '');
-            
-            // 2. Troca pontos, hifens e underlines por espaço
             parteLocal = parteLocal.replace(/[.\-_]/g, ' ');
-            
-            // 3. Tira espaços duplos que possam sobrar e apara as pontas
             parteLocal = parteLocal.replace(/\s+/g, ' ').trim();
-            
-            // 4. Capitaliza a primeira letra de cada palavra
             const palavras = parteLocal.split(' ');
             const nomeFormatado = palavras.map(palavra => {
                 if (palavra.length > 0) {
@@ -224,26 +207,27 @@
                 }
                 return '';
             }).join(' ');
-            
-            return nomeFormatado || 'Cliente'; // Se o email era só número, fica "Cliente"
+            return nomeFormatado || 'Cliente';
+        }
+
+        function formatarDataHora(dataString) {
+            if (!dataString) return 'Nunca acessou';
+            const data = new Date(dataString);
+            return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
 
         function filtrarClientes() {
-            // Pega os valores digitados nos filtros
             const termoBusca = document.getElementById('filtroBusca').value.toLowerCase();
             const statusFiltro = document.getElementById('filtroStatus').value;
             const dataInicio = document.getElementById('filtroDataInicio').value;
             const dataFim = document.getElementById('filtroDataFim').value;
 
-            // Filtra o array principal
             clientesFiltradosGlobais = todosOsClientes.filter(cliente => {
                 
-                // 1. Filtro de Texto (inclui o nome extraído do email na busca)
                 const nomeExibicao = cliente.full_name || extrairNomeDoEmail(cliente.email);
                 const textoCliente = `${nomeExibicao} ${cliente.email || ''} ${cliente.telefone || ''}`.toLowerCase();
                 const passaTexto = textoCliente.includes(termoBusca);
 
-                // 2. Filtro de Status
                 let passaStatus = true;
                 if (statusFiltro !== 'todos') {
                     const statusReal = cliente.subscription_status;
@@ -256,7 +240,6 @@
                     }
                 }
 
-                // 3. Filtro de Datas
                 let passaData = true;
                 if (dataInicio || dataFim) {
                     const dataCadastro = new Date(cliente.created_at);
@@ -273,10 +256,8 @@
                 return passaTexto && passaStatus && passaData;
             });
 
-            // Sempre que filtrar, volta para a página 1
             paginaAtual = 1; 
 
-            // Atualiza os Números dos Cards Superiores
             let contAtivos = 0, contInativos = 0, contPendentes = 0;
             clientesFiltradosGlobais.forEach(cliente => {
                 if (cliente.subscription_status === 'active') contAtivos++;
@@ -288,7 +269,6 @@
             document.getElementById('clientesInativos').innerText = contInativos;
             document.getElementById('clientesPendentes').innerText = contPendentes;
 
-            // Renderiza a tabela paginada
             renderizarTabelaPaginada();
         }
 
@@ -305,17 +285,14 @@
                 return;
             }
 
-            // Calcula o corte (Fatia) do Array para a página atual
             const inicioIndice = (paginaAtual - 1) * itensPorPagina;
             const fimIndice = inicioIndice + itensPorPagina;
             const clientesNaTela = clientesFiltradosGlobais.slice(inicioIndice, fimIndice);
 
             clientesNaTela.forEach(cliente => {
-                // Datas
                 const dataCadastro = new Date(cliente.created_at).toLocaleDateString('pt-BR');
-                const ultimoPagamento = cliente.updated_at ? new Date(cliente.updated_at).toLocaleDateString('pt-BR') : '—';
+                const ultimoAcesso = formatarDataHora(cliente.last_login);
                 
-                // Badges de Status
                 let statusBadge = '';
                 if (cliente.subscription_status === 'active') {
                     statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-emerald-200"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Ativo</span>`;
@@ -325,7 +302,6 @@
                     statusBadge = `<span class="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-amber-100"><div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Pendente</span>`;
                 }
 
-                // Botão WhatsApp e Nome Formatado
                 const nomeExibicao = cliente.full_name || extrairNomeDoEmail(cliente.email);
 
                 let btnWhats = `<span class="text-slate-300 text-[11px] bg-slate-50 px-2 py-1 rounded">Sem Nº</span>`;
@@ -340,7 +316,6 @@
                     `;
                 }
 
-                // Monta a Linha
                 const tr = document.createElement('tr');
                 tr.className = 'table-row transition-colors hover:bg-blue-50/30';
                 tr.innerHTML = `
@@ -349,8 +324,8 @@
                         <p class="text-[11px] text-slate-500 font-medium">${cliente.email || '—'}</p>
                     </td>
                     <td class="px-6 py-4 text-slate-600 text-[13px] font-medium tracking-wide">${cliente.telefone || '—'}</td>
+                    <td class="px-6 py-4 text-slate-600 text-[12px]"><div class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3 h-3 text-slate-400"></i> ${ultimoAcesso}</div></td>
                     <td class="px-6 py-4 text-slate-500 text-[13px]">${dataCadastro}</td>
-                    <td class="px-6 py-4 text-slate-500 text-[13px]">${ultimoPagamento}</td>
                     <td class="px-6 py-4">${statusBadge}</td>
                     <td class="px-6 py-4">${btnWhats}</td>
                 `;
@@ -365,14 +340,12 @@
             const total = clientesFiltradosGlobais.length;
             const maxPaginas = Math.ceil(total / itensPorPagina);
             
-            // Texto: Mostrando 1 a 10 de 50 clientes
             if (total === 0) {
                 document.getElementById('textoPaginacao').innerText = "Nenhum cliente encontrado.";
             } else {
                 document.getElementById('textoPaginacao').innerText = `Mostrando ${inicioIndice + 1} a ${inicioIndice + qtdNaTela} de ${total} clientes (Página ${paginaAtual}/${maxPaginas})`;
             }
 
-            // Habilita/Desabilita os botões
             document.getElementById('btnAnterior').disabled = (paginaAtual === 1);
             document.getElementById('btnProxima').disabled = (paginaAtual === maxPaginas || maxPaginas === 0);
         }
@@ -387,36 +360,33 @@
             document.getElementById('filtroStatus').value = 'todos';
             document.getElementById('filtroDataInicio').value = '';
             document.getElementById('filtroDataFim').value = '';
-            filtrarClientes(); // Roda a tabela de novo com tudo limpo
+            filtrarClientes(); 
         }
 
-        // FUNÇÃO DE EXPORTAR EXCEL (CSV)
         function exportarCSV() {
             if (clientesFiltradosGlobais.length === 0) {
                 alert("Não há dados para exportar com os filtros atuais.");
                 return;
             }
 
-            // Cabeçalho da Planilha
-            let csv = "Nome,Email,Telefone,Data Cadastro,Ultimo Pgto,Status\n";
+            let csv = "Nome,Email,Telefone,Data Cadastro,Ultimo Acesso,Status\n";
 
             clientesFiltradosGlobais.forEach(c => {
                 const nomeExibicao = c.full_name || extrairNomeDoEmail(c.email);
-                const nome = nomeExibicao.replace(/,/g, ''); // Remove vírgulas para não bugar o CSV
+                const nome = nomeExibicao.replace(/,/g, ''); 
                 const email = c.email || '';
                 const tel = c.telefone || '';
                 const dataCad = new Date(c.created_at).toLocaleDateString('pt-BR');
-                const ultPgto = c.updated_at ? new Date(c.updated_at).toLocaleDateString('pt-BR') : '';
+                const ultAcesso = formatarDataHora(c.last_login).replace(/,/g, ' -');
                 
                 let status = 'Pendente';
                 if (c.subscription_status === 'active') status = 'Ativo';
                 else if (c.subscription_status === 'canceled' || c.subscription_status === 'past_due') status = 'Inativo';
 
-                csv += `${nome},${email},${tel},${dataCad},${ultPgto},${status}\n`;
+                csv += `${nome},${email},${tel},${dataCad},${ultAcesso},${status}\n`;
             });
 
-            // Cria o arquivo virtual e clica para baixar
-            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }); // \uFEFF força o Excel a ler os acentos corretos
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -430,7 +400,6 @@
             window.location.href = 'login.html';
         }
 
-        // Dá o Play na Segurança e Carregamento
         verificarAcesso();
     </script>
 </body>
