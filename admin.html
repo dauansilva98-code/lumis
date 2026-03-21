@@ -198,16 +198,26 @@
             }
         }
 
-        // Nova função inteligente para extrair e formatar o nome
+        // ==========================================
+        // NOVA FUNÇÃO: EXTRAIR NOME LIMPO
+        // ==========================================
         function extrairNomeDoEmail(email) {
             if (!email) return 'Sem nome';
-            const parteLocal = email.split('@')[0];
             
-            // Troca pontos, hifens e underlines por espaço
-            const nomeComEspacos = parteLocal.replace(/[.\-_]/g, ' ');
+            // Pega só o que vem antes do @
+            let parteLocal = email.split('@')[0];
             
-            // Capitaliza a primeira letra de cada palavra
-            const palavras = nomeComEspacos.split(' ');
+            // 1. Remove todos os números
+            parteLocal = parteLocal.replace(/\d+/g, '');
+            
+            // 2. Troca pontos, hifens e underlines por espaço
+            parteLocal = parteLocal.replace(/[.\-_]/g, ' ');
+            
+            // 3. Tira espaços duplos que possam sobrar e apara as pontas
+            parteLocal = parteLocal.replace(/\s+/g, ' ').trim();
+            
+            // 4. Capitaliza a primeira letra de cada palavra
+            const palavras = parteLocal.split(' ');
             const nomeFormatado = palavras.map(palavra => {
                 if (palavra.length > 0) {
                     return palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase();
@@ -215,7 +225,7 @@
                 return '';
             }).join(' ');
             
-            return nomeFormatado;
+            return nomeFormatado || 'Cliente'; // Se o email era só número, fica "Cliente"
         }
 
         function filtrarClientes() {
