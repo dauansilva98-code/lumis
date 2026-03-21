@@ -94,9 +94,15 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h2 class="text-base sm:text-lg font-bold text-slate-800">Banco de Clientes</h2>
-                <button onclick="carregarClientes()" class="text-[#2563EB] hover:text-[#1D4ED8] flex items-center gap-2 text-sm font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar
-                </button>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="exportarCSV()" class="text-emerald-600 hover:text-emerald-700 flex items-center gap-2 text-xs sm:text-sm font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden sm:inline">Baixar Planilha</span>
+                    </button>
+                    <button onclick="carregarClientes()" class="text-[#2563EB] hover:text-[#1D4ED8] flex items-center gap-2 text-xs sm:text-sm font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden sm:inline">Sincronizar</span>
+                    </button>
+                </div>
             </div>
             
             <div class="overflow-x-auto">
@@ -121,6 +127,19 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <span id="textoPaginacao" class="text-xs font-medium text-slate-500">Aguardando dados...</span>
+                <div class="flex gap-2">
+                    <button id="btnAnterior" onclick="mudarPagina(-1)" disabled class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i> Anterior
+                    </button>
+                    <button id="btnProxima" onclick="mudarPagina(1)" disabled class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        Próxima <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
 
     </main>
@@ -137,7 +156,11 @@
         // 🔒 TRAVA DE SEGURANÇA
         const EMAILS_ADMIN = ['dauan.silva98@gmail.com'];
 
-        let todosOsClientes = []; // Variável global para guardar os dados do banco
+        // Variáveis Globais (Para Filtros, Paginação e Exportação)
+        let todosOsClientes = []; 
+        let clientesFiltradosGlobais = []; 
+        let paginaAtual = 1;
+        const itensPorPagina = 10;
 
         async function verificarAcesso() {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -167,12 +190,32 @@
                 if (error) throw error;
                 
                 todosOsClientes = clientes || [];
-                filtrarClientes(); // Renderiza a tabela pela primeira vez aplicando filtros vazios
+                filtrarClientes(); // Renderiza a tabela aplicando filtros e paginação inicial
 
             } catch (error) {
                 console.error("Erro ao buscar clientes:", error);
                 document.getElementById('tabelaClientes').innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500 font-medium bg-red-50/50">Erro ao carregar dados. (Verifique as permissões do banco).</td></tr>`;
             }
+        }
+
+        // Nova função inteligente para extrair e formatar o nome
+        function extrairNomeDoEmail(email) {
+            if (!email) return 'Sem nome';
+            const parteLocal = email.split('@')[0];
+            
+            // Troca pontos, hifens e underlines por espaço
+            const nomeComEspacos = parteLocal.replace(/[.\-_]/g, ' ');
+            
+            // Capitaliza a primeira letra de cada palavra
+            const palavras = nomeComEspacos.split(' ');
+            const nomeFormatado = palavras.map(palavra => {
+                if (palavra.length > 0) {
+                    return palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase();
+                }
+                return '';
+            }).join(' ');
+            
+            return nomeFormatado;
         }
 
         function filtrarClientes() {
@@ -183,10 +226,11 @@
             const dataFim = document.getElementById('filtroDataFim').value;
 
             // Filtra o array principal
-            const clientesFiltrados = todosOsClientes.filter(cliente => {
+            clientesFiltradosGlobais = todosOsClientes.filter(cliente => {
                 
-                // 1. Filtro de Texto (Nome, Email ou Fone)
-                const textoCliente = `${cliente.full_name || ''} ${cliente.email || ''} ${cliente.telefone || ''}`.toLowerCase();
+                // 1. Filtro de Texto (inclui o nome extraído do email na busca)
+                const nomeExibicao = cliente.full_name || extrairNomeDoEmail(cliente.email);
+                const textoCliente = `${nomeExibicao} ${cliente.email || ''} ${cliente.telefone || ''}`.toLowerCase();
                 const passaTexto = textoCliente.includes(termoBusca);
 
                 // 2. Filtro de Status
@@ -206,7 +250,6 @@
                 let passaData = true;
                 if (dataInicio || dataFim) {
                     const dataCadastro = new Date(cliente.created_at);
-                    
                     if (dataInicio) {
                         const inicio = new Date(dataInicio + 'T00:00:00');
                         if (dataCadastro < inicio) passaData = false;
@@ -220,79 +263,113 @@
                 return passaTexto && passaStatus && passaData;
             });
 
-            // Manda desenhar a tabela com os filtrados
-            renderizarTabela(clientesFiltrados);
-        }
+            // Sempre que filtrar, volta para a página 1
+            paginaAtual = 1; 
 
-        function renderizarTabela(clientes) {
-            const tbody = document.getElementById('tabelaClientes');
-            tbody.innerHTML = ''; 
-
-            let contAtivos = 0;
-            let contInativos = 0;
-            let contPendentes = 0;
-
-            if (clientes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500 bg-slate-50/30 rounded-xl"><i data-lucide="search-x" class="w-8 h-8 text-slate-300 mx-auto mb-3"></i>Nenhum cliente atende a esses filtros.</td></tr>`;
-            } else {
-                clientes.forEach(cliente => {
-                    // Atualiza Contadores dos Cards
-                    if (cliente.subscription_status === 'active') contAtivos++;
-                    else if (cliente.subscription_status === 'canceled' || cliente.subscription_status === 'past_due') contInativos++;
-                    else contPendentes++;
-
-                    // Datas
-                    const dataCadastro = new Date(cliente.created_at).toLocaleDateString('pt-BR');
-                    const ultimoPagamento = cliente.updated_at ? new Date(cliente.updated_at).toLocaleDateString('pt-BR') : '—';
-                    
-                    // Badges de Status
-                    let statusBadge = '';
-                    if (cliente.subscription_status === 'active') {
-                        statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-emerald-200"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Ativo</span>`;
-                    } else if (cliente.subscription_status === 'canceled' || cliente.subscription_status === 'past_due') {
-                        statusBadge = `<span class="bg-red-50 text-red-600 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-red-100"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> Inativo</span>`;
-                    } else {
-                        statusBadge = `<span class="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-amber-100"><div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Pendente</span>`;
-                    }
-
-                    // Botão WhatsApp
-                    let btnWhats = `<span class="text-slate-300 text-[11px] bg-slate-50 px-2 py-1 rounded">Sem Nº</span>`;
-                    if (cliente.telefone) { 
-                        const numLimpo = cliente.telefone.replace(/\D/g, ''); 
-                        btnWhats = `
-                            <a href="https://wa.me/55${numLimpo}?text=Olá%20${cliente.full_name || ''},%20aqui%20é%20da%20equipe%20Lumis!" 
-                               target="_blank" 
-                               class="bg-[#25D366] hover:bg-[#1ebd5a] text-white px-3 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 mx-auto w-max shadow-sm shadow-[#25D366]/30">
-                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Chamar
-                            </a>
-                        `;
-                    }
-
-                    // Monta a Linha
-                    const tr = document.createElement('tr');
-                    tr.className = 'table-row transition-colors hover:bg-blue-50/30';
-                    tr.innerHTML = `
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-slate-800 text-[13px] mb-0.5">${cliente.full_name || 'Sem nome'}</p>
-                            <p class="text-[11px] text-slate-500 font-medium">${cliente.email || '—'}</p>
-                        </td>
-                        <td class="px-6 py-4 text-slate-600 text-[13px] font-medium tracking-wide">${cliente.telefone || '—'}</td>
-                        <td class="px-6 py-4 text-slate-500 text-[13px]">${dataCadastro}</td>
-                        <td class="px-6 py-4 text-slate-500 text-[13px]">${ultimoPagamento}</td>
-                        <td class="px-6 py-4">${statusBadge}</td>
-                        <td class="px-6 py-4">${btnWhats}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-
-            // Atualiza os Números dos Cards Superiores baseado no filtro
-            document.getElementById('totalClientes').innerText = clientes.length;
+            // Atualiza os Números dos Cards Superiores
+            let contAtivos = 0, contInativos = 0, contPendentes = 0;
+            clientesFiltradosGlobais.forEach(cliente => {
+                if (cliente.subscription_status === 'active') contAtivos++;
+                else if (cliente.subscription_status === 'canceled' || cliente.subscription_status === 'past_due') contInativos++;
+                else contPendentes++;
+            });
+            document.getElementById('totalClientes').innerText = clientesFiltradosGlobais.length;
             document.getElementById('clientesAtivos').innerText = contAtivos;
             document.getElementById('clientesInativos').innerText = contInativos;
             document.getElementById('clientesPendentes').innerText = contPendentes;
-            
+
+            // Renderiza a tabela paginada
+            renderizarTabelaPaginada();
+        }
+
+        function renderizarTabelaPaginada() {
+            const tbody = document.getElementById('tabelaClientes');
+            tbody.innerHTML = ''; 
+
+            const totalFiltrados = clientesFiltradosGlobais.length;
+
+            if (totalFiltrados === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500 bg-slate-50/30 rounded-xl"><i data-lucide="search-x" class="w-8 h-8 text-slate-300 mx-auto mb-3"></i>Nenhum cliente atende a esses filtros.</td></tr>`;
+                atualizarBotoesPaginacao(0, 0);
+                lucide.createIcons();
+                return;
+            }
+
+            // Calcula o corte (Fatia) do Array para a página atual
+            const inicioIndice = (paginaAtual - 1) * itensPorPagina;
+            const fimIndice = inicioIndice + itensPorPagina;
+            const clientesNaTela = clientesFiltradosGlobais.slice(inicioIndice, fimIndice);
+
+            clientesNaTela.forEach(cliente => {
+                // Datas
+                const dataCadastro = new Date(cliente.created_at).toLocaleDateString('pt-BR');
+                const ultimoPagamento = cliente.updated_at ? new Date(cliente.updated_at).toLocaleDateString('pt-BR') : '—';
+                
+                // Badges de Status
+                let statusBadge = '';
+                if (cliente.subscription_status === 'active') {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-emerald-200"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Ativo</span>`;
+                } else if (cliente.subscription_status === 'canceled' || cliente.subscription_status === 'past_due') {
+                    statusBadge = `<span class="bg-red-50 text-red-600 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-red-100"><div class="w-1.5 h-1.5 rounded-full bg-red-500"></div> Inativo</span>`;
+                } else {
+                    statusBadge = `<span class="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 w-max border border-amber-100"><div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div> Pendente</span>`;
+                }
+
+                // Botão WhatsApp e Nome Formatado
+                const nomeExibicao = cliente.full_name || extrairNomeDoEmail(cliente.email);
+
+                let btnWhats = `<span class="text-slate-300 text-[11px] bg-slate-50 px-2 py-1 rounded">Sem Nº</span>`;
+                if (cliente.telefone) { 
+                    const numLimpo = cliente.telefone.replace(/\D/g, ''); 
+                    btnWhats = `
+                        <a href="https://wa.me/55${numLimpo}?text=Olá%20${nomeExibicao},%20aqui%20é%20da%20equipe%20Lumis!" 
+                           target="_blank" 
+                           class="bg-[#25D366] hover:bg-[#1ebd5a] text-white px-3 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 mx-auto w-max shadow-sm shadow-[#25D366]/30">
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Chamar
+                        </a>
+                    `;
+                }
+
+                // Monta a Linha
+                const tr = document.createElement('tr');
+                tr.className = 'table-row transition-colors hover:bg-blue-50/30';
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <p class="font-bold text-slate-800 text-[13px] mb-0.5">${nomeExibicao}</p>
+                        <p class="text-[11px] text-slate-500 font-medium">${cliente.email || '—'}</p>
+                    </td>
+                    <td class="px-6 py-4 text-slate-600 text-[13px] font-medium tracking-wide">${cliente.telefone || '—'}</td>
+                    <td class="px-6 py-4 text-slate-500 text-[13px]">${dataCadastro}</td>
+                    <td class="px-6 py-4 text-slate-500 text-[13px]">${ultimoPagamento}</td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4">${btnWhats}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            atualizarBotoesPaginacao(inicioIndice, clientesNaTela.length);
             lucide.createIcons();
+        }
+
+        function atualizarBotoesPaginacao(inicioIndice, qtdNaTela) {
+            const total = clientesFiltradosGlobais.length;
+            const maxPaginas = Math.ceil(total / itensPorPagina);
+            
+            // Texto: Mostrando 1 a 10 de 50 clientes
+            if (total === 0) {
+                document.getElementById('textoPaginacao').innerText = "Nenhum cliente encontrado.";
+            } else {
+                document.getElementById('textoPaginacao').innerText = `Mostrando ${inicioIndice + 1} a ${inicioIndice + qtdNaTela} de ${total} clientes (Página ${paginaAtual}/${maxPaginas})`;
+            }
+
+            // Habilita/Desabilita os botões
+            document.getElementById('btnAnterior').disabled = (paginaAtual === 1);
+            document.getElementById('btnProxima').disabled = (paginaAtual === maxPaginas || maxPaginas === 0);
+        }
+
+        function mudarPagina(direcao) {
+            paginaAtual += direcao;
+            renderizarTabelaPaginada();
         }
 
         function limparFiltros() {
@@ -301,6 +378,41 @@
             document.getElementById('filtroDataInicio').value = '';
             document.getElementById('filtroDataFim').value = '';
             filtrarClientes(); // Roda a tabela de novo com tudo limpo
+        }
+
+        // FUNÇÃO DE EXPORTAR EXCEL (CSV)
+        function exportarCSV() {
+            if (clientesFiltradosGlobais.length === 0) {
+                alert("Não há dados para exportar com os filtros atuais.");
+                return;
+            }
+
+            // Cabeçalho da Planilha
+            let csv = "Nome,Email,Telefone,Data Cadastro,Ultimo Pgto,Status\n";
+
+            clientesFiltradosGlobais.forEach(c => {
+                const nomeExibicao = c.full_name || extrairNomeDoEmail(c.email);
+                const nome = nomeExibicao.replace(/,/g, ''); // Remove vírgulas para não bugar o CSV
+                const email = c.email || '';
+                const tel = c.telefone || '';
+                const dataCad = new Date(c.created_at).toLocaleDateString('pt-BR');
+                const ultPgto = c.updated_at ? new Date(c.updated_at).toLocaleDateString('pt-BR') : '';
+                
+                let status = 'Pendente';
+                if (c.subscription_status === 'active') status = 'Ativo';
+                else if (c.subscription_status === 'canceled' || c.subscription_status === 'past_due') status = 'Inativo';
+
+                csv += `${nome},${email},${tel},${dataCad},${ultPgto},${status}\n`;
+            });
+
+            // Cria o arquivo virtual e clica para baixar
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }); // \uFEFF força o Excel a ler os acentos corretos
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Clientes_Lumis.csv';
+            link.click();
+            URL.revokeObjectURL(url);
         }
 
         async function sair() {
