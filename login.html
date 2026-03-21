@@ -257,6 +257,11 @@
             if (profile && profile.subscription_status === 'active') {
                 showToast("Login realizado com sucesso! Redirecionando...", "success");
                 
+                // NOVO: Bater o Ponto (Salvar último login)
+                try {
+                    await supabaseClient.from('profiles').update({ last_login: new Date().toISOString() }).eq('id', userId);
+                } catch (e) { console.error("Erro ao registrar último login", e); }
+
                 // LÓGICA DO MANTER SESSÃO
                 const manterSessao = document.getElementById('manterSessao').checked;
                 if (manterSessao) {
