@@ -29,14 +29,6 @@
             border-radius: 1.25rem;
         }
 
-        /* Efeito de fundo grid lado escuro */
-        .bg-grid-dark {
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
         /* Toast Animations */
         .toast-enter { transform: translateY(100%); opacity: 0; }
         .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -54,7 +46,7 @@
     
     <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
 
-    <div class="w-full lg:w-[55%] xl:w-[60%] lg:h-screen lg:overflow-y-auto left-scroll bg-[#0D152B] bg-grid-dark text-white flex flex-col relative order-2 lg:order-1 border-t lg:border-t-0 lg:border-r border-slate-800">
+    <div class="w-full lg:w-[55%] xl:w-[60%] lg:h-screen lg:overflow-y-auto left-scroll bg-[#0D152B] text-white flex flex-col relative order-2 lg:order-1 border-t lg:border-t-0 lg:border-r border-slate-800">
         
         <div class="p-8 lg:p-12 xl:p-16 max-w-3xl mx-auto w-full pb-20">
             
@@ -69,95 +61,24 @@
                 Acesse nossa plataforma premium para gerenciar receitas, despesas, investimentos e muito mais. Tudo em um único lugar.
             </p>
 
-            <div class="mb-10 bg-[#111827] border border-[#1E293B] rounded-3xl p-6 lg:p-8 flex flex-col relative overflow-hidden shadow-2xl">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-[#3B82F6] opacity-10 blur-[80px] rounded-full pointer-events-none"></div>
-
-                <div class="z-10 mb-8">
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-4">
-                        <i data-lucide="bot" class="w-3.5 h-3.5"></i> Inteligência Artificial
-                    </div>
-                    <h3 class="text-xl lg:text-2xl font-extrabold text-white leading-tight mb-3">
-                        Conheça a <span class="text-[#3B82F6]">Mis</span>,<br>sua assistente no WhatsApp
-                    </h3>
-                    <p class="text-sm text-slate-400 leading-relaxed">
-                        Esqueça a obrigação de abrir o aplicativo. Mande uma mensagem de texto no WhatsApp e a Mis categoriza e registra tudo na plataforma automaticamente.
-                    </p>
-                </div>
-
-                <div class="w-full max-w-[320px] bg-[#0b141a] border-[4px] border-[#1f2937] rounded-[2rem] overflow-hidden flex flex-col shadow-lg relative z-10 self-center">
-                    <div class="bg-[#202c33] px-3 py-2.5 flex items-center gap-2 shadow-sm relative z-10">
-                        <i data-lucide="chevron-left" class="w-4 h-4 text-[#3B82F6]"></i>
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-bold text-xs shadow-md">L</div>
-                        <div>
-                            <p class="text-white text-xs font-semibold leading-none">Lumis</p>
-                        </div>
-                    </div>
-
-                    <div class="flex-1 p-3 flex flex-col gap-3 h-[200px] overflow-y-auto no-scrollbar relative" style="background-color: #0b141a;">
-                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
-                            <span class="leading-relaxed">Recebi 4000 de salário</span>
-                            <div class="flex justify-end items-center gap-1 mt-0.5 -mb-0.5">
-                                <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="self-start bg-[#202c33] text-[#e9edef] text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
-                            <span class="leading-relaxed block mb-1">Anotado! Receita de R$ 4.000,00 (Salário) ✅</span>
-                            <span class="leading-relaxed block text-[#8696a0]">📊 Acesse a plataforma para ver os detalhes!</span>
-                        </div>
-
-                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10 mt-1">
-                            <span class="leading-relaxed">Paguei 150 de internet</span>
-                            <div class="flex justify-end items-center gap-1 mt-0.5 -mb-0.5">
-                                <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="self-start bg-[#202c33] text-[#e9edef] text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
-                            <span class="leading-relaxed block mb-1">Anotado! R$ 150,00 em Casa (Internet) ✅</span>
-                            <span class="leading-relaxed block text-[#8696a0]">📊 Acesse a plataforma para ver os detalhes!</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#202c33] px-2 py-2 flex items-center gap-2 relative z-10 shadow-inner">
-                        <div class="flex-1 bg-[#2a3942] rounded-full h-7 flex items-center px-3">
-                            <span class="text-[#8696a0] text-[10px]">Mensagem</span>
-                        </div>
-                        <div class="w-7 h-7 rounded-full bg-[#00a884] flex items-center justify-center text-white shrink-0 shadow-md">
-                            <i data-lucide="send" class="w-3 h-3 text-[#0b141a] fill-current translate-y-[1px] translate-x-[-1px]"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="mb-10 rounded-3xl relative overflow-hidden shadow-2xl">
+               <img src="image_a7df5e.png" alt="Conheça a Mis, sua assistente no WhatsApp" class="w-full h-auto" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                <div class="dark-card p-5">
-                    <div class="w-8 h-8 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-3">
-                        <i data-lucide="pie-chart" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-white mb-1.5">Controle Total</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Painéis claros com receitas, despesas e investimentos.</p>
-                </div>
-                <div class="dark-card p-5">
-                    <div class="w-8 h-8 rounded-lg bg-[#2563EB]/10 flex items-center justify-center mb-3">
-                        <i data-lucide="shield" class="w-4 h-4 text-[#3B82F6]"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-white mb-1.5">Reserva e Metas</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Acompanhe suas metas de gastos e sua reserva de emergência.</p>
-                </div>
+            <div class="mb-10 rounded-3xl relative overflow-hidden shadow-2xl">
+               <img src="image_a7df7f.png" alt="Tudo o que você precisa para organizar suas finanças" class="w-full h-auto" />
             </div>
 
-            <div class="dark-card p-6 flex flex-col justify-between">
-                <div>
-                    <div class="flex text-[#3B82F6] mb-4 gap-1">
-                        <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    </div>
-                    <p class="text-[13px] text-slate-300 italic mb-5">"A Mis mudou minha vida. Mando uma mensagem saindo do restaurante e tá tudo lá na plataforma. Recomendo demais!"</p>
-                </div>
-                <div>
-                    <p class="font-bold text-white text-[13px]">Rafael Mendes</p>
-                    <p class="text-[11px] text-slate-500">Desenvolvedor</p>
-                </div>
+             <div class="mb-10 rounded-3xl relative overflow-hidden shadow-2xl">
+               <img src="image_a7dfb6.png" alt="Conheça a plataforma por dentro" class="w-full h-auto" />
+            </div>
+
+            <div class="rounded-3xl relative overflow-hidden shadow-2xl">
+               <img src="image_a7e261.png" alt="O que nossos usuários dizem" class="w-full h-auto" />
+            </div>
+
+            <div class="mt-10 rounded-3xl relative overflow-hidden shadow-2xl">
+               <img src="image_a7e285.png" alt="Planos de Assinatura" class="w-full h-auto" />
             </div>
 
         </div>
@@ -176,9 +97,13 @@
 
             <div class="clean-card w-full p-6 sm:p-8 lg:p-10 mb-8">
                 
-                <div class="text-center mb-8">
-                    <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2" id="titulo-pagina">Crie sua conta Premium</h2>
-                    <p id="plano-selecionado-texto" class="text-xs sm:text-sm text-slate-500 font-medium">Excelente escolha! <b>Plano Anual</b> com desconto.</p>
+                <div class="text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
+                    <img src="logo.png" alt="Lumis Logo" class="w-32 sm:w-40 h-auto object-contain mx-auto mb-1">
+                    <h2 class="w-full text-center text-[10px] sm:text-[11px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] mb-4">
+                        Organizador Financeiro
+                    </h2>
+                    <h3 id="titulo-pagina" class="text-lg sm:text-xl font-extrabold text-slate-800 mb-1">Crie sua conta Premium</h3>
+                    <p id="plano-selecionado-texto" class="text-[12px] sm:text-[13px] text-slate-500 font-medium">Excelente escolha! <b>Plano Anual</b> com desconto.</p>
                 </div>
 
                 <div class="flex gap-3 sm:gap-4 mb-8 w-full">
@@ -186,18 +111,15 @@
                         <div class="flex flex-col items-center justify-center h-full pointer-events-none">
                             <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Mensal</span>
                             <span class="text-[10px] text-slate-400 line-through font-medium leading-none mb-1">de R$ 19,90</span>
-                            <span class="text-xl font-black text-[#2563EB] leading-none">R$ 9,90</span>
+                            <span class="text-lg sm:text-xl font-black text-[#0040A1] leading-none">R$ 9,90</span>
                         </div>
                     </button>
                     
-                    <button type="button" id="btn-plano-anual" onclick="selecionarPlano('anual')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#2563EB] bg-blue-50/50 ring-2 ring-[#2563EB]/20 scale-[1.02] shadow-md opacity-100">
-                        <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#2563EB] text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full whitespace-nowrap">
-                            Mais Popular
-                        </div>
-                        <div class="flex flex-col items-center justify-center h-full pointer-events-none mt-1">
+                    <button type="button" id="btn-plano-anual" onclick="selecionarPlano('anual')" class="flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100">
+                        <div class="flex flex-col items-center justify-center h-full pointer-events-none">
                             <span class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wider mb-1">Anual</span>
                             <span class="text-[10px] text-slate-400 line-through font-medium leading-none mb-1">de R$ 190,90</span>
-                            <span class="text-xl font-black text-[#2563EB] leading-none mb-1.5">R$ 99,90</span>
+                            <span class="text-lg sm:text-xl font-black text-[#0040A1] leading-none mb-1.5">R$ 99,90</span>
                             <span class="text-[9px] font-bold text-emerald-600 leading-none bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">R$ 8,33 / mês</span>
                         </div>
                     </button>
@@ -206,65 +128,62 @@
                 <div id="formulario-cadastro" class="space-y-4 sm:space-y-5 w-full text-left">
                     
                     <div class="input-group w-full">
-                        <label for="email" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">E-mail Pessoal</label>
+                        <label for="email" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">O seu melhor E-mail</label>
                         <div class="relative group w-full">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#2563EB] transition-colors">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                                 <i data-lucide="mail" class="w-4 h-4"></i>
                             </span>
                             <input type="email" id="email" 
-                                class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#2563EB] focus:border-[#2563EB] transition-all placeholder:text-slate-400" 
+                                class="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0040A1] focus:border-[#0040A1] transition-all placeholder:text-slate-400" 
                                 placeholder="exemplo@email.com">
                         </div>
                     </div>
 
                     <div class="input-group w-full">
-                        <label for="telefone" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">WhatsApp da Mis</label>
+                        <label for="telefone" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">WhatsApp</label>
                         <div class="relative group w-full">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#2563EB] transition-colors">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
                                 <i data-lucide="phone" class="w-4 h-4"></i>
                             </span>
                             <input type="tel" id="telefone" oninput="mascaraTelefone(this)" maxlength="15"
-                                class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#2563EB] focus:border-[#2563EB] transition-all placeholder:text-slate-400" 
+                                class="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0040A1] focus:border-[#0040A1] transition-all placeholder:text-slate-400" 
                                 placeholder="(11) 99999-9999">
                         </div>
-                        <p class="text-[9px] text-slate-400 mt-1 ml-1">Para vincular sua assistente inteligente</p>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
-                        <div class="input-group w-full">
-                            <label for="senha" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">Senha</label>
-                            <div class="relative group w-full">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 group-focus-within:text-[#2563EB] transition-colors">
-                                    <i data-lucide="lock" class="w-4 h-4"></i>
-                                </span>
-                                <input type="password" id="senha" oninput="checarSenhas()"
-                                    class="block w-full pl-9 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#2563EB] focus:border-[#2563EB] transition-all placeholder:text-slate-400" 
-                                    placeholder="••••••••">
-                                <button type="button" onclick="togglePassword('senha', 'eyeIcon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#2563EB] transition-colors">
-                                    <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                    <div class="input-group w-full">
+                        <label for="senha" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">Crie uma Senha</label>
+                        <div class="relative group w-full">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" id="senha" oninput="checarSenhas()"
+                                class="block w-full pl-9 pr-9 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0040A1] focus:border-[#0040A1] transition-all placeholder:text-slate-400" 
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword('senha', 'eyeIcon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#0040A1] transition-colors cursor-pointer focus:outline-none">
+                                <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="input-group w-full">
-                            <label for="senha_confirmacao" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">Confirme</label>
-                            <div class="relative group w-full">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 group-focus-within:text-[#2563EB] transition-colors">
-                                    <i data-lucide="lock" class="w-4 h-4"></i>
-                                </span>
-                                <input type="password" id="senha_confirmacao" oninput="checarSenhas()"
-                                    class="block w-full pl-9 pr-9 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#2563EB] focus:border-[#2563EB] transition-all placeholder:text-slate-400" 
-                                    placeholder="••••••••">
-                                <button type="button" onclick="togglePassword('senha_confirmacao', 'eyeIconConfirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#2563EB] transition-colors">
-                                    <i id="eyeIconConfirm" data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                            </div>
+                    <div class="input-group w-full">
+                        <label for="senha_confirmacao" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">Confirme a Senha</label>
+                        <div class="relative group w-full">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 group-focus-within:text-[#0040A1] transition-colors">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" id="senha_confirmacao" oninput="checarSenhas()"
+                                class="block w-full pl-9 pr-9 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0040A1] focus:border-[#0040A1] transition-all placeholder:text-slate-400" 
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword('senha_confirmacao', 'eyeIconConfirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#0040A1] transition-colors cursor-pointer focus:outline-none">
+                                <i id="eyeIconConfirm" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
                     <p id="senhaErro" class="text-red-500 text-[10px] font-bold mt-1 hidden text-left pl-1 transition-all">As senhas não coincidem</p>
                 </div>
 
-                <button onclick="processarAcao()" id="btnCadastro" class="w-full py-4 mt-8 bg-[#2563EB] text-white rounded-xl font-bold text-[14px] shadow-lg shadow-[#2563EB]/30 hover:bg-[#1D4ED8] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
+                <button onclick="processarAcao()" id="btnCadastro" class="w-full py-3.5 mt-8 bg-[#0040A1] text-white rounded-xl font-bold text-[14px] shadow-lg shadow-[#0040A1]/30 hover:bg-[#003080] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
                     <span>Continuar para Pagamento</span>
                     <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
@@ -273,7 +192,7 @@
             
             <div id="area-login" class="w-full text-center text-xs text-slate-500">
                 <span>Já tem uma conta?</span>
-                <a href="login.html" class="text-[#2563EB] font-bold hover:text-[#1D4ED8] ml-1 transition-colors">Fazer Login</a>
+                <a href="login.html" class="text-[#0040A1] font-bold hover:text-[#003080] ml-1 transition-colors">Fazer Login ➔</a>
             </div>
 
             <div class="mt-8 text-center">
@@ -314,22 +233,16 @@
           const btnAnual = document.getElementById('btn-plano-anual');
           const textoPlano = document.getElementById('plano-selecionado-texto');
 
-          const cssAtivo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#2563EB] bg-blue-50/50 ring-2 ring-[#2563EB]/20 scale-[1.02] shadow-md opacity-100";
+          const cssAtivo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-[#0040A1] bg-blue-50/50 ring-2 ring-[#0040A1]/20 scale-[1.02] shadow-md opacity-100";
           const cssInativo = "flex-1 relative p-3 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer border-slate-100 bg-white opacity-60 hover:opacity-100 hover:border-slate-300 scale-100";
 
           if (plano === 'mensal') {
               btnMensal.className = cssAtivo;
               btnAnual.className = cssInativo;
-              // Remove badge "Mais Popular" do anual se não selecionado
-              const badge = btnAnual.querySelector('.absolute');
-              if(badge) badge.style.opacity = '0.5';
-              textoPlano.innerHTML = "Você escolheu o <b>Plano Mensal</b>.";
+              textoPlano.innerHTML = "Está prestes a assinar o <b>Plano Mensal</b>.";
           } else {
               btnAnual.className = cssAtivo;
               btnMensal.className = cssInativo;
-              // Volta badge
-              const badge = btnAnual.querySelector('.absolute');
-              if(badge) badge.style.opacity = '1';
               textoPlano.innerHTML = "Excelente escolha! <b>Plano Anual</b> com desconto.";
           }
       }
@@ -493,7 +406,7 @@
                   <div class="p-4 bg-emerald-50 text-emerald-700 rounded-xl font-medium text-sm border border-emerald-100">
                       Você está logado como <b>${user.email}</b>.<br>Escolha o seu plano abaixo para reativar o acesso.
                   </div>
-                  <button onclick="sairEVoltarParaLogin()" class="text-xs font-bold text-slate-400 hover:text-[#2563EB] transition-colors underline decoration-dashed underline-offset-4">
+                  <button onclick="sairEVoltarParaLogin()" class="text-xs font-bold text-slate-400 hover:text-[#0040A1] transition-colors underline decoration-dashed underline-offset-4">
                       Não é você? Sair e entrar com outra conta
                   </button>
               `;
