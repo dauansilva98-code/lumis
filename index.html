@@ -198,51 +198,116 @@
                         Conheça a <span class="text-[#3B82F6]">Mis</span>,<br>sua assistente no WhatsApp
                     </h3>
                     <p class="text-sm md:text-base text-slate-400 leading-relaxed">
-                        Esqueça a obrigação de abrir o aplicativo toda vez que gastar dinheiro. Basta mandar um áudio ou texto no WhatsApp para a Mis, e ela categoriza e registra a despesa na sua plataforma automaticamente.
+                        Esqueça a obrigação de abrir o aplicativo toda vez que gastar dinheiro. Basta mandar uma mensagem de texto no WhatsApp para a Mis, e ela categoriza e registra tudo na sua plataforma automaticamente.
                     </p>
                     <ul class="space-y-3 mt-4 text-sm text-slate-300 font-medium">
-                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Reconhece áudios e mensagens de texto</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Categoriza e registra direto no seu painel Lumis</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Te avisa como está o limite do mês na hora</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Reconhece mensagens de texto em linguagem natural</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Categoriza receitas, despesas e investimentos no painel</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6]"></i> Organiza seu balanço do mês instantaneamente</li>
                     </ul>
                 </div>
 
-                <div class="w-full md:w-[320px] bg-[#0b141a] border-[6px] border-[#1f2937] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl relative z-10 flex-shrink-0 mx-auto">
-                    <div class="bg-[#202c33] px-4 py-3 flex items-center gap-3 relative z-10">
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shadow-md">M</div>
+                <div class="w-full md:w-[360px] bg-[#0b141a] border-[6px] border-[#1f2937] rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl relative z-10 flex-shrink-0 mx-auto">
+                    <div class="bg-[#202c33] px-4 py-3 flex items-center gap-3 relative z-10 shadow-md">
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-[#3B82F6]"></i>
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-bold text-sm shadow-md">L</div>
                         <div>
-                            <p class="text-white text-[13px] font-semibold leading-none">Mis (Lumis)</p>
-                            <p class="text-[#8696a0] text-[10px] mt-1">online</p>
+                            <p class="text-white text-[13px] font-semibold leading-none">Lumis</p>
+                            <p class="text-[#8696a0] text-[10px] mt-1">Conta comercial</p>
                         </div>
                     </div>
-                    <div class="flex-1 p-4 flex flex-col gap-3 min-h-[260px] relative" style="background-color: #0b141a;">
-                        <div class="absolute inset-0 opacity-5" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover;"></div>
+
+                    <div class="flex-1 p-4 flex flex-col gap-4 h-[380px] overflow-y-auto no-scrollbar relative" style="background-color: #0b141a;">
+                        <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; background-attachment: fixed;"></div>
                         
-                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-[12px] px-3 pt-2 pb-1.5 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
-                            <span class="leading-relaxed">Acabei de gastar 50 reais num Uber pra voltar pra casa</span>
-                            <div class="flex justify-end items-center gap-1 mt-1">
-                                <span class="text-[#8696a0] text-[9px]">18:42</span>
+                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
+                            <span class="leading-relaxed">Recebi 4000 de salário</span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
                                 <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
                             </div>
                         </div>
                         
-                        <div class="self-start bg-[#202c33] text-[#e9edef] text-[12px] px-3 pt-2 pb-1.5 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10 mt-1">
-                            <span class="leading-relaxed">
-                                Tudo certo! 🚗<br><br>
-                                Valor: <strong>R$ 50,00</strong><br>
-                                Categoria: <strong>Transporte</strong><br><br>
-                                Já registrei essa despesa no seu painel. Você ainda tem R$ 150,00 de limite para gastar com Transporte este mês. 😉
+                        <div class="self-start bg-[#202c33] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
+                            <span class="leading-relaxed block mb-2">
+                                Anotado! Receita de R$ 4.000,00 (Salário) ✅
                             </span>
-                            <div class="flex justify-end items-center gap-1 mt-1">
-                                <span class="text-[#8696a0] text-[9px]">18:42</span>
+                            <span class="leading-relaxed block">
+                                📊 Acesse a plataforma para ver os detalhes!
+                            </span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
                             </div>
                         </div>
+
+                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
+                            <span class="leading-relaxed">Coloquei 200 de gasolina</span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
+                                <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="self-start bg-[#202c33] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
+                            <span class="leading-relaxed block mb-2">
+                                Anotado! R$ 200,00 em Automóvel (Gasolina) ✅
+                            </span>
+                            <span class="leading-relaxed block">
+                                📊 Acesse a plataforma para ver os detalhes!
+                            </span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
+                            </div>
+                        </div>
+
+                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
+                            <span class="leading-relaxed">Paguei 150 de internet</span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
+                                <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="self-start bg-[#202c33] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
+                            <span class="leading-relaxed block mb-2">
+                                Anotado! R$ 150,00 em Casa (Internet) ✅
+                            </span>
+                            <span class="leading-relaxed block">
+                                📊 Acesse a plataforma para ver os detalhes!
+                            </span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:49</span>
+                            </div>
+                        </div>
+
+                        <div class="self-end bg-[#005c4b] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10">
+                            <span class="leading-relaxed">Investi 200 na reserva</span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:50</span>
+                                <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="self-start bg-[#202c33] text-[#e9edef] text-[13px] px-3 pt-2 pb-1.5 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
+                            <span class="leading-relaxed block mb-2">
+                                Anotado! Investimento de R$ 200,00 em Reserva ✅
+                            </span>
+                            <span class="leading-relaxed block">
+                                📊 Acesse a plataforma para ver os detalhes!
+                            </span>
+                            <div class="flex justify-end items-center gap-1 mt-1 -mb-0.5">
+                                <span class="text-[#8696a0] text-[9px]">22:50</span>
+                            </div>
+                        </div>
+
                     </div>
-                    <div class="bg-[#202c33] px-2 py-2 flex items-center gap-2 relative z-10">
-                        <div class="w-full bg-[#2a3942] rounded-full h-9 flex items-center px-4">
+                    <div class="bg-[#202c33] px-2 py-2 flex items-center gap-2 relative z-10 shadow-inner">
+                        <i data-lucide="plus" class="w-5 h-5 text-[#8696a0] ml-1"></i>
+                        <div class="flex-1 bg-[#2a3942] rounded-full h-9 flex items-center px-4">
                             <span class="text-[#8696a0] text-xs">Mensagem</span>
                         </div>
-                        <div class="w-9 h-9 rounded-full bg-[#00a884] flex items-center justify-center text-white shrink-0 shadow-md">
+                        <i data-lucide="camera" class="w-5 h-5 text-[#8696a0]"></i>
+                        <div class="w-9 h-9 rounded-full bg-[#00a884] flex items-center justify-center text-white shrink-0 shadow-md ml-1">
                             <i data-lucide="mic" class="w-4 h-4 text-[#0b141a] fill-current"></i>
                         </div>
                     </div>
@@ -327,7 +392,7 @@
                         <div class="flex text-[#3B82F6] mb-4 gap-1">
                             <i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i>
                         </div>
-                        <p class="text-[13px] text-slate-300 italic mb-6">"A Mis mudou minha vida. Mando um áudio do WhatsApp saindo do restaurante e tá tudo lá na planilha. Genial!"</p>
+                        <p class="text-[13px] text-slate-300 italic mb-6">"A Mis mudou minha vida. Mando uma mensagem saindo do restaurante e tá tudo lá na plataforma. Genial!"</p>
                     </div>
                     <div>
                         <p class="font-bold text-white text-[13px]">Juliana Santos</p>
@@ -449,7 +514,7 @@
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 faq-icon transition-transform flex-shrink-0"></i>
                     </div>
                     <div class="faq-content hidden px-4 pb-4 text-[12px] text-slate-400 leading-relaxed border-t border-slate-800/50 pt-3">
-                        Ao assinar qualquer plano, você recebe um número de WhatsApp exclusivo. Basta salvar nos seus contatos e enviar mensagens de texto ou áudio (ex: "Gastei 15 no Ifood"). A Mis entende, categoriza e envia a despesa direto para o seu painel Lumis em tempo real.
+                        Ao assinar qualquer plano, você recebe um número de WhatsApp exclusivo. Basta salvar nos seus contatos e enviar mensagens de texto (ex: "Gastei 15 no Ifood"). A Mis entende, categoriza e envia a despesa direto para o seu painel Lumis em tempo real.
                     </div>
                 </div>
                 <div class="dark-card overflow-hidden cursor-pointer faq-item" onclick="toggleFaq(this)">
