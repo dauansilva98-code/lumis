@@ -13,7 +13,7 @@
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow-x: hidden;
-            background-color: #0D152B; 
+            background-color: #0D152B; /* Fundo geral para mobile e lado esquerdo */
         }
         
         .clean-card {
@@ -35,6 +35,7 @@
         .toast-leave { transform: translateY(0); opacity: 1; }
         .toast-leave-active { transform: translateY(-100%); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
+        /* Scrollbar customizada só pro lado esquerdo no desktop */
         .left-scroll::-webkit-scrollbar { width: 6px; }
         .left-scroll::-webkit-scrollbar-thumb { background-color: #1E293B; border-radius: 10px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -64,262 +65,88 @@
 
             <div class="space-y-12 w-full flex flex-col items-center lg:items-start">
                 
-                <div class="w-full bg-[#111827] border border-[#1E293B] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center lg:items-stretch gap-8 relative overflow-hidden shadow-2xl">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-[#3B82F6] opacity-10 blur-[80px] rounded-full pointer-events-none"></div>
+                <div class="w-full rounded-3xl relative overflow-hidden shadow-2xl">
+                   <img src="image_a7df5e.png" alt="Conheça a Mis, sua assistente no WhatsApp" class="w-full h-auto" />
+                </div>
 
-                    <div class="flex-1 space-y-4 z-10">
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
-                            <i data-lucide="bot" class="w-3.5 h-3.5"></i> Inteligência Artificial
-                        </div>
-                        <h3 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                            Conheça a <span class="text-[#3B82F6]">Mis</span>,<br>sua assistente no WhatsApp
-                        </h3>
-                        <p class="text-sm text-slate-400 leading-relaxed">
-                            Esqueça a obrigação de abrir o aplicativo. Mande uma mensagem de texto no WhatsApp e a Mis categoriza e registra tudo na plataforma automaticamente.
-                        </p>
-                        <ul class="space-y-3 mt-4 text-xs sm:text-sm text-slate-300 font-medium">
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6] shrink-0"></i> Reconhece mensagens em linguagem natural</li>
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6] shrink-0"></i> Categoriza receitas, despesas e investimentos</li>
-                            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#3B82F6] shrink-0"></i> Atualiza seu saldo instantaneamente</li>
-                        </ul>
-                    </div>
+                <div class="w-full rounded-3xl relative overflow-hidden shadow-2xl">
+                   <img src="image_a7df7f.png" alt="Tudo o que você precisa para organizar suas finanças" class="w-full h-auto" />
+                </div>
 
-                    <div class="w-full md:w-[280px] lg:w-[300px] bg-[#0b141a] border-[4px] border-[#1f2937] rounded-[2rem] overflow-hidden flex flex-col shadow-lg relative z-10 shrink-0">
-                        <div class="bg-[#202c33] px-3 py-2.5 flex items-center gap-2 shadow-sm relative z-10">
-                            <i data-lucide="chevron-left" class="w-4 h-4 text-[#3B82F6]"></i>
-                            <div class="w-7 h-7 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-bold text-xs shadow-md">L</div>
-                            <div>
-                                <p class="text-white text-[11px] font-semibold leading-none">Lumis</p>
-                                <p class="text-[#8696a0] text-[9px] mt-0.5">Conta comercial</p>
+                <div class="w-full mt-4 mb-4">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-6 text-center lg:text-left">Conheça a plataforma <span class="text-[#3B82F6]">por dentro</span></h2>
+                    
+                    <div class="w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative group bg-[#0B1121]">
+                        <div id="carousel" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth w-full">
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-1.png" alt="Tela do Painel 1" class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                        </div>
-
-                        <div class="flex-1 p-3 flex flex-col gap-3 h-[240px] overflow-y-auto no-scrollbar relative" style="background-color: #0b141a;">
-                            <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: cover; background-attachment: fixed;"></div>
-                            
-                            <div class="self-end bg-[#005c4b] text-[#e9edef] text-[11px] sm:text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10 mt-1">
-                                <span class="leading-relaxed">Recebi 4000 de salário</span>
-                                <div class="flex justify-end items-center gap-1 mt-0.5 -mb-0.5">
-                                    <span class="text-[#8696a0] text-[8px]">22:49</span>
-                                    <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
-                                </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-2.png" alt="Tela do Painel 2" class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                            
-                            <div class="self-start bg-[#202c33] text-[#e9edef] text-[11px] sm:text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
-                                <span class="leading-relaxed block mb-1">Anotado! Receita de R$ 4.000,00 (Salário) ✅</span>
-                                <span class="leading-relaxed block text-[#8696a0] text-[10px]">📊 Acesse a plataforma para ver os detalhes!</span>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-3.png" alt="Tela do Painel 3" class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-
-                            <div class="self-end bg-[#005c4b] text-[#e9edef] text-[11px] sm:text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tr-none max-w-[85%] shadow-sm relative z-10 mt-1">
-                                <span class="leading-relaxed">Coloquei 200 de gasolina</span>
-                                <div class="flex justify-end items-center gap-1 mt-0.5 -mb-0.5">
-                                    <span class="text-[#8696a0] text-[8px]">22:55</span>
-                                    <i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>
-                                </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-4.png" alt="Tela do Painel 4" class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                            
-                            <div class="self-start bg-[#202c33] text-[#e9edef] text-[11px] sm:text-xs px-2.5 pt-1.5 pb-1 rounded-lg rounded-tl-none max-w-[90%] shadow-sm relative z-10">
-                                <span class="leading-relaxed block mb-1">Anotado! R$ 200,00 em Automóvel (Gasolina) ✅</span>
-                                <span class="leading-relaxed block text-[#8696a0] text-[10px]">📊 Acesse a plataforma para ver os detalhes!</span>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-5.png" alt="Tela do Painel 5" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-6.png" alt="Tela do Painel 6" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-7.png" alt="Tela do Painel 7" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-8.png" alt="Tela do Painel 8" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-9.png" alt="Tela do Painel 9" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-10.png" alt="Tela do Painel 10" class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            </div>
+                            <div class="w-full flex-shrink-0 snap-center aspect-video relative flex items-center justify-center text-slate-600">
+                                <img src="dashboard-11.png" alt="Tela do Painel 11" class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
                         </div>
 
-                        <div class="bg-[#202c33] px-2 py-2 flex items-center gap-2 relative z-10 shadow-inner">
-                            <i data-lucide="plus" class="w-4 h-4 text-[#8696a0] ml-1"></i>
-                            <div class="flex-1 bg-[#2a3942] rounded-full h-8 flex items-center px-3">
-                                <span class="text-[#8696a0] text-[10px]">Mensagem</span>
-                            </div>
-                            <div class="w-8 h-8 rounded-full bg-[#00a884] flex items-center justify-center text-white shrink-0 shadow-md ml-0.5">
-                                <i data-lucide="send" class="w-3.5 h-3.5 text-[#0b141a] fill-current translate-y-[1px] translate-x-[-1px]"></i>
-                            </div>
+                        <button onclick="scrollCarousel(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0D152B]/80 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur transition-all opacity-0 group-hover:opacity-100 hidden md:flex border border-white/10">
+                            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                        </button>
+                        <button onclick="scrollCarousel(1)" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0D152B]/80 hover:bg-blue-600 text-white flex items-center justify-center backdrop-blur transition-all opacity-0 group-hover:opacity-100 hidden md:flex border border-white/10">
+                            <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                        </button>
+
+                        <div class="absolute bottom-3 right-3 bg-[#0D152B]/80 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] font-medium text-slate-300 border border-white/10 md:hidden flex items-center gap-1.5">
+                            <i data-lucide="hand" class="w-3 h-3"></i> Arraste para o lado
                         </div>
                     </div>
                 </div>
 
-                <div class="w-full">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="wallet" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Receitas e Despesas</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Registre todas as suas rendas e contas. Veja exatamente quanto sobra.</p>
-                        </div>
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="target" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Metas por Categoria</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Defina metas percentuais e acompanhe o uso do orçamento real.</p>
-                        </div>
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="pie-chart" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Distribuição</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Visualize para onde vai o seu dinheiro com gráficos claros.</p>
-                        </div>
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="trending-up" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Investimentos</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Cadastre ativos, acompanhe o patrimônio e veja a alocação.</p>
-                        </div>
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="shield" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Reserva</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Acompanhe o progresso com metas de segurança financeira.</p>
-                        </div>
-                        <div class="dark-card p-5 hover:border-[#3B82F6] transition-colors">
-                            <div class="w-8 h-8 rounded-lg bg-[#3B82F6]/10 flex items-center justify-center mb-3">
-                                <i data-lucide="bell" class="w-4 h-4 text-[#3B82F6]"></i>
-                            </div>
-                            <h3 class="text-sm font-bold text-white mb-1.5">Alertas e Histórico</h3>
-                            <p class="text-xs text-slate-400 leading-relaxed">Receba alertas e salve no histórico mensal com renda e gastos.</p>
-                        </div>
-                    </div>
+                <div class="w-full rounded-3xl relative overflow-hidden shadow-2xl mt-4">
+                   <img src="image_a7e261.png" alt="O que nossos usuários dizem" class="w-full h-auto" />
                 </div>
 
-                <div class="w-full text-center mt-6">
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-8">Conheça a plataforma <span class="text-[#3B82F6]">por dentro</span></h2>
-                    <div class="w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-[#0B1121]">
-                        <img src="image_a7dfb6.png" alt="Conheça a plataforma por dentro" class="w-full h-auto object-cover" onerror="this.style.display='none';">
-                    </div>
-                </div>
-
-                <div class="w-full mt-6 text-center lg:text-left">
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-8 text-center">O que nossos <span class="text-[#3B82F6]">usuários dizem</span></h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 text-left">
-                        <div class="dark-card p-5 flex flex-col justify-between hover:border-[#3B82F6] transition-colors">
-                            <div>
-                                <div class="flex text-[#3B82F6] mb-3 gap-1">
-                                    <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                                </div>
-                                <p class="text-xs text-slate-300 italic mb-5 leading-relaxed">"Finalmente consegui ter controle das minhas finanças pessoais e do meu negócio. A plataforma é extremamente fácil de usar!"</p>
-                            </div>
-                            <div>
-                                <p class="font-bold text-white text-xs">Ana Carolina</p>
-                                <p class="text-[10px] text-slate-500">Empreendedora</p>
-                            </div>
-                        </div>
-                        <div class="dark-card p-5 flex flex-col justify-between hover:border-[#3B82F6] transition-colors">
-                            <div>
-                                <div class="flex text-[#3B82F6] mb-3 gap-1">
-                                    <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                                </div>
-                                <p class="text-xs text-slate-300 italic mb-5 leading-relaxed">"Uso há 6 meses e já economizei mais de R$3.000 só para ter visibilidade dos meus gastos. Recomendo demais!"</p>
-                            </div>
-                            <div>
-                                <p class="font-bold text-white text-xs">Rafael Mendes</p>
-                                <p class="text-[10px] text-slate-500">Desenvolvedor</p>
-                            </div>
-                        </div>
-                        <div class="dark-card p-5 flex flex-col justify-between hover:border-[#3B82F6] transition-colors">
-                            <div>
-                                <div class="flex text-[#3B82F6] mb-3 gap-1">
-                                    <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                                </div>
-                                <p class="text-xs text-slate-300 italic mb-5 leading-relaxed">"A Mis mudou minha vida. Mando uma mensagem saindo do restaurante e tá tudo lá na plataforma. Genial!"</p>
-                            </div>
-                            <div>
-                                <p class="font-bold text-white text-xs">Juliana Santos</p>
-                                <p class="text-[10px] text-slate-500">Designer</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="w-full mt-6">
-                    <div class="w-full bg-[#111827] border border-slate-800 rounded-xl py-2.5 px-4 flex justify-center items-center gap-2 mb-6 text-[11px] sm:text-xs text-center mx-auto">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0"></i>
-                        <span class="text-[#3B82F6] font-semibold whitespace-nowrap">Oferta limitada</span> 
-                        <span class="text-slate-400">— preços válidos para os primeiros <strong class="text-white">500 usuários</strong></span>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-                        <div class="relative dark-card border-[#3B82F6] flex flex-col text-center overflow-hidden bg-[#0B1121]">
-                            <div class="w-full bg-[#3B82F6] text-white py-1.5 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
-                                <i data-lucide="crown" class="w-3 h-3"></i> MAIS POPULAR — ECONOMIZE 50%
-                            </div>
-                            <div class="p-6 flex flex-col flex-1">
-                                <p class="text-[9px] font-bold tracking-widest text-[#3B82F6] uppercase mb-2">MELHOR CUSTO-BENEFÍCIO</p>
-                                <h3 class="text-base font-bold text-white mb-3">Plano Anual</h3>
-                                <div class="mb-2">
-                                    <span class="text-slate-500 line-through text-[10px] block mb-0.5">R$ 190,90/ano</span>
-                                    <div class="flex items-baseline justify-center gap-1">
-                                        <span class="text-3xl font-extrabold text-[#3B82F6]">R$ 99,90</span>
-                                        <span class="text-slate-400 text-[10px]">/ano</span>
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-[#3B82F6] font-bold mb-1 flex items-center justify-center gap-1"><i data-lucide="star" class="w-3 h-3 fill-current"></i> Apenas R$ 8,33/mês</p>
-                                <p class="text-[9px] text-slate-500 flex items-center justify-center gap-1 mb-5"><i data-lucide="shield" class="w-3 h-3"></i> Garantia de 7 dias</p>
-
-                                <ul class="text-left space-y-2.5 text-[11px] text-slate-300 mb-6 flex-1">
-                                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5"></i> <span>Acesso à assistente <strong class="text-white">Mis no WhatsApp</strong></span></li>
-                                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5"></i> <span>Controle de receitas e despesas</span></li>
-                                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5"></i> <span>Gráficos de distribuição</span></li>
-                                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5"></i> <span>Gestão de investimentos</span></li>
-                                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#3B82F6] shrink-0 mt-0.5"></i> <span>Reserva de emergência</span></li>
-                                </ul>
-
-                                <div class="w-full bg-[#111827] rounded-lg p-2.5 border border-slate-800">
-                                    <div class="flex justify-center text-[9px] font-bold text-white items-center gap-1 mb-1.5">
-                                        <i data-lucide="users" class="w-3 h-3 text-[#3B82F6]"></i> +150 usuários <span class="text-slate-400 font-normal">— vagas limitadas!</span>
-                                    </div>
-                                    <div class="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
-                                        <div class="bg-[#3B82F6] h-1 rounded-full" style="width: 85%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="dark-card p-6 flex flex-col text-center bg-[#0D152B] mt-0 md:mt-6">
-                            <p class="text-[9px] font-bold tracking-widest text-slate-500 uppercase mb-2">FLEXIBILIDADE</p>
-                            <h3 class="text-base font-bold text-white mb-3">Plano Mensal</h3>
-                            <div class="mb-3">
-                                <span class="text-slate-500 line-through text-[10px] block mb-0.5">R$ 19,90/mês</span>
-                                <div class="flex items-baseline justify-center gap-1">
-                                    <span class="text-3xl font-extrabold text-white">R$ 9,90</span>
-                                    <span class="text-slate-400 text-[10px]">/mês</span>
-                                </div>
-                            </div>
-                            <p class="text-[10px] text-slate-400 mb-1">Cancele quando quiser</p>
-                            <p class="text-[9px] text-slate-500 flex items-center justify-center gap-1 mb-5"><i data-lucide="shield" class="w-3 h-3"></i> Garantia de 7 dias</p>
-
-                            <ul class="text-left space-y-2.5 text-[11px] text-slate-300 flex-1">
-                                <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i> <span>Acesso à assistente <strong class="text-white">Mis no WhatsApp</strong></span></li>
-                                <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i> <span>Controle de receitas e despesas</span></li>
-                                <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i> <span>Gráficos de distribuição</span></li>
-                                <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i> <span>Gestão de investimentos</span></li>
-                                <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i> <span>Reserva de emergência</span></li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="w-full rounded-3xl relative overflow-hidden shadow-2xl">
+                   <img src="image_a7e285.png" alt="Planos de Assinatura" class="w-full h-auto" />
                 </div>
 
             </div>
-
         </div>
     </div>
 
-    <div class="w-full lg:w-[45%] xl:w-[40%] bg-gradient-to-b from-[#f0f4f8] to-[#e2e8f0] flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 lg:p-12 relative order-1 lg:order-2 lg:h-screen lg:sticky lg:top-0 shadow-[-20px_0_30px_-15px_rgba(0,0,0,0.1)]">
+    <div class="w-full lg:w-[45%] xl:w-[40%] bg-gradient-to-b from-[#f0f4f8] to-[#e2e8f0] flex flex-col items-center justify-start lg:justify-center p-4 sm:p-8 lg:p-12 relative order-1 lg:order-2 lg:h-screen lg:sticky lg:top-0">
         
         <div class="w-full max-w-[420px] mx-auto pt-6 lg:pt-0">
             
-            <div class="lg:hidden text-center mb-8 flex flex-col items-center justify-center pt-4">
-                <img src="logo.png" alt="Lumis Logo" class="h-10 object-contain mx-auto mb-2" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="hidden items-center justify-center gap-2">
-                    <span class="text-[#0D152B] font-black text-2xl tracking-tighter">LUMIS</span>
-                </div>
-            </div>
-
-            <div class="clean-card w-full p-6 sm:p-8 mb-8">
+            <div class="clean-card w-full p-6 sm:p-8 lg:p-10 mb-8">
                 
                 <div class="text-center mb-6 sm:mb-8 flex flex-col items-center justify-center">
-                    <img src="logo.png" alt="Lumis Logo" class="hidden lg:block w-32 sm:w-40 h-auto object-contain mx-auto mb-1" onerror="this.style.display='none';">
+                    <img src="logo.png" alt="Lumis Logo" class="block w-28 sm:w-40 h-auto object-contain mx-auto mb-3" onerror="this.style.display='none';">
+                    
                     <h2 class="w-full text-center text-[10px] sm:text-[11px] font-extrabold text-[#0040A1] uppercase tracking-[0.2em] mb-4">
                         Organizador Financeiro
                     </h2>
@@ -404,7 +231,7 @@
                     <p id="senhaErro" class="text-red-500 text-[10px] font-bold mt-1 hidden text-left pl-1 transition-all">As senhas não coincidem</p>
                 </div>
 
-                <button onclick="processarAcao()" id="btnCadastro" class="w-full py-3.5 mt-8 bg-[#0040A1] text-white rounded-xl font-bold text-[14px] shadow-lg shadow-[#0040A1]/30 hover:bg-[#003080] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
+                <button onclick="processarAcao()" id="btnCadastro" class="w-full py-4 mt-8 bg-gradient-to-r from-[#031A47] to-[#0040A1] text-white rounded-full font-bold text-[14px] shadow-lg shadow-[#0040A1]/30 hover:to-[#021A40] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
                     <span>Continuar para Pagamento</span>
                     <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
@@ -636,6 +463,13 @@
       document.addEventListener('keypress', (e) => { 
           if (e.key === 'Enter') processarAcao(); 
       });
+
+      // Função para o carrossel do lado esquerdo
+      function scrollCarousel(direction) {
+          const carousel = document.getElementById('carousel');
+          const scrollAmount = carousel.clientWidth;
+          carousel.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+      }
     </script>
 </body>
 </html>
