@@ -25,7 +25,7 @@
         input[type=range] { accent-color: #3b82f6; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 pb-20 font-sans">
+<body class="bg-[#f8fafc] text-slate-800 pb-20 font-sans relative">
 
     <div id="app-root">
         <div class="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc]">
@@ -115,7 +115,14 @@
             user: null, budgetData: { [currentYearString]: generateEmptyYearData() }, currentYear: currentYearString,
             currentMonthIdx: new Date().getMonth(), activeTab: 'dashboard', loading: true, saving: false, errorMsg: null,
             showSyncSuccess: false, syncSuccessTimer: null,
-            confirmMonthChange: null, confirmDeleteItem: null, charts: {}, 
+            confirmMonthChange: null, confirmDeleteItem: null, 
+            
+            // Novos Estados para Modais
+            modalAddItem: null, // { year, month, cat, typeContext }
+            modalAddCat: null, // { year, month }
+            modalEditCat: null, // { year, month, catName }
+            
+            charts: {}, 
             investFilterYear: currentYearString, investFilterType: 'all', investFilterAsset: 'all', investFilterMetric: 'todos',
             rendaFilterItem: 'all',
             get currentMonth() { return MONTHS[this.currentMonthIdx]; },
@@ -302,7 +309,6 @@
         let typingTimer;
 
         window.AppActions = {
-            // AJUSTE AQUI: Limpa as duas chaves ao clicar em sair
             sair: async () => { 
                 await supabaseClient.auth.signOut(); 
                 localStorage.removeItem("logado"); 
@@ -345,7 +351,14 @@
             },
             prevMonth: () => { if (AppState.currentMonthIdx > 0) { AppState.currentMonthIdx--; renderApp(); } },
             nextMonthConfirm: () => { if (AppState.currentMonthIdx < 11) { AppState.confirmMonthChange = AppState.currentMonthIdx + 1; renderModal(); } },
-            closeModal: () => { AppState.confirmMonthChange = null; renderModal(); },
+            closeModal: () => { 
+                AppState.confirmMonthChange = null; 
+                AppState.confirmDeleteItem = null;
+                AppState.modalAddItem = null;
+                AppState.modalAddCat = null;
+                AppState.modalEditCat = null;
+                renderModal(); 
+            },
             confirmMonthChange: () => { AppState.currentMonthIdx = AppState.confirmMonthChange; AppState.confirmMonthChange = null; renderApp(); },
             
             handleInputDebounced: (year, month, category, item, inputEl) => {
@@ -362,7 +375,6 @@
                 if (AppState.budgetData[year][month][category][item] !== numValue) { AppState.budgetData[year][month][category][item] = numValue; saveToDatabase(); renderApp(); } 
             },
 
-            // NOVAS AÇÕES PARA RENDIMENTOS
             handleYieldInputDebounced: (year, month, category, item, inputEl) => {
                 const rawDigits = inputEl.value.replace(/\D/g, ''); inputEl.value = rawDigits ? formatCurrencyInput(Number(rawDigits) / 100) : '0,00';
                 clearTimeout(typingTimer); typingTimer = setTimeout(() => { 
@@ -488,13 +500,10 @@
                 saveToDatabase(); renderApp(); 
             },
             
-            addCategory: (year, month) => { let name = 'Nova Categoria', c = 1; while (AppState.budgetData[year][month][name] !== undefined) { name = `Nova Categoria ${c}`; c++; } AppState.budgetData[year][month][name] = {}; if (!AppState.budgetData[year][month].itemMetadata[name]) AppState.budgetData[year][month].itemMetadata[name] = {}; AppState.budgetData[year][month].categoriesMetadata[name] = 'expense'; saveToDatabase(); renderApp(); },
-            renameCategory: (year, month, old, el) => { const nw = el.value.trim(); if (old === nw || nw === '' || AppState.budgetData[year][month][nw] !== undefined) { el.value = old; return; } AppState.budgetData[year][month][nw] = AppState.budgetData[year][month][old]; delete AppState.budgetData[year][month][old]; if (AppState.budgetData[year][month].itemMetadata[old]) { AppState.budgetData[year][month].itemMetadata[nw] = AppState.budgetData[year][month].itemMetadata[old]; delete AppState.budgetData[year][month].itemMetadata[old]; } if (AppState.budgetData[year][month].categoriesMetadata[old]) { AppState.budgetData[year][month].categoriesMetadata[nw] = AppState.budgetData[year][month].categoriesMetadata[old]; delete AppState.budgetData[year][month].categoriesMetadata[old]; } saveToDatabase(); renderApp(); },
-            
             requestDeleteItem: (year, month, cat, name, accumulatedValue) => {
                 if (accumulatedValue > 0) {
                     AppState.confirmDeleteItem = { year, month, cat, name, accumulatedValue };
-                    renderApp();
+                    renderModal();
                 } else {
                     AppActions.deleteItem(year, month, cat, name);
                 }
@@ -503,10 +512,6 @@
                 const { year, month, cat, name } = AppState.confirmDeleteItem;
                 AppState.confirmDeleteItem = null;
                 AppActions.deleteItem(year, month, cat, name);
-            },
-            cancelDelete: () => {
-                AppState.confirmDeleteItem = null;
-                renderApp();
             },
             
             deleteItem: (year, month, cat, name) => { 
@@ -532,32 +537,6 @@
                         delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; 
                         delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; 
                     } 
-                }
-                saveToDatabase(); renderApp(); 
-            },
-            
-            addItem: (year, month, cat, def = 'Nova Conta', type = 'auto') => { 
-                let name = def, c = 1; 
-                while (AppState.budgetData[year][month][cat] && AppState.budgetData[year][month][cat][name] !== undefined) { name = `${def} ${c}`; c++; } 
-                
-                const isInvest = cat === 'Investimento' || AppState.budgetData[year][month].categoriesMetadata?.[cat] === 'investment';
-
-                if (isInvest) {
-                    // Adiciona globalmente para todos os meses (passados e futuros) para manter o historico coeso
-                    Object.keys(AppState.budgetData).forEach(y => {
-                        Object.keys(AppState.budgetData[y]).forEach(m => {
-                            if (!AppState.budgetData[y][m][cat]) AppState.budgetData[y][m][cat] = {};
-                            if (!AppState.budgetData[y][m].itemMetadata[cat]) AppState.budgetData[y][m].itemMetadata[cat] = {};
-                            AppState.budgetData[y][m][cat][name] = 0;
-                            AppState.budgetData[y][m].itemMetadata[cat][name] = type === 'auto' ? 'variavel' : type;
-                        });
-                    });
-                } else {
-                    if (!AppState.budgetData[year][month][cat]) { AppState.budgetData[year][month][cat] = {}; AppState.budgetData[year][month].categoriesMetadata[cat] = cat === 'Renda Familiar' ? 'income' : 'expense'; } 
-                    AppState.budgetData[year][month][cat][name] = 0; 
-                    if (!AppState.budgetData[year][month].itemMetadata[cat]) AppState.budgetData[year][month].itemMetadata[cat] = {}; 
-                    const catMetaType = AppState.budgetData[year][month].categoriesMetadata[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense'; 
-                    if(type === 'auto') { AppState.budgetData[year][month].itemMetadata[cat][name] = isDefaultFixed(name) ? 'fixed' : 'variable'; } else { AppState.budgetData[year][month].itemMetadata[cat][name] = type; } 
                 }
                 saveToDatabase(); renderApp(); 
             },
@@ -597,10 +576,116 @@
                 saveToDatabase(); renderApp(); 
             },
 
+            // --- FUNÇÕES DE MODAL DE ADIÇÃO/EDIÇÃO ---
+
+            openAddItemModal: (year, month, cat, typeContext) => {
+                AppState.modalAddItem = { year, month, cat, typeContext };
+                renderModal();
+            },
+
+            confirmAddItem: () => {
+                const { year, month, cat, typeContext } = AppState.modalAddItem;
+                const nameInput = document.getElementById('modal-add-name');
+                const valInput = document.getElementById('modal-add-val');
+                const typeSelect = document.getElementById('modal-add-type');
+                
+                let name = nameInput.value.trim();
+                if(!name) { alert("Por favor, dê um nome ao item."); return; }
+
+                const numValue = parseCurrencyString(valInput.value);
+                const type = typeSelect ? typeSelect.value : 'auto';
+
+                // Lógica original de AddItem com o valor capturado do Modal
+                let c = 1; let finalName = name;
+                while (AppState.budgetData[year][month][cat] && AppState.budgetData[year][month][cat][finalName] !== undefined) { finalName = `${name} ${c}`; c++; } 
+                
+                const isInvest = cat === 'Investimento' || AppState.budgetData[year][month].categoriesMetadata?.[cat] === 'investment';
+
+                if (isInvest) {
+                    Object.keys(AppState.budgetData).forEach(y => {
+                        Object.keys(AppState.budgetData[y]).forEach(m => {
+                            if (!AppState.budgetData[y][m][cat]) AppState.budgetData[y][m][cat] = {};
+                            if (!AppState.budgetData[y][m].itemMetadata[cat]) AppState.budgetData[y][m].itemMetadata[cat] = {};
+                            // Insere o valor apenas no mês atual. Nos outros meses é zero.
+                            AppState.budgetData[y][m][cat][finalName] = (y === year && m === month) ? numValue : 0;
+                            AppState.budgetData[y][m].itemMetadata[cat][finalName] = type === 'auto' ? 'variavel' : type;
+                        });
+                    });
+                } else {
+                    if (!AppState.budgetData[year][month][cat]) { AppState.budgetData[year][month][cat] = {}; AppState.budgetData[year][month].categoriesMetadata[cat] = cat === 'Renda Familiar' ? 'income' : 'expense'; } 
+                    AppState.budgetData[year][month][cat][finalName] = numValue; 
+                    if (!AppState.budgetData[year][month].itemMetadata[cat]) AppState.budgetData[year][month].itemMetadata[cat] = {}; 
+                    if(type === 'auto') { AppState.budgetData[year][month].itemMetadata[cat][finalName] = isDefaultFixed(finalName) ? 'fixed' : 'variable'; } else { AppState.budgetData[year][month].itemMetadata[cat][finalName] = type; } 
+                }
+                
+                AppState.modalAddItem = null;
+                saveToDatabase(); renderApp();
+            },
+
+            openAddCatModal: (year, month) => {
+                AppState.modalAddCat = { year, month };
+                renderModal();
+            },
+
+            confirmAddCat: () => {
+                const { year, month } = AppState.modalAddCat;
+                const input = document.getElementById('modal-cat-name');
+                let name = input.value.trim();
+                if(!name) { alert("Dê um nome à categoria."); return; }
+
+                if (AppState.budgetData[year][month][name] !== undefined) { alert("Essa categoria já existe neste mês."); return; }
+                
+                AppState.budgetData[year][month][name] = {}; 
+                if (!AppState.budgetData[year][month].itemMetadata[name]) AppState.budgetData[year][month].itemMetadata[name] = {}; 
+                AppState.budgetData[year][month].categoriesMetadata[name] = 'expense'; 
+                
+                AppState.modalAddCat = null;
+                saveToDatabase(); renderApp();
+            },
+
+            openEditCatModal: (year, month, catName) => {
+                AppState.modalEditCat = { year, month, catName };
+                renderModal();
+            },
+
+            confirmRenameCat: () => {
+                const { year, month, catName } = AppState.modalEditCat;
+                const input = document.getElementById('modal-edit-cat-name');
+                const nw = input.value.trim();
+
+                if (catName === nw || nw === '') { AppActions.closeModal(); return; } 
+                if (AppState.budgetData[year][month][nw] !== undefined) { alert("Já existe uma categoria com este nome."); return; }
+
+                AppState.budgetData[year][month][nw] = AppState.budgetData[year][month][catName]; 
+                delete AppState.budgetData[year][month][catName]; 
+                if (AppState.budgetData[year][month].itemMetadata[catName]) { 
+                    AppState.budgetData[year][month].itemMetadata[nw] = AppState.budgetData[year][month].itemMetadata[catName]; 
+                    delete AppState.budgetData[year][month].itemMetadata[catName]; 
+                } 
+                if (AppState.budgetData[year][month].categoriesMetadata[catName]) { 
+                    AppState.budgetData[year][month].categoriesMetadata[nw] = AppState.budgetData[year][month].categoriesMetadata[catName]; 
+                    delete AppState.budgetData[year][month].categoriesMetadata[catName]; 
+                } 
+                
+                AppState.modalEditCat = null;
+                saveToDatabase(); renderApp();
+            },
+
+            deleteCategory: (year, month, catName) => {
+                if(confirm(`Tem certeza que deseja EXCLUIR a categoria "${catName}" e todas as suas contas do mês de ${month}?`)){
+                    delete AppState.budgetData[year][month][catName];
+                    if (AppState.budgetData[year][month].itemMetadata[catName]) delete AppState.budgetData[year][month].itemMetadata[catName];
+                    if (AppState.budgetData[year][month].categoriesMetadata[catName]) delete AppState.budgetData[year][month].categoriesMetadata[catName];
+                    
+                    AppState.modalEditCat = null;
+                    saveToDatabase(); renderApp();
+                }
+            },
+
             // Função de Filtro de Evolução de Investimentos
             changeInvestFilter: (filterName, value) => {
                 if (filterName === 'year') AppState.investFilterYear = value;
-                if (filterName === 'type') { AppState.investFilterType = value; AppState.investFilterAsset = 'all'; } // Reseta o ativo ao mudar o tipo
+                if (filterName === 'type') { AppState.investFilterType = value; AppState.investFilterAsset = 'all'; } 
                 if (filterName === 'asset') AppState.investFilterAsset = value;
                 if (filterName === 'metric') AppState.investFilterMetric = value;
                 renderApp();
@@ -811,7 +896,7 @@
                 if (pMonth < 0) { pMonth = 11; pYear = (parseInt(AppState.currentYear) - 1).toString(); }
                 html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth('income')" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
             }
-            html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-8"><div class="flex flex-wrap gap-2 justify-between items-center mb-6"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-widest">Minhas Rendas</h3><button onclick="AppActions.addItem('${y}', '${m}', 'Renda Familiar', 'Nova Renda', 'income')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar</button></div><div class="space-y-3 min-h-[120px]">${entries.length === 0 ? '<div class="flex items-center justify-center h-full text-slate-400 italic text-xs md:text-sm py-10">Nenhuma renda cadastrada.</div>' : entries.map(([name, val]) => renderEditableRowHTML(name, val, 'income', true, false, 'Renda Familiar')).join('')}</div><div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-end"><span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Total Recebido:</span><span class="text-2xl md:text-3xl font-bold text-emerald-600">${formatCurrency(totalRenda)}</span></div></div>`;
+            html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-8"><div class="flex flex-wrap gap-2 justify-between items-center mb-6"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-widest">Minhas Rendas</h3><button onclick="AppActions.openAddItemModal('${y}', '${m}', 'Renda Familiar', 'income')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar</button></div><div class="space-y-3 min-h-[120px]">${entries.length === 0 ? '<div class="flex items-center justify-center h-full text-slate-400 italic text-xs md:text-sm py-10">Nenhuma renda cadastrada.</div>' : entries.map(([name, val]) => renderEditableRowHTML(name, val, 'income', true, false, 'Renda Familiar')).join('')}</div><div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-end"><span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Total Recebido:</span><span class="text-2xl md:text-3xl font-bold text-emerald-600">${formatCurrency(totalRenda)}</span></div></div>`;
             
             html += `<div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
@@ -860,12 +945,12 @@
                 html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth('expense')" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
             }
 
-            html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="home" class="w-3 h-3"></i> Total Gastos Fixos</span><span class="text-2xl md:text-3xl font-bold text-rose-600">${formatCurrency(totals.fixos)}</span></div><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="smile" class="w-3 h-3"></i> Total Gastos Variáveis</span><span class="text-2xl md:text-3xl font-bold text-orange-500">${formatCurrency(totals.variaveis)}</span></div><div class="bg-emerald-50 p-4 md:p-5 rounded-3xl border border-emerald-100 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Saldo Conta Corrente</span><span class="text-2xl md:text-3xl font-bold text-emerald-700">${formatCurrency(saldoContaCorrente)}</span><span class="text-[8px] md:text-[9px] text-emerald-600/80 mt-1">Renda - (Gastos + Invest. no Mês)</span></div></div><div class="bg-rose-50 border border-rose-100 rounded-3xl p-4 md:p-5 shadow-sm"><div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b border-rose-100 pb-3 gap-3"><div><h3 class="font-bold text-rose-800 uppercase text-xs md:text-sm tracking-wide flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 md:w-5 md:h-5"></i> Custo de Vida Mensal</h3><p class="text-[10px] md:text-[11px] text-rose-600 mt-1">Contas marcadas como "Fixo" nas categorias abaixo.</p></div><span class="text-rose-700 font-bold bg-rose-200/50 px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap self-start sm:self-auto">Total: ${formatCurrency(totals.fixos)}</span></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">${fixedItems.map(item => `<div class="bg-white p-2.5 rounded-xl shadow-sm border border-rose-50 flex flex-col justify-between gap-1"><span class="text-[8px] md:text-[9px] font-bold text-rose-400 uppercase tracking-widest truncate">${item.cat}</span><span class="text-[11px] md:text-xs font-bold text-slate-700 truncate" title="${item.name}">${item.name}</span><span class="text-xs md:text-sm font-bold text-rose-600">${formatCurrency(item.val)}</span></div>`).join('')}${fixedItems.length===0?'<div class="col-span-full text-xs text-rose-400 italic py-2">Nenhuma despesa marcada como fixa.</div>':''}</div></div><div class="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-200 pb-4"><div><h2 class="text-lg md:text-xl font-bold text-slate-800">Categorias de Despesas</h2><p class="text-[11px] md:text-xs text-slate-500 mt-1">Adicione contas e marque-as como FIXO ou VAR (Variável).</p></div><button onclick="AppActions.addCategory('${y}', '${m}')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md w-full md:w-auto transition-colors"><i data-lucide="plus" class="w-4 h-4"></i> Nova Categoria</button></div><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">`;
+            html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="home" class="w-3 h-3"></i> Total Gastos Fixos</span><span class="text-2xl md:text-3xl font-bold text-rose-600">${formatCurrency(totals.fixos)}</span></div><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="smile" class="w-3 h-3"></i> Total Gastos Variáveis</span><span class="text-2xl md:text-3xl font-bold text-orange-500">${formatCurrency(totals.variaveis)}</span></div><div class="bg-emerald-50 p-4 md:p-5 rounded-3xl border border-emerald-100 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Saldo Conta Corrente</span><span class="text-2xl md:text-3xl font-bold text-emerald-700">${formatCurrency(saldoContaCorrente)}</span><span class="text-[8px] md:text-[9px] text-emerald-600/80 mt-1">Renda - (Gastos + Invest. no Mês)</span></div></div><div class="bg-rose-50 border border-rose-100 rounded-3xl p-4 md:p-5 shadow-sm"><div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b border-rose-100 pb-3 gap-3"><div><h3 class="font-bold text-rose-800 uppercase text-xs md:text-sm tracking-wide flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 md:w-5 md:h-5"></i> Custo de Vida Mensal</h3><p class="text-[10px] md:text-[11px] text-rose-600 mt-1">Contas marcadas como "Fixo" nas categorias abaixo.</p></div><span class="text-rose-700 font-bold bg-rose-200/50 px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap self-start sm:self-auto">Total: ${formatCurrency(totals.fixos)}</span></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">${fixedItems.map(item => `<div class="bg-white p-2.5 rounded-xl shadow-sm border border-rose-50 flex flex-col justify-between gap-1"><span class="text-[8px] md:text-[9px] font-bold text-rose-400 uppercase tracking-widest truncate">${item.cat}</span><span class="text-[11px] md:text-xs font-bold text-slate-700 truncate" title="${item.name}">${item.name}</span><span class="text-xs md:text-sm font-bold text-rose-600">${formatCurrency(item.val)}</span></div>`).join('')}${fixedItems.length===0?'<div class="col-span-full text-xs text-rose-400 italic py-2">Nenhuma despesa marcada como fixa.</div>':''}</div></div><div class="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-200 pb-4"><div><h2 class="text-lg md:text-xl font-bold text-slate-800">Categorias de Despesas</h2><p class="text-[11px] md:text-xs text-slate-500 mt-1">Adicione contas e marque-as como FIXO ou VAR (Variável).</p></div><button onclick="AppActions.openAddCatModal('${y}', '${m}')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md w-full md:w-auto transition-colors"><i data-lucide="plus" class="w-4 h-4"></i> Nova Categoria</button></div><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">`;
 
             displayCategories.forEach(cat => {
                 const items = AppState.currentData[cat]; const total = Object.values(items).reduce((a, b) => a + Number(b||0), 0);
                 const theme = getCategoryIconAndColor(cat); const isInvest = (AppState.currentData.categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
-                html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 flex flex-col h-full relative group/card hover:shadow-md transition-shadow"><div class="flex flex-col gap-3 mb-4 pb-4 border-b border-slate-100"><div class="flex justify-between items-start gap-2"><div class="flex items-center gap-2 flex-1"><div class="p-2 rounded-xl ${theme.bg}"><i data-lucide="${theme.icon.toLowerCase()}" class="w-4 h-4 ${theme.color}"></i></div><input type="text" value="${cat}" onblur="AppActions.renameCategory('${y}', '${m}', '${cat}', this)" class="font-bold text-slate-800 text-sm outline-none bg-transparent hover:bg-slate-50 focus:bg-blue-50 focus:text-blue-700 rounded px-2 py-1 w-full uppercase tracking-wide transition-colors"></div><button onclick="AppActions.deleteCategory('${y}', '${m}', '${cat}')" class="text-slate-300 hover:text-rose-500 p-1 opacity-0 group-hover/card:opacity-100 bg-white rounded-full shadow-sm border border-slate-100 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button></div><div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100"><span class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-2">Total na Categoria</span><span class="font-bold text-slate-800 text-xs sm:text-sm">${formatCurrency(total)}</span></div></div><div class="space-y-2 flex-1 mb-4">${Object.keys(items).length === 0 ? '<div class="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">Nenhuma conta cadastrada.</div>' : ''}${Object.entries(items).map(([itemName, itemVal]) => { const t = AppState.currentData.itemMetadata?.[cat]?.[itemName] || (isInvest?'variavel':'variable'); return renderEditableRowHTML(itemName, itemVal, t, false, isInvest, cat); }).join('')}</div><div class="mt-auto"><button onclick="AppActions.addItem('${y}', '${m}', '${cat}')" class="w-full bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar Conta</button></div></div>`;
+                html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 flex flex-col h-full relative group/card hover:shadow-md transition-shadow"><div class="flex flex-col gap-3 mb-4 pb-4 border-b border-slate-100"><div class="flex justify-between items-start gap-2"><div class="flex items-center gap-2 flex-1"><div class="p-2 rounded-xl ${theme.bg}"><i data-lucide="${theme.icon.toLowerCase()}" class="w-4 h-4 ${theme.color}"></i></div><span class="font-bold text-slate-800 text-sm uppercase tracking-wide truncate flex-1" title="${cat}">${cat}</span></div><button onclick="AppActions.openEditCatModal('${y}', '${m}', '${cat}')" class="text-slate-400 hover:text-slate-600 p-1 opacity-0 group-hover/card:opacity-100 bg-slate-50 rounded-full shadow-sm border border-slate-200 transition-colors" title="Configurações da Categoria"><i data-lucide="settings" class="w-4 h-4"></i></button></div><div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100"><span class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-2">Total na Categoria</span><span class="font-bold text-slate-800 text-xs sm:text-sm">${formatCurrency(total)}</span></div></div><div class="space-y-2 flex-1 mb-4">${Object.keys(items).length === 0 ? '<div class="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">Nenhuma conta cadastrada.</div>' : ''}${Object.entries(items).map(([itemName, itemVal]) => { const t = AppState.currentData.itemMetadata?.[cat]?.[itemName] || (isInvest?'variavel':'variable'); return renderEditableRowHTML(itemName, itemVal, t, false, isInvest, cat); }).join('')}</div><div class="mt-auto"><button onclick="AppActions.openAddItemModal('${y}', '${m}', '${cat}', '${isInvest ? 'variavel' : 'auto'}')" class="w-full bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar Conta</button></div></div>`;
             });
 
             html += '</div></div>'; return html;
@@ -1051,7 +1136,7 @@
                         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                             <div class="px-4 md:px-6 py-4 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
                                 <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest">Meus Ativos</h3>
-                                <button onclick="AppActions.addItem('${y}', '${m}', 'Investimento', 'Novo Ativo', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
+                                <button onclick="AppActions.openAddItemModal('${y}', '${m}', 'Investimento', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
                             </div>
                             <div class="overflow-x-auto p-1">
                                 <table class="w-full text-sm text-left text-slate-500 min-w-full">
@@ -1264,12 +1349,12 @@
             if (AppState.confirmMonthChange !== null) {
                 root.innerHTML = `
                 <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
                         <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Fechar o mês?</h3>
                         <p class="text-xs md:text-sm text-slate-500 mb-6">Tem certeza que deseja fechar <strong>${AppState.currentMonth}</strong> e ir para o mês seguinte?</p>
                         <div class="flex gap-3 justify-end">
                             <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.confirmMonthChange()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Sim, fechar mês</button>
+                            <button onclick="AppActions.confirmMonthChange()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md">Sim, fechar mês</button>
                         </div>
                     </div>
                 </div>`;
@@ -1277,19 +1362,112 @@
                 const item = AppState.confirmDeleteItem;
                 root.innerHTML = `
                 <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
                         <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
                         <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Excluir Ativo?</h3>
                         <p class="text-xs md:text-sm text-slate-500 mb-6">Você tem <strong>${formatCurrency(item.accumulatedValue)}</strong> acumulados em <strong>${item.name}</strong>. Excluir este ativo apagará todo o seu histórico e não poderá ser desfeito. Tem certeza?</p>
                         <div class="flex gap-3 justify-end">
                             <button onclick="AppActions.cancelDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.confirmDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
+                            <button onclick="AppActions.confirmDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-md">Sim, excluir</button>
+                        </div>
+                    </div>
+                </div>`;
+            } else if (AppState.modalAddItem !== null) {
+                const { year, month, cat, typeContext } = AppState.modalAddItem;
+                const isInvest = typeContext !== 'income' && typeContext !== 'auto';
+                const isIncome = typeContext === 'income';
+                
+                let selectHTML = '';
+                if (isInvest) {
+                    selectHTML = `<select id="modal-add-type" class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                                    <option value="reserva">Reserva</option>
+                                    <option value="fixa">Fixa</option>
+                                    <option value="variavel" selected>Variável</option>
+                                    <option value="cripto">Cripto</option>
+                                  </select>`;
+                } else if (!isIncome) {
+                    selectHTML = `<select id="modal-add-type" class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                                    <option value="variable" selected>Variável (Var)</option>
+                                    <option value="fixed">Fixo</option>
+                                  </select>`;
+                }
+
+                root.innerHTML = `
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg md:text-xl font-bold text-slate-800">Nova ${isInvest ? 'Conta' : isIncome ? 'Renda' : 'Despesa'}</h3>
+                            <button onclick="AppActions.closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="space-y-4 mb-6 text-left">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Nome</label>
+                                <input id="modal-add-name" type="text" placeholder="Ex: ${isIncome ? 'Salário' : 'Internet'}" class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" autofocus>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Valor (R$)</label>
+                                <input id="modal-add-val" type="text" inputmode="numeric" placeholder="0,00" oninput="this.value = formatCurrencyInput(Number(this.value.replace(/\\D/g, '')) / 100)" class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                            </div>
+                            ${selectHTML ? `<div><label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Tipo</label>${selectHTML}</div>` : ''}
+                        </div>
+                        <button onclick="AppActions.confirmAddItem()" class="w-full py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i> Salvar
+                        </button>
+                    </div>
+                </div>`;
+                // Focar automaticamente no input de nome após renderizar
+                setTimeout(() => { const el = document.getElementById('modal-add-name'); if(el) el.focus(); }, 50);
+
+            } else if (AppState.modalAddCat !== null) {
+                root.innerHTML = `
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg md:text-xl font-bold text-slate-800">Nova Categoria</h3>
+                            <button onclick="AppActions.closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="space-y-4 mb-6 text-left">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Nome da Categoria</label>
+                                <input id="modal-cat-name" type="text" placeholder="Ex: Moradia, Pets, Viagem..." class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" autofocus onkeydown="if(event.key==='Enter')AppActions.confirmAddCat()">
+                            </div>
+                        </div>
+                        <button onclick="AppActions.confirmAddCat()" class="w-full py-3 rounded-xl text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 transition-colors shadow-md flex items-center justify-center gap-2">
+                            <i data-lucide="folder-plus" class="w-4 h-4"></i> Criar Categoria
+                        </button>
+                    </div>
+                </div>`;
+                setTimeout(() => { const el = document.getElementById('modal-cat-name'); if(el) el.focus(); }, 50);
+
+            } else if (AppState.modalEditCat !== null) {
+                const { year, month, catName } = AppState.modalEditCat;
+                root.innerHTML = `
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200 flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg md:text-xl font-bold text-slate-800">Configurar Categoria</h3>
+                            <button onclick="AppActions.closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="space-y-4 mb-8 text-left">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-1">Renomear</label>
+                                <input id="modal-edit-cat-name" type="text" value="${catName}" class="w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter')AppActions.confirmRenameCat()">
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mt-auto">
+                            <button onclick="AppActions.deleteCategory('${year}', '${month}', '${catName}')" class="flex-1 py-3 rounded-xl text-xs md:text-sm font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors border border-rose-100 flex items-center justify-center gap-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
+                            </button>
+                            <button onclick="AppActions.confirmRenameCat()" class="flex-1 py-3 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-1">
+                                <i data-lucide="save" class="w-4 h-4"></i> Salvar
+                            </button>
                         </div>
                     </div>
                 </div>`;
             } else {
                 root.innerHTML = '';
             }
+            if(root.innerHTML !== '') lucide.createIcons();
         }
 
         function renderApp() {
@@ -1344,31 +1522,25 @@
                 
                 AppState.user = user;
 
-                // --- NOVO: REVELA O BOTÃO SECRETO SE FOR O ADMIN ---
                 if (user.email === 'dauan.silva98@gmail.com') {
-                    // Espera 1 segundo para a tela renderizar e tira o hidden do botão
                     setTimeout(() => {
                         const btnAdmin = document.getElementById('btn-admin-secreto');
                         if (btnAdmin) btnAdmin.classList.remove('hidden');
                     }, 500);
                 }
                 
-                // 1. Vai na tabela profiles conferir se a porta deve abrir
                 const { data: profile, error: profileError } = await supabaseClient
                     .from('profiles')
                     .select('subscription_status')
                     .eq('id', user.id)
                     .single();
 
-                // 2. A Lógica da Porta: Se der erro, se não tiver perfil ou se NÃO for 'active'
                 if (profileError || !profile || profile.subscription_status !== 'active') {
                     console.log("Acesso negado: Assinatura não está ativa.");
-                    // Fecha a porta e manda pra tela de pagamento
                     window.location.href = "cadastro.html"; 
                     return; 
                 }
                 
-                // 3. Sucesso! Porta aberta, assinatura ativa. Busca os dados e renderiza.
                 await loadDatabaseData();
                 
             } catch (error) {
