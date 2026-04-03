@@ -343,6 +343,8 @@
             openAddGoalModal: (year, month) => { AppState.activeModal = { type: 'goal', year, month, id: null }; renderModal(); },
             openEditGoalModal: (year, month, id, oldName) => { AppState.activeModal = { type: 'goal', year, month, id, oldName }; renderModal(); },
             
+            openAporteModal: (year, month) => { AppState.activeModal = { type: 'aporte', year, month }; renderModal(); },
+            
             requestDeleteGeneric: (type, title, message, data) => { AppState.activeModal = { type: 'confirmDelete', title, message, actionData: { type, ...data } }; renderModal(); },
             
             // Especial para Investimentos com aviso de acúmulo (Mantido para preservar a lógica original segura)
@@ -414,9 +416,39 @@
                     }
                     AppState.budgetData[m.year][m.month][m.cat][fn] = numVal;
                     if (!AppState.budgetData[m.year][m.month].itemMetadata[m.cat]) AppState.budgetData[m.year][m.month].itemMetadata[m.cat] = {};
-                    AppState.budgetData[m.year][m.month].itemMetadata[m.cat][fn] = m.itemType === 'auto' ? (isDefaultFixed(fn) ? 'fixed' : 'variable') : m.itemType;
+                    
+                    // Lê se é Fixo ou Variável no Modal (se não for Renda nem Investimento)
+                    let selectedType = m.itemType;
+                    if (m.cat !== 'Renda Familiar' && m.cat !== 'Investimento') {
+                        const elType = document.getElementById('modal-item-expense-type');
+                        if (elType) selectedType = elType.value;
+                    }
+                    
+                    AppState.budgetData[m.year][m.month].itemMetadata[m.cat][fn] = selectedType === 'auto' ? (isDefaultFixed(fn) ? 'fixed' : 'variable') : selectedType;
                 }
                 
+                saveToDatabase(); AppState.activeModal = null; renderApp();
+            },
+            
+            saveAporte: () => {
+                const m = AppState.activeModal;
+                const assetVal = document.getElementById('modal-aporte-asset').value;
+                const valStr = document.getElementById('modal-aporte-val').value;
+                const numVal = parseCurrencyString(valStr);
+
+                if (!assetVal) return alert("Selecione um ativo.");
+                if (numVal <= 0) return alert("Insira um valor válido para o aporte.");
+
+                const parts = assetVal.split('::');
+                const cat = parts[0];
+                const name = parts[1];
+
+                if (!AppState.budgetData[m.year][m.month][cat]) AppState.budgetData[m.year][m.month][cat] = {};
+                if (!AppState.budgetData[m.year][m.month].itemMetadata[cat]) AppState.budgetData[m.year][m.month].itemMetadata[cat] = {};
+                
+                const currentVal = AppState.budgetData[m.year][m.month][cat][name] || 0;
+                AppState.budgetData[m.year][m.month][cat][name] = currentVal + numVal;
+
                 saveToDatabase(); AppState.activeModal = null; renderApp();
             },
 
@@ -669,670 +701,45 @@
                             <button onclick="AppActions.executeDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
                         </div>
                     </div>`;
-                } else if (m.type === 'addItem') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.cat === 'Investimento' ? 'Novo Ativo' : 'Novo Registro'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome / Descrição</label>
-                                <input type="text" id="modal-item-name" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: ${m.cat === 'Renda Familiar' ? 'Salário Extra' : m.cat === 'Investimento' ? 'Ações Petrobras' : 'Nova Conta'}" />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Valor (R$)</label>
-                                <input type="text" id="modal-item-val" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="0,00" oninput="AppActions.handleModalCurrencyInput(this)" />
-                            </div>
-                            ${m.cat === 'Investimento' ? `
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Instituição</label>
-                                <input type="text" id="modal-item-inst" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Itaú, XP..." />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Tipo</label>
-                                <select id="modal-item-type" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
-                                    <option value="variavel">Variável</option>
-                                    <option value="fixa">Fixa</option>
-                                    <option value="reserva">Reserva</option>
-                                    <option value="cripto">Cripto</option>
-                                </select>
-                            </div>
-                            ` : ''}
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveNewItem()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Adicionar</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'category') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.oldName ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome da Categoria</label>
-                                <input type="text" id="modal-cat-name" value="${m.oldName || ''}" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Moradia, Lazer..." />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveCategory()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Salvar</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'goal') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.id ? 'Editar Planejamento' : 'Novo Planejamento'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome do Planejamento</label>
-                                <input type="text" id="modal-goal-name" value="${m.oldName || ''}" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Viagem, Carro Novo..." />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveGoal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Salvar</button>
-                        </div>
-                    </div>`;
-                }
-            }
-
-            root.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">${content}</div>`;
-            if(content) lucide.createIcons();
-        }
-
-        // --- RENDERS DE ABAS ---
-        function renderPieChartCard(id, title, data, colors, type = 'pie') {
-            const isEmpty = data.length === 0;
-            return `<div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full"><h3 class="font-extrabold text-blue-700 uppercase text-xs tracking-widest text-center mb-4">${title}</h3>${!isEmpty ? `<div class="w-full flex justify-center pb-6 border-b border-slate-50"><div class="relative w-48 h-48 sm:w-64 sm:h-64"><canvas id="${id}"></canvas></div></div><div class="w-full mt-4 space-y-2">${data.map((entry, i) => { const pct = ((entry.value / data.reduce((a,b)=>a+b.value,0)) * 100).toFixed(1); return `<div class="flex justify-between text-xs items-center p-1.5 hover:bg-slate-50 rounded-lg"><div class="flex items-center gap-2 overflow-hidden mr-2"><div class="w-3 h-3 rounded-full shrink-0" style="background-color: ${colors[i % colors.length]}"></div><span class="text-slate-600 font-bold truncate">${entry.name}</span></div><div class="text-right"><span class="font-bold text-slate-800 block leading-none">${formatCurrency(entry.value)}</span><span class="text-[10px] text-slate-400 font-medium">${pct}%</span></div></div>`}).join('')}</div>` : `<div class="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs sm:text-sm italic min-h-[160px]">Nenhum dado registrado.</div>`}</div>`;
-        }
-
-        function renderDashboard() {
-            const { totals, metrics, historyData } = calculateMetrics();
-            
-            const accDetails = getAccumulatedAssetDetails(AppState.currentYear, AppState.currentMonthIdx);
-            let totalPatrimonioAcumulado = 0;
-            Object.values(accDetails.assets).forEach(data => { totalPatrimonioAcumulado += (data.invested + data.yield); });
-
-            const yearlyBarData = MONTHS.map(m => { let r = 0, g = 0, i = 0; if(AppState.budgetData[AppState.currentYear] && AppState.budgetData[AppState.currentYear][m]) { Object.keys(AppState.budgetData[AppState.currentYear][m]).forEach(cat => { if (['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) return; const type = AppState.budgetData[AppState.currentYear][m].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense'; const catTot = getCategoryTotal(AppState.currentYear, m, cat); if (type === 'income') r += catTot; else if (type === 'investment') i += catTot; else g += catTot; }); } return { name: m.substring(0, 3), Rendimentos: r, Gastos: g, Investido: i, Saldo: r - (g + i) }; });
-            
-            const catGastos = Object.keys(AppState.currentData).filter(cat => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (AppState.currentData.categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense') === 'expense').map(cat => ({ name: cat, value: getCategoryTotal(AppState.currentYear, AppState.currentMonth, cat) })).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
-            const fixoVar = [{ name: 'Contas Fixas', value: totals.fixos }, { name: 'Despesas Variáveis', value: totals.variaveis }].filter(d => d.value > 0);
-            const incomeData = [], ccData = [];
-            const meta = AppState.currentData.categoriesMetadata || DEFAULT_METADATA;
-            
-            Object.keys(AppState.currentData).forEach(cat => {
-                if (['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) return;
-                const items = Object.entries(AppState.currentData[cat]).map(([n, v]) => ({name: n, value: Number(v)}));
-                if (meta[cat] === 'income' || cat === 'Renda Familiar') incomeData.push(...items);
-                if (cat.toLowerCase().includes('cartão') || cat.toLowerCase().includes('cartao')) ccData.push(...items);
-            });
-
-            const dashInvestData = Object.entries(accDetails.assets)
-                .map(([name, data]) => ({name: name, value: data.invested + data.yield}))
-                .filter(d => d.value > 0)
-                .sort((a, b) => b.value - a.value);
-            
-            const dashInvestColors = dashInvestData.map((d, i) => EXTENDED_COLORS[i % EXTENDED_COLORS.length]);
-            const processChartArr = arr => arr.filter(d => d.value > 0).sort((a,b) => b.value - a.value);
-
-            setTimeout(() => { 
-                createBarChart('dashboard-bar-chart', yearlyBarData); 
-                if(catGastos.length > 0) createPieChart('chart-cat', catGastos, COLORS_GERAL, 'pie'); 
-                if(fixoVar.length > 0) createPieChart('chart-fixovar', fixoVar, ['#f43f5e', '#f59e0b'], 'pie'); 
-                if(processChartArr(incomeData).length > 0) createPieChart('chart-income', processChartArr(incomeData), COLORS_INCOME, 'pie'); 
-                if(processChartArr(ccData).length > 0) createPieChart('chart-cc', processChartArr(ccData), COLORS_CC, 'pie'); 
-                if(dashInvestData.length > 0) createPieChart('chart-invest', dashInvestData, dashInvestColors, 'pie'); 
-            }, 0);
-
-            return `<div class="space-y-6"><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">${[ { l: 'Rendimentos', v: totals.renda, c: 'text-emerald-600' }, { l: 'Gastos', v: totals.gastos, c: 'text-rose-600' }, { l: 'Investimento', v: totalPatrimonioAcumulado, c: 'text-blue-600', bg: 'bg-blue-50' }, { l: 'Saldo Mês', v: totals.saldo, c: totals.saldo >= 0 ? 'text-emerald-700' : 'text-rose-700', bg: totals.saldo >= 0 ? 'bg-emerald-50' : 'bg-rose-50' }, { l: 'Acumulado Ano', v: totals.acumulado, c: totals.acumulado >= 0 ? 'text-blue-700' : 'text-rose-700', bg: totals.acumulado >= 0 ? 'bg-blue-50' : 'bg-rose-50' } ].map(card => `<div class="p-3 md:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center ${card.bg || 'bg-white'}"><p class="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest">${card.l}</p><p class="text-base sm:text-lg md:text-xl font-bold truncate mt-1 ${card.c}">${formatCurrency(card.v)}</p></div>`).join('')}</div><div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-wide mb-6 text-center">Evolução em ${AppState.currentYear}</h3><div class="h-[300px] md:h-[350px] w-full relative"><canvas id="dashboard-bar-chart"></canvas></div></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">${renderPieChartCard('chart-cat', 'Para onde vai meu dinheiro? (Categorias)', catGastos, COLORS_GERAL, 'pie')}${renderPieChartCard('chart-fixovar', 'Gastos: Fixos vs Variáveis', fixoVar, ['#f43f5e', '#f59e0b'], 'pie')}${renderPieChartCard('chart-income', 'Rendimentos', processChartArr(incomeData), COLORS_INCOME, 'pie')}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">${renderPieChartCard('chart-cc', 'Gastos com Cartão de Crédito', processChartArr(ccData), COLORS_CC, 'pie')}${renderPieChartCard('chart-invest', 'Valor Investido', dashInvestData, dashInvestColors, 'pie')}</div></div>`;
-        }
-
-        function renderEditableRowHTML(name, value, type, isIncome, isInvestment, category) {
-            const colorClass = isIncome ? 'text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50' : 'text-rose-600 focus:text-rose-700 focus:bg-rose-50';
-            const y = AppState.currentYear; const m = AppState.currentMonth;
-            const inputId = `input-val-${safeId(category)}-${safeId(name)}`; const nameInputId = `input-name-${safeId(category)}-${safeId(name)}`;
-
-            let selectHTML = '';
-            if (isInvestment) {
-                const colors = type === 'reserva' ? 'bg-blue-100 text-blue-700' : type === 'fixa' ? 'bg-emerald-100 text-emerald-700' : type === 'cripto' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700';
-                selectHTML = `<select onchange="AppActions.handleTypeChange('${y}', '${m}', '${category}', '${name}', this.value)" class="text-[9px] uppercase font-bold rounded px-1.5 py-1 outline-none cursor-pointer transition-colors ${colors}"><option value="reserva" ${type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${type==='variavel'?'selected':''}>Var</option><option value="cripto" ${type==='cripto'?'selected':''}>Cripto</option></select>`;
-            } else if (!isIncome) {
-                const colors = type === 'fixed' ? 'bg-rose-100 text-rose-700' : 'bg-orange-100 text-orange-700';
-                selectHTML = `<select onchange="AppActions.handleTypeChange('${y}', '${m}', '${category}', '${name}', this.value)" class="text-[9px] uppercase font-bold rounded px-1.5 py-1 outline-none cursor-pointer transition-colors ${colors}"><option value="fixed" ${type==='fixed'?'selected':''}>Fixo</option><option value="variable" ${type==='variable'?'selected':''}>Var</option></select>`;
-            }
-
-            return `<div class="flex items-center justify-between p-2 bg-white hover:bg-slate-50/80 border border-slate-100 rounded-xl transition-colors group shadow-sm gap-1 flex-wrap sm:flex-nowrap"><input id="${nameInputId}" type="text" value="${name}" onblur="AppActions.renameItem('${y}', '${m}', '${category}', '${name}', this)" class="bg-transparent font-semibold text-slate-700 text-xs outline-none w-full sm:w-auto flex-1 min-w-[100px] mb-1 sm:mb-0" placeholder="Descrição"><div class="flex items-center gap-1 shrink-0 ml-auto">${selectHTML}<input id="${inputId}" type="text" inputmode="numeric" value="${formatCurrencyInput(value)}" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${category}', '${name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${category}', '${name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-16 sm:w-20 !pl-1 !pr-1 !py-1 border-transparent bg-transparent hover:bg-white font-bold text-xs text-right outline-none transition-all rounded ${colorClass}"><button onclick="AppActions.requestDeleteGeneric('item', 'Excluir Conta', 'Tem certeza que deseja excluir <strong>${name}</strong>?', {year: '${y}', month: '${m}', cat: '${category}', name: '${name}'})" class="text-rose-400 hover:text-rose-600 p-1 sm:p-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="x" class="w-3 h-3 sm:w-4 sm:h-4"></i></button></div></div>`;
-        }
-
-        function renderRenda() {
-            const { totals } = calculateMetrics(); const y = AppState.currentYear; const m = AppState.currentMonth;
-            const incomes = AppState.currentData['Renda Familiar'] || {}; const entries = Object.entries(incomes);
-            const totalRenda = getCategoryTotal(AppState.currentYear, AppState.currentMonth, 'Renda Familiar');
-            const isMonthEmpty = totals.renda === 0 && totals.gastos === 0 && (totals.investimentosMes + totals.reservaMesAtual) === 0;
-
-            let uniqueRendaItemsSet = new Set();
-            const yDataRendaFiltro = AppState.budgetData[AppState.currentYear];
-            if (yDataRendaFiltro) {
-                MONTHS.forEach(mesLoop => {
-                    if (yDataRendaFiltro[mesLoop]) {
-                        const meta = yDataRendaFiltro[mesLoop].categoriesMetadata || DEFAULT_METADATA;
-                        Object.keys(yDataRendaFiltro[mesLoop]).forEach(cat => {
-                            if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (meta[cat] === 'income' || cat === 'Renda Familiar')) {
-                                Object.entries(yDataRendaFiltro[mesLoop][cat]).forEach(([itemName, val]) => {
-                                    if (Number(val) > 0) uniqueRendaItemsSet.add(itemName);
+                } else if (m.type === 'aporte') {
+                    // Modal de Aporte Mensal para Investimentos
+                    let uniqueAssetsMap = new Map(); 
+                    const allYears = Object.keys(AppState.budgetData);
+                    allYears.forEach(yy => {
+                        MONTHS.forEach(mm => {
+                            if (AppState.budgetData[yy][mm]) {
+                                const mInvestCats = Object.keys(AppState.budgetData[yy][mm]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (AppState.budgetData[yy][mm].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
+                                mInvestCats.forEach(cat => {
+                                    Object.keys(AppState.budgetData[yy][mm][cat]).forEach(name => {
+                                        uniqueAssetsMap.set(`${cat}::${name}`, { cat, name });
+                                    });
                                 });
                             }
                         });
-                    }
-                });
-            }
-            const uniqueRendaItems = Array.from(uniqueRendaItemsSet).sort();
-
-            let allowedMonthsRenda = MONTHS.slice(0, AppState.currentMonthIdx + 1);
-            const rendaEvolutionData = allowedMonthsRenda.map((mesNome) => {
-                let totalMes = 0;
-                const yData = AppState.budgetData[AppState.currentYear];
-                if (yData && yData[mesNome]) {
-                    const meta = yData[mesNome].categoriesMetadata || DEFAULT_METADATA;
-                    Object.keys(yData[mesNome]).forEach(cat => {
-                        if (!['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat) && (meta[cat] === 'income' || cat === 'Renda Familiar')) {
-                            Object.entries(yData[mesNome][cat]).forEach(([itemName, val]) => {
-                                if (AppState.rendaFilterItem === 'all' || AppState.rendaFilterItem === itemName) {
-                                    totalMes += Number(val) || 0;
-                                }
-                            });
-                        }
                     });
-                }
-                return { name: mesNome.substring(0, 3), Valor: totalMes };
-            });
+                    const assetsList = Array.from(uniqueAssetsMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+                    const optionsHTML = assetsList.length > 0 
+                        ? assetsList.map(a => `<option value="${a.cat}::${a.name}">${a.name} (${a.cat})</option>`).join('')
+                        : `<option value="">Nenhum ativo cadastrado</option>`;
 
-            setTimeout(() => { 
-                if (rendaEvolutionData.length > 0) createEvolucaoRendaChart('chart-renda-evolucao', rendaEvolutionData);
-            }, 0);
-
-            let html = '<div class="space-y-6 max-w-4xl mx-auto">';
-            if (isMonthEmpty && (AppState.currentMonthIdx > 0 || parseInt(AppState.currentYear) > 2020)) {
-                let pMonth = AppState.currentMonthIdx - 1; let pYear = AppState.currentYear;
-                if (pMonth < 0) { pMonth = 11; pYear = (parseInt(AppState.currentYear) - 1).toString(); }
-                html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth('income')" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
-            }
-            html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 md:p-8"><div class="flex flex-wrap gap-2 justify-between items-center mb-6"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-widest">Minhas Rendas</h3><button onclick="AppActions.openAddItemModal('${y}', '${m}', 'Renda Familiar', 'income')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 md:px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar</button></div><div class="space-y-3 min-h-[120px]">${entries.length === 0 ? '<div class="flex items-center justify-center h-full text-slate-400 italic text-xs md:text-sm py-10">Nenhuma renda cadastrada.</div>' : entries.map(([name, val]) => renderEditableRowHTML(name, val, 'income', true, false, 'Renda Familiar')).join('')}</div><div class="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-end"><span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Total Recebido:</span><span class="text-2xl md:text-3xl font-bold text-emerald-600">${formatCurrency(totalRenda)}</span></div></div>`;
-            
-            html += `<div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
-                            <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i> Evolução da Renda em ${AppState.currentYear}</h3>
-                            <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                                <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1 shrink-0"></i>
-                                <select onchange="AppActions.changeRendaFilter(this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer max-w-[150px] truncate">
-                                    <option value="all" ${AppState.rendaFilterItem === 'all' ? 'selected' : ''}>Todas as Rendas</option>
-                                    ${uniqueRendaItems.map(a => `<option value="${a}" ${AppState.rendaFilterItem === a ? 'selected' : ''}>${a}</option>`).join('')}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="h-[250px] md:h-[300px] w-full relative">
-                            <canvas id="chart-renda-evolucao"></canvas>
-                        </div>
-                    </div>`;
-
-            html += '</div>';
-            return html;
-        }
-
-        function renderGastos() {
-            const { totals } = calculateMetrics(); const y = AppState.currentYear; const m = AppState.currentMonth;
-            const saldoContaCorrente = totals.renda - (totals.gastos + totals.investimentosMes + totals.reservaMesAtual);
-            const isMonthEmpty = totals.renda === 0 && totals.gastos === 0 && (totals.investimentosMes + totals.reservaMesAtual) === 0;
-
-            const expenseCats = Object.keys(AppState.currentData).filter(cat => {
-                if (['goals', 'itemMetadata', 'categoriesMetadata'].includes(cat)) return false;
-                const type = AppState.currentData.categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type || 'expense'; return type === 'expense' || type === 'investment';
-            });
-            const defaultOrder = Object.keys(CATEGORIES_CONFIG);
-            const displayCategories = [ ...expenseCats.filter(c => !defaultOrder.includes(c)).reverse(), ...expenseCats.filter(c => defaultOrder.includes(c)) ];
-
-            const fixedItems = [];
-            displayCategories.forEach(cat => {
-                Object.entries(AppState.currentData[cat]).forEach(([name, val]) => {
-                    const type = AppState.currentData.itemMetadata?.[cat]?.[name] || 'variable';
-                    if(type === 'fixed') fixedItems.push({cat, name, val: Number(val)});
-                });
-            });
-
-            let html = '<div class="space-y-6 md:space-y-8">';
-            if (isMonthEmpty && (AppState.currentMonthIdx > 0 || parseInt(AppState.currentYear) > 2020)) {
-                let pMonth = AppState.currentMonthIdx - 1; let pYear = AppState.currentYear;
-                if (pMonth < 0) { pMonth = 11; pYear = (parseInt(AppState.currentYear) - 1).toString(); }
-                html += `<div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div class="flex items-center gap-3"><div class="p-2 bg-blue-100 rounded-lg shrink-0"><i data-lucide="copy" class="w-5 h-5 text-blue-600"></i></div><div><h4 class="font-bold text-blue-800 text-sm">Puxar dados passados?</h4><p class="text-xs text-blue-600">Copie as contas de ${MONTHS[pMonth]}/${pYear} para agilizar.</p></div></div><button onclick="AppActions.copyFromPreviousMonth('expense')" class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors">Copiar Dados</button></div>`;
-            }
-
-            html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="home" class="w-3 h-3"></i> Total Gastos Fixos</span><span class="text-2xl md:text-3xl font-bold text-rose-600">${formatCurrency(totals.fixos)}</span></div><div class="bg-white p-4 md:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="smile" class="w-3 h-3"></i> Total Gastos Variáveis</span><span class="text-2xl md:text-3xl font-bold text-orange-500">${formatCurrency(totals.variaveis)}</span></div><div class="bg-emerald-50 p-4 md:p-5 rounded-3xl border border-emerald-100 shadow-sm flex flex-col justify-center items-center text-center"><span class="text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Saldo Conta Corrente</span><span class="text-2xl md:text-3xl font-bold text-emerald-700">${formatCurrency(saldoContaCorrente)}</span><span class="text-[8px] md:text-[9px] text-emerald-600/80 mt-1">Renda - (Gastos + Invest. no Mês)</span></div></div><div class="bg-rose-50 border border-rose-100 rounded-3xl p-4 md:p-5 shadow-sm"><div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b border-rose-100 pb-3 gap-3"><div><h3 class="font-bold text-rose-800 uppercase text-xs md:text-sm tracking-wide flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 md:w-5 md:h-5"></i> Custo de Vida Mensal</h3><p class="text-[10px] md:text-[11px] text-rose-600 mt-1">Contas marcadas como "Fixo" nas categorias abaixo.</p></div><span class="text-rose-700 font-bold bg-rose-200/50 px-3 py-1.5 rounded-lg text-xs md:text-sm whitespace-nowrap self-start sm:self-auto">Total: ${formatCurrency(totals.fixos)}</span></div><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">${fixedItems.map(item => `<div class="bg-white p-2.5 rounded-xl shadow-sm border border-rose-50 flex flex-col justify-between gap-1"><span class="text-[8px] md:text-[9px] font-bold text-rose-400 uppercase tracking-widest truncate">${item.cat}</span><span class="text-[11px] md:text-xs font-bold text-slate-700 truncate" title="${item.name}">${item.name}</span><span class="text-xs md:text-sm font-bold text-rose-600">${formatCurrency(item.val)}</span></div>`).join('')}${fixedItems.length===0?'<div class="col-span-full text-xs text-rose-400 italic py-2">Nenhuma despesa marcada como fixa.</div>':''}</div></div><div class="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b border-slate-200 pb-4"><div><h2 class="text-lg md:text-xl font-bold text-slate-800">Categorias de Despesas</h2><p class="text-[11px] md:text-xs text-slate-500 mt-1">Adicione contas e marque-as como FIXO ou VAR (Variável).</p></div><button onclick="AppActions.openAddCategoryModal('${y}', '${m}')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md w-full md:w-auto transition-colors"><i data-lucide="plus" class="w-4 h-4"></i> Nova Categoria</button></div><div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">`;
-
-            displayCategories.forEach(cat => {
-                const items = AppState.currentData[cat]; const total = Object.values(items).reduce((a, b) => a + Number(b||0), 0);
-                const theme = getCategoryIconAndColor(cat); const isInvest = (AppState.currentData.categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
-                html += `<div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 flex flex-col h-full relative group/card hover:shadow-md transition-shadow"><div class="flex flex-col gap-3 mb-4 pb-4 border-b border-slate-100"><div class="flex justify-between items-start gap-2"><div class="flex items-center gap-2 flex-1"><div class="p-2 rounded-xl ${theme.bg}"><i data-lucide="${theme.icon.toLowerCase()}" class="w-4 h-4 ${theme.color}"></i></div><span class="font-bold text-slate-800 text-sm tracking-wide truncate flex-1 uppercase pt-0.5">${cat}</span></div><button onclick="AppActions.openEditCategoryModal('${y}', '${m}', '${cat}')" class="text-blue-400 hover:text-blue-600 p-1 opacity-0 group-hover/card:opacity-100 transition-opacity" title="Editar Categoria"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="AppActions.requestDeleteGeneric('category', 'Excluir Categoria', 'Tem certeza que deseja excluir a categoria <strong>${cat}</strong> e todas as suas contas?', {year: '${y}', month: '${m}', cat: '${cat}'})" class="text-rose-300 hover:text-rose-500 p-1 opacity-0 group-hover/card:opacity-100 transition-opacity" title="Excluir Categoria"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100"><span class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-2">Total na Categoria</span><span class="font-bold text-slate-800 text-xs sm:text-sm">${formatCurrency(total)}</span></div></div><div class="space-y-2 flex-1 mb-4">${Object.keys(items).length === 0 ? '<div class="text-xs text-slate-400 italic text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">Nenhuma conta cadastrada.</div>' : ''}${Object.entries(items).map(([itemName, itemVal]) => { const t = AppState.currentData.itemMetadata?.[cat]?.[itemName] || (isInvest?'variavel':'variable'); return renderEditableRowHTML(itemName, itemVal, t, false, isInvest, cat); }).join('')}</div><div class="mt-auto"><button onclick="AppActions.openAddItemModal('${y}', '${m}', '${cat}', 'auto')" class="w-full bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar Conta</button></div></div>`;
-            });
-
-            html += '</div></div>'; return html;
-        }
-
-        function renderPlanejamento() {
-            const { totals } = calculateMetrics(); const y = AppState.currentYear; const m = AppState.currentMonth;
-            const goals = AppState.currentData?.goals || {}; const goalEntries = Object.entries(goals);
-            
-            let totalGoal = 0; goalEntries.forEach(([id, g]) => totalGoal += Number(g.value));
-            const isExc = totalGoal > 100;
-            const chartData = goalEntries.map(([id, g]) => ({ 
-                name: g.label, 
-                value: (g.value / 100) * totals.renda, 
-                hex: GOAL_COLORS[g.color]?.hex || '#94a3b8' 
-            })).filter(d => d.value > 0);
-            
-            const chartColors = chartData.map(d => d.hex);
-
-            setTimeout(() => { if(chartData.length>0) createPieChart('chart-plan', chartData, chartColors, 'doughnut'); }, 0);
-
-            const alertCard = (title, actual, planned) => {
-                const isOk = actual <= planned; const p = planned>0 ? (actual/planned)*100 : 0;
-                return `<div class="p-4 rounded-xl border ${isOk ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}"><div class="flex justify-between items-center mb-3"><span class="font-bold text-[10px] md:text-xs text-slate-600 uppercase tracking-wide">${title}</span><span class="text-[10px] md:text-xs font-bold px-2 py-1 rounded flex items-center gap-1 ${isOk?'bg-emerald-200 text-emerald-800':'bg-rose-200 text-rose-800'}"><i data-lucide="${isOk?'check-circle-2':'alert-triangle'}" class="w-3 h-3"></i> ${isOk?'OK':'ACIMA'}</span></div><div class="flex justify-between items-end"><span class="text-2xl md:text-3xl font-bold ${isOk?'text-emerald-700':'text-rose-700'}">${p.toFixed(0)}%</span><div class="text-right flex flex-col"><span class="text-[10px] md:text-xs text-slate-500 line-through decoration-slate-300">${formatCurrency(planned)}</span><span class="text-xs md:text-sm font-bold ${isOk?'text-emerald-700':'text-rose-700'}">${formatCurrency(actual)}</span></div></div><div class="mt-3 w-full bg-white/50 rounded-full h-1.5 overflow-hidden"><div class="h-full transition-all ${isOk?'bg-emerald-500':'bg-rose-500'}" style="width: ${Math.min(100, p)}%"></div></div></div>`;
-            };
-
-            let slidersHTML = goalEntries.map(([id, g]) => {
-                const plannedValue = (g.value / 100) * totals.renda; const colorData = GOAL_COLORS[g.color] || GOAL_COLORS.blue;
-                const isCustom = !['fixed', 'variable', 'investment'].includes(id);
-                
-                const labelHTML = `<span class="font-semibold text-slate-700 truncate max-w-[120px] sm:max-w-[160px]">${g.label}</span>`;
-                const actionBtns = isCustom ? `
-                    <button onclick="AppActions.openEditGoalModal('${y}', '${m}', '${id}', '${g.label}')" class="ml-2 text-blue-400 hover:text-blue-600"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                    <button onclick="AppActions.requestDeleteGeneric('goal', 'Excluir Planejamento', 'Tem certeza que deseja excluir o planejamento <strong>${g.label}</strong>?', {year: '${y}', month: '${m}', id: '${id}'})" class="ml-2 text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                ` : '';
-
-                return `<div class="mb-5"><div class="flex justify-between text-xs md:text-sm mb-2 font-semibold text-slate-700 items-center"><div class="flex items-center">${labelHTML} ${actionBtns}</div><div class="flex gap-3 items-center"><span class="text-slate-400" id="plan-val-${id}">${formatCurrency(plannedValue)}</span><span id="goal-val-${id}" class="${colorData.text}">${g.value}%</span></div></div><input type="range" min="0" max="100" value="${g.value}" class="goal-slider w-full h-3 md:h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer" style="accent-color: ${colorData.hex};" oninput="AppActions.handleGoalInput('${id}', this.value, ${totals.renda})" onchange="AppActions.handleGoalChange('${y}', '${m}', '${id}', this.value)"></div>`;
-            }).join('');
-
-            return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="lg:col-span-5 space-y-6"><div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-wide mb-6">Definição de Metas (%)</h3><div>${slidersHTML}</div><button onclick="AppActions.openAddGoalModal('${y}', '${m}')" class="mt-2 w-full border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-blue-600 font-bold text-xs py-2 rounded-xl flex justify-center items-center gap-1 transition-colors"><i data-lucide="plus" class="w-3 h-3"></i> Adicionar Novo Objetivo</button><div class="mt-8 pt-6 border-t border-slate-100"><div class="flex justify-between text-[10px] md:text-xs font-bold text-slate-500 mb-2 uppercase"><span>Uso do Orçamento</span><span id="plan-total-text" class="${isExc?'text-rose-500':'text-blue-600'}">${totalGoal}%</span></div><div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div id="plan-total-bar" class="h-full transition-all ${isExc?'bg-rose-500':'bg-blue-600'}" style="width: ${Math.min(100, totalGoal)}%"></div></div><p id="plan-exc-msg" class="text-xs text-rose-500 mt-2 text-center" style="display: ${isExc ? 'block' : 'none'}">A soma das metas não deve exceder 100%.</p></div></div></div><div class="lg:col-span-7 space-y-6"><div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-wide text-center mb-4">Distribuição Planejada</h3><div class="flex justify-center w-full py-4"><div class="h-56 w-56 md:h-64 md:w-64 relative"><canvas id="chart-plan"></canvas></div></div></div><div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-wide mb-4">Alertas de Categoria</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${goalEntries.map(([id, g]) => { let actual = 0; if (id === 'fixed') actual = totals.fixos; else if (id === 'variable') actual = totals.variaveis; else if (id === 'investment') actual = totals.investimentosMes + totals.reservaMesAtual; else actual = getCategoryTotal(y, m, g.label); const planned = (g.value/100) * totals.renda; if (id !== 'fixed' && id !== 'variable' && id !== 'investment' && planned === 0 && actual === 0) return ''; return alertCard(g.label, actual, planned); }).join('')}</div></div></div></div>`;
-        }
-
-        function renderInvestimento() {
-            const y = AppState.currentYear; const m = AppState.currentMonth; const meta = AppState.currentData.categoriesMetadata || DEFAULT_METADATA;
-            const investCats = Object.keys(AppState.currentData).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (meta[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
-            
-            let list = []; 
-            const accDetailsCurrent = getAccumulatedAssetDetails(y, AppState.currentMonthIdx);
-
-            investCats.forEach(cat => { 
-                const assetsInCat = Object.entries(accDetailsCurrent.assets).filter(([n, d]) => d.cat === cat);
-                
-                assetsInCat.forEach(([name, data]) => {
-                    const hasVal = AppState.currentData[cat] && AppState.currentData[cat][name] !== undefined;
-                    const val = hasVal ? AppState.currentData[cat][name] : 0;
-                    const type = AppState.currentData.itemMetadata?.[cat]?.[name] || data.type; 
-                    const inst = AppState.currentData.itemMetadata?.[cat]?.[`${name}_inst`] || data.inst; 
-                    
-                    const hasYield = AppState.currentData.itemMetadata?.[cat] && AppState.currentData.itemMetadata[cat][`${name}_yield`] !== undefined;
-                    const yieldVal = hasYield ? Number(AppState.currentData.itemMetadata[cat][`${name}_yield`]) : 0;
-                    
-                    const accumulatedValue = data.invested + data.yield;
-
-                    list.push({cat, name, val: Number(val), yieldVal, type, inst, accumulatedValue, hasVal, hasYield}); 
-                }); 
-            });
-            
-            list.reverse();
-
-            let uniqueAssetsSet = new Set();
-            const yDataFiltro = AppState.budgetData[AppState.investFilterYear];
-            if (yDataFiltro) {
-                MONTHS.forEach(mesLoop => {
-                    if(yDataFiltro[mesLoop]) {
-                        const mInvestCats = Object.keys(yDataFiltro[mesLoop]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (yDataFiltro[mesLoop].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
-                        mInvestCats.forEach(cat => {
-                            Object.keys(yDataFiltro[mesLoop][cat]).forEach(name => {
-                                const type = yDataFiltro[mesLoop].itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel');
-                                if (AppState.investFilterType === 'all' || AppState.investFilterType === type) {
-                                    uniqueAssetsSet.add(name);
-                                }
-                            });
-                        });
-                    }
-                });
-            }
-            const uniqueAssets = Array.from(uniqueAssetsSet).sort();
-
-            let allowedMonths = MONTHS;
-            if (AppState.investFilterYear === AppState.currentYear) {
-                allowedMonths = MONTHS.slice(0, AppState.currentMonthIdx + 1);
-            } else if (parseInt(AppState.investFilterYear) > parseInt(AppState.currentYear)) {
-                allowedMonths = []; 
-            }
-
-            const evolutionData = allowedMonths.map((mesNome) => {
-                const monthActualIndex = MONTHS.indexOf(mesNome);
-                let mesAporte = 0, mesRend = 0, accTotal = 0;
-                
-                const yData = AppState.budgetData[AppState.investFilterYear];
-                if (yData && yData[mesNome]) {
-                    const mInvestCats = Object.keys(yData[mesNome]).filter(c => !['goals', 'itemMetadata', 'categoriesMetadata'].includes(c) && (yData[mesNome].categoriesMetadata?.[c] || CATEGORIES_CONFIG[c]?.type) === 'investment');
-                    mInvestCats.forEach(cat => {
-                        Object.entries(yData[mesNome][cat]).forEach(([name, val]) => {
-                            const type = yData[mesNome].itemMetadata?.[cat]?.[name] || (name.toLowerCase().includes('reserva')?'reserva':name.toLowerCase().includes('fixa')?'fixa':'variavel');
-                            if ((AppState.investFilterType === 'all' || AppState.investFilterType === type) &&
-                                (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
-                                mesAporte += Number(val) || 0;
-                                mesRend += Number(yData[mesNome].itemMetadata?.[cat]?.[`${name}_yield`]) || 0;
-                            }
-                        });
-                    });
-                }
-
-                const accDetails = getAccumulatedAssetDetails(AppState.investFilterYear, monthActualIndex);
-                Object.entries(accDetails.assets).forEach(([name, data]) => {
-                    if ((AppState.investFilterType === 'all' || AppState.investFilterType === data.type) &&
-                        (AppState.investFilterAsset === 'all' || AppState.investFilterAsset === name)) {
-                        accTotal += (data.invested + data.yield);
-                    }
-                });
-
-                return { name: mesNome.substring(0, 3), Aportes: mesAporte, Rendimentos: mesRend, Acumulado: accTotal };
-            });
-
-            let totalInvestidoAcumulado = 0; 
-            let totalRendimentosAcumulado = 0; 
-            let totalReservaAcumulado = 0; 
-            let totalRendimentoReserva = 0;
-
-            let chartInvestidoData = [];
-            let chartRendimentosData = [];
-            let chartTotalData = [];
-
-            const sortedAssets = Object.entries(accDetailsCurrent.assets).sort((a,b) => (b[1].invested+b[1].yield) - (a[1].invested+a[1].yield));
-
-            sortedAssets.forEach(([assetName, data], index) => {
-                const valTotal = data.invested + data.yield;
-                const color = EXTENDED_COLORS[index % EXTENDED_COLORS.length];
-                
-                if (data.type === 'reserva') {
-                    totalReservaAcumulado += valTotal;
-                    totalRendimentoReserva += data.yield;
-                } else {
-                    totalInvestidoAcumulado += data.invested;
-                    totalRendimentosAcumulado += data.yield;
-                }
-
-                if (data.invested > 0) { chartInvestidoData.push({ name: assetName, value: data.invested, color: color }); }
-                if (data.yield > 0) { chartRendimentosData.push({ name: assetName, value: data.yield, color: color }); }
-                if (valTotal > 0) { chartTotalData.push({ name: assetName, value: valTotal, color: color }); }
-            });
-
-            const patLiq = totalReservaAcumulado + totalInvestidoAcumulado + totalRendimentosAcumulado;
-
-            const colorsInvestido = chartInvestidoData.map(d => d.color);
-            const colorsRends = chartRendimentosData.map(d => d.color);
-            const colorsTotal = chartTotalData.map(d => d.color);
-
-            setTimeout(() => { 
-                createEvolucaoInvestChart('chart-inv-evolucao', evolutionData, AppState.investFilterMetric);
-                if(chartInvestidoData.length>0) createPieChart('chart-inv-investido', chartInvestidoData, colorsInvestido, 'pie'); 
-                if(chartRendimentosData.length>0) createPieChart('chart-inv-rends', chartRendimentosData, colorsRends, 'pie'); 
-                if(chartTotalData.length>0) createPieChart('chart-inv-total', chartTotalData, colorsTotal, 'pie'); 
-            }, 0);
-
-            return `
-            <div class="space-y-6">
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    <div class="lg:col-span-8 space-y-6">
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="px-4 md:px-6 py-4 flex flex-wrap gap-3 items-center justify-between border-b border-slate-100">
-                                <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest">Meus Ativos</h3>
-                                <button onclick="AppActions.openAddItemModal('${y}', '${m}', 'Investimento', 'variavel')" class="text-[10px] md:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 md:px-4 py-2 rounded-xl flex items-center gap-1 transition-colors shadow-sm"><i data-lucide="plus" class="w-3 h-3"></i> Novo Ativo</button>
-                            </div>
-                            <div class="overflow-x-auto p-1">
-                                <table class="w-full text-sm text-left text-slate-500 min-w-full">
-                                    <thead class="hidden sm:table-header-group text-[9px] md:text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50">
-                                        <tr>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold rounded-tl-xl">Ativo</th>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold">Instituição</th>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-center">Tipo</th>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right">Aporte (Mês)</th>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right text-emerald-600">Rendimento (Mês)</th>
-                                            <th class="px-2 sm:px-3 py-3 font-extrabold text-right text-blue-600">Acumulado</th>
-                                            <th class="px-1 sm:px-2 py-3 rounded-tr-xl"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="flex flex-col sm:table-row-group">
-                                        ${list.map(i => { 
-                                            const inputId = `input-inv-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                            const yieldId = `input-yield-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                            const nameInputId = `input-name-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                            
-                                            const displayVal = (i.hasVal && i.val !== 0) ? formatCurrencyInput(i.val) : '';
-                                            const displayYield = (i.hasYield && i.yieldVal !== 0) ? formatCurrencyInput(i.yieldVal) : '';
-                                            
-                                            const typeColorClass = i.type==='reserva' ? 'bg-blue-100 text-blue-700' : 
-                                                                   i.type==='fixa' ? 'bg-emerald-100 text-emerald-700' : 
-                                                                   i.type==='cripto' ? 'bg-amber-100 text-amber-700' : 
-                                                                   'bg-purple-100 text-purple-700';
-
-                                            return `
-                                            <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-bold text-slate-800 bg-transparent outline-none w-full min-w-[80px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs text-right sm:text-left"></div></td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Instituição</span><input type="text" value="${i.inst}" onblur="AppActions.handleInstChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="font-medium text-slate-500 bg-transparent outline-none w-full min-w-[80px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs text-right sm:text-left" placeholder="Ex: Itaú"></div></td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-center"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-auto">Tipo</span><select onchange="AppActions.handleTypeChange('${y}', '${m}', '${i.cat}', '${i.name}', this.value)" class="text-[9px] font-extrabold px-1.5 py-1 rounded outline-none uppercase cursor-pointer ${typeColorClass}"><option value="reserva" ${i.type==='reserva'?'selected':''}>Reserva</option><option value="fixa" ${i.type==='fixa'?'selected':''}>Fixa</option><option value="variavel" ${i.type==='variavel'?'selected':''}>Variável</option><option value="cripto" ${i.type==='cripto'?'selected':''}>Cripto</option></select></div></td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aporte (Mês)</span>
-                                                    <div class="relative w-full max-w-[100px] ml-auto">
-                                                        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 pointer-events-none">R$</span>
-                                                        <input id="${inputId}" type="text" inputmode="numeric" value="${displayVal}" placeholder="0,00" oninput="AppActions.handleInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-full pl-6 pr-2 py-1.5 border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-1 focus:ring-blue-500 text-right font-bold text-xs rounded-lg outline-none transition-all">
-                                                    </div>
-                                                </td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end border-b border-slate-50 sm:border-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rendimento (Mês)</span>
-                                                    <div class="relative w-full max-w-[100px] ml-auto">
-                                                        <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-emerald-400 pointer-events-none">R$</span>
-                                                        <input id="${yieldId}" type="text" inputmode="numeric" value="${displayYield}" placeholder="0,00" oninput="AppActions.handleYieldInputDebounced('${y}', '${m}', '${i.cat}', '${i.name}', this)" onblur="AppActions.handleYieldBlur('${y}', '${m}', '${i.cat}', '${i.name}', this)" onkeydown="if(event.key==='Enter')this.blur()" class="w-full pl-6 pr-2 py-1.5 border border-emerald-100 bg-emerald-50/30 focus:bg-white focus:ring-1 focus:ring-emerald-500 text-emerald-700 text-right font-bold text-xs rounded-lg outline-none transition-all">
-                                                    </div>
-                                                </td>
-                                                <td class="px-2 sm:px-3 py-2 sm:py-3 text-right flex sm:table-cell items-center justify-between sm:justify-end"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Acumulado</span><span class="font-extrabold text-xs text-blue-700">${formatCurrency(i.accumulatedValue)}</span></td>
-                                                <td class="px-1 sm:px-2 py-2 sm:py-3 text-center"><button onclick="AppActions.requestDeleteItem('${y}', '${m}', '${i.cat}', '${i.name}', ${i.accumulatedValue})" class="text-rose-400 hover:text-rose-600 p-2 w-full sm:w-auto flex justify-center items-center gap-1 bg-rose-50 sm:bg-transparent rounded-lg mt-2 sm:mt-0 text-xs sm:text-base font-bold sm:font-normal transition-colors" title="Excluir de todos os meses"><i data-lucide="x" class="w-3.5 h-3.5 md:w-4 md:h-4"></i><span class="sm:hidden">Excluir</span></button></td>
-                                            </tr>`
-                                        }).join('')}
-                                        ${list.length===0?'<tr><td colspan="7" class="py-10 text-center text-slate-400 italic text-xs">Nenhum investimento registrado. Clique em "Novo Ativo" acima.</td></tr>':''}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="px-4 md:px-6 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center"><span class="text-[11px] md:text-xs font-bold text-slate-600 uppercase tracking-wide">Total Investido (Exclui Reserva)</span><span class="text-sm md:text-base font-black text-blue-700">${formatCurrency(totalInvestidoAcumulado)}</span></div>
-                        </div>
-                        
-                    </div>
-
-                    <div class="lg:col-span-4 space-y-6">
-                        <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-fit sticky top-24 flex flex-col relative overflow-hidden border border-slate-700/50">
-                            <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
-                            <div class="absolute -left-6 -bottom-6 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"></div>
-                            
-                            <div class="mb-6 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
-                            <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-white"></div>Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
-                            <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
-                            <div class="pt-6 border-t border-slate-800 flex justify-between items-center mt-2 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</h4><p class="text-lg md:text-xl font-black text-white">${formatCurrency(patLiq)}</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-2">
-                    ${renderPieChartCard('chart-inv-investido', 'Valor Investido', chartInvestidoData, colorsInvestido, 'pie')}
-                    ${renderPieChartCard('chart-inv-rends', 'Rendimentos / Dividendos', chartRendimentosData, colorsRends, 'pie')}
-                    ${renderPieChartCard('chart-inv-total', 'Investido + Rendimentos', chartTotalData, colorsTotal, 'pie')}
-                </div>
-
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
-                        <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Evolução Patrimonial</h3>
-                        <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                            <i data-lucide="filter" class="w-4 h-4 text-slate-400 ml-1 shrink-0"></i>
-                            <select onchange="AppActions.changeInvestFilter('year', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300">
-                                ${Object.keys(AppState.budgetData).sort().map(ano => `<option value="${ano}" ${AppState.investFilterYear === ano ? 'selected' : ''}>${ano}</option>`).join('')}
-                            </select>
-                            <select onchange="AppActions.changeInvestFilter('type', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300">
-                                <option value="all" ${AppState.investFilterType === 'all' ? 'selected' : ''}>Todos os Tipos</option>
-                                <option value="reserva" ${AppState.investFilterType === 'reserva' ? 'selected' : ''}>Reserva</option>
-                                <option value="fixa" ${AppState.investFilterType === 'fixa' ? 'selected' : ''}>Renda Fixa</option>
-                                <option value="variavel" ${AppState.investFilterType === 'variavel' ? 'selected' : ''}>Renda Variável</option>
-                                <option value="cripto" ${AppState.investFilterType === 'cripto' ? 'selected' : ''}>Cripto</option>
-                            </select>
-                            <select onchange="AppActions.changeInvestFilter('asset', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer border-r border-slate-300 max-w-[120px] truncate">
-                                <option value="all" ${AppState.investFilterAsset === 'all' ? 'selected' : ''}>Todos os Ativos</option>
-                                ${uniqueAssets.map(a => `<option value="${a}" ${AppState.investFilterAsset === a ? 'selected' : ''}>${a}</option>`).join('')}
-                            </select>
-                            <select onchange="AppActions.changeInvestFilter('metric', this.value)" class="text-[10px] md:text-xs font-bold text-slate-600 bg-transparent py-1 px-1 outline-none cursor-pointer">
-                                <option value="todos" ${AppState.investFilterMetric === 'todos' ? 'selected' : ''}>Todos os Dados</option>
-                                <option value="acumulado" ${AppState.investFilterMetric === 'acumulado' ? 'selected' : ''}>Evolução (Acumulado)</option>
-                                <option value="aportes" ${AppState.investFilterMetric === 'aportes' ? 'selected' : ''}>Aportes (Mensal)</option>
-                                <option value="rendimentos" ${AppState.investFilterMetric === 'rendimentos' ? 'selected' : ''}>Rendimentos (Mensal)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="h-[250px] md:h-[300px] w-full relative">
-                        <canvas id="chart-inv-evolucao"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50 mt-6">
-                    <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
-                    <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">${[{t:'1. RESERVA PRIMEIRO',d:'Garanta sua reserva de emergência antes de ir para a bolsa.'},{t:'2. DIVERSIFICAÇÃO',d:'Divida entre Renda Fixa e Variável.'},{t:'3. FOCO NO LONGO PRAZO',d:'Serve para multiplicar patrimônio no tempo, não ficar rico rápido.'},{t:'4. ESTUDE TAXAS E IR',d:'Taxas e impostos podem "comer" boa parte da sua rentabilidade.'}].map(x=>`<div class="bg-white p-4 rounded-2xl border border-blue-100/50"><h4 class="font-extrabold text-blue-800 text-[10px] md:text-[11px] uppercase tracking-wide mb-1.5">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500">${x.d}</p></div>`).join('')}</div>
-                </div>
-            </div>`;
-        }
-
-        function renderHistorico() {
-            const { metrics, historyData } = calculateMetrics(); 
-            const progPct = Math.min(100, (metrics.reservaTotalAcumulada / (metrics.metaReserva12m||1)) * 100); 
-            const falta = Math.max(0, metrics.metaReserva12m - metrics.reservaTotalAcumulada);
-
-            let totalRendaAno = 0, totalGastosAno = 0, totalInvestidoAno = 0, totalSobrouAno = 0;
-            historyData.forEach(d => {
-                totalRendaAno += d.renda;
-                totalGastosAno += d.gastos;
-                totalInvestidoAno += d.investido;
-                totalSobrouAno += d.saldo;
-            });
-
-            return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"><div class="lg:col-span-5 space-y-6"><div class="bg-white p-5 md:p-8 rounded-3xl shadow-sm border border-slate-200"><h3 class="text-[11px] md:text-[13px] font-extrabold text-blue-600 uppercase tracking-widest mb-6">Meta de Segurança</h3><div class="flex flex-col sm:flex-row gap-3 md:gap-4 mb-6 md:mb-8"><div class="flex-1 bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-100 flex flex-col justify-center"><p class="text-[9px] md:text-[10px] font-bold text-slate-500 mb-1.5 uppercase">Segurança (6 Meses)</p><p class="text-xl md:text-2xl font-black text-slate-800">${formatCurrency(metrics.metaReserva6m)}</p></div><div class="flex-1 bg-blue-50 p-4 md:p-5 rounded-2xl border border-blue-100 flex flex-col justify-center"><p class="text-[9px] md:text-[10px] font-bold text-blue-600 mb-1.5 uppercase">Ideal (12 Meses)</p><p class="text-xl md:text-2xl font-black text-blue-600">${formatCurrency(metrics.metaReserva12m)}</p></div></div><div><div class="flex justify-between items-end mb-1.5"><div><span class="text-[10px] md:text-[11px] font-extrabold text-slate-700 block uppercase tracking-widest mb-1">Progresso Atual</span><span class="text-[9px] md:text-[11px] italic text-slate-400 font-medium">${formatCurrency(metrics.reservaTotalAcumulada)} / ${formatCurrency(metrics.metaReserva12m)}</span></div><div class="text-right"><span class="text-lg md:text-xl font-black text-blue-600 block leading-none mb-1.5">${progPct.toFixed(0)}%</span><span class="text-[9px] md:text-[10px] font-extrabold text-rose-500 uppercase tracking-wider">Falta: ${formatCurrency(falta)}</span></div></div><div class="w-full bg-[#f1f5f9] rounded-xl h-10 md:h-11 mt-4 flex items-center justify-center relative overflow-hidden shadow-inner border border-slate-200/50"><div class="absolute left-0 top-0 h-full bg-blue-600 transition-all duration-1000" style="width: ${progPct}%"></div><span class="relative z-10 text-xs md:text-[13px] font-bold ${progPct>50?'text-white':'text-slate-800'}">${formatCurrency(metrics.reservaTotalAcumulada)}</span></div></div></div><div class="bg-white p-5 md:p-8 rounded-3xl shadow-sm border border-slate-200"><h3 class="text-[11px] md:text-[13px] font-extrabold text-slate-800 uppercase tracking-widest mb-6">O que é a reserva?</h3><div class="space-y-6">${[{i:'shield-check',c:'blue',t:'Para que serve?',d:'Cobre imprevistos como demissão ou saúde sem precisar de empréstimos.'},{i:'help-circle',c:'amber',t:'Quanto guardar?',d:'O ideal é ter entre 6 e 12 meses do seu custo de vida atual guardado.'},{i:'trending-up',c:'emerald',t:'Onde investir?',d:'Priorize Liquidez Diária e Baixo Risco (Tesouro Selic, CDB 100% DI).'}].map(x=>`<div class="flex gap-3 md:gap-4"><div class="w-10 h-10 md:w-12 h-12 rounded-2xl bg-${x.c}-50 flex items-center justify-center shrink-0 border border-${x.c}-100/50"><i data-lucide="${x.i}" class="w-5 h-5 md:w-6 h-6 text-${x.c}-500"></i></div><div><h4 class="font-extrabold text-slate-800 text-[11px] md:text-xs uppercase tracking-wide">${x.t}</h4><p class="text-[10px] md:text-[11px] text-slate-500 mt-1.5 leading-relaxed">${x.d}</p></div></div>`).join('')}</div></div></div><div class="lg:col-span-7"><div class="bg-white p-4 md:p-8 rounded-3xl shadow-sm border border-slate-200 h-full"><h3 class="text-[11px] md:text-[13px] font-extrabold text-slate-800 uppercase tracking-widest mb-6">Histórico em ${AppState.currentYear}</h3><div class="overflow-x-auto scrollbar-hide"><table class="w-full text-sm text-left min-w-[450px]"><thead class="text-[9px] md:text-[10px] text-slate-400 uppercase border-b border-slate-100"><tr><th class="pb-3 md:pb-4 font-bold tracking-widest">Mês</th><th class="pb-3 md:pb-4 font-bold tracking-widest">Renda</th><th class="pb-3 md:pb-4 font-bold tracking-widest">Gastos</th><th class="pb-3 md:pb-4 font-bold tracking-widest">Investido Mês</th><th class="pb-3 md:pb-4 font-bold tracking-widest text-right">Sobrou</th></tr></thead><tbody>${historyData.map(d => `<tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors"><td class="py-3 md:py-4 font-extrabold text-slate-700 text-[10px] md:text-xs tracking-wide lowercase whitespace-nowrap">${d.month.substring(0,3)}/${AppState.currentYear}</td><td class="py-3 md:py-4 text-emerald-600 font-bold text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(d.renda)}</td><td class="py-3 md:py-4 text-rose-600 font-bold text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(d.gastos)}</td><td class="py-3 md:py-4 text-blue-600 font-bold text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(d.investido)}</td><td class="py-3 md:py-4 text-right font-black text-xs md:text-sm whitespace-nowrap ${d.saldo>=0?'text-emerald-700':'text-rose-600'}">${formatCurrency(d.saldo)}</td></tr>`).join('')}${historyData.length===0?'<tr><td colspan="5" class="py-8 text-center text-slate-400 italic text-xs md:text-sm">Nenhum histórico disponível.</td></tr>':''}
-                                    <tr class="bg-slate-50 border-t-2 border-slate-200 font-black transition-colors">
-                                        <td class="py-3 md:py-4 text-slate-800 text-[10px] md:text-xs uppercase tracking-widest whitespace-nowrap">Total Ano</td>
-                                        <td class="py-3 md:py-4 text-emerald-600 text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(totalRendaAno)}</td>
-                                        <td class="py-3 md:py-4 text-rose-600 text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(totalGastosAno)}</td>
-                                        <td class="py-3 md:py-4 text-blue-600 text-[10px] md:text-xs whitespace-nowrap">${formatCurrency(totalInvestidoAno)}</td>
-                                        <td class="py-3 md:py-4 text-right text-xs md:text-sm whitespace-nowrap ${totalSobrouAno>=0?'text-emerald-700':'text-rose-600'}">${formatCurrency(totalSobrouAno)}</td>
-                                    </tr>
-                                </tbody></table></div></div></div></div>`;
-        }
-
-        function renderHeader() {
-            const tabs = [ { id: 'dashboard', label: 'Dashboard' }, { id: 'renda', label: 'Renda' }, { id: 'gastos', label: 'Gastos' }, { id: 'planejamento', label: 'Planejamento' }, { id: 'investimento', label: 'Investimentos' }, { id: 'historico', label: 'Reserva e Histórico' } ];
-
-            return `
-            <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-                <div class="max-w-7xl mx-auto px-4 py-2 md:py-3">
-                    <div class="flex items-center justify-between gap-3 md:gap-4">
-                        <div class="flex items-center h-10 md:h-12 relative w-24 sm:w-32 md:w-44 shrink-0">
-                            <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
-                        </div>
-                        
-                        <div class="hidden md:flex flex-1 max-w-md items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 mx-auto">
-                            <div class="flex items-center border-r border-slate-200 pr-2 mr-2">
-                                <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                                <div class="font-bold text-sm text-slate-700 px-2">${AppState.currentYear}</div>
-                                <button onclick="AppActions.changeYear(1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                            </div>
-                            <div class="flex items-center flex-1 justify-between">
-                                <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                                <div class="font-bold text-sm text-slate-700 uppercase tracking-widest px-2 text-center flex-1">${AppState.currentMonth}</div>
-                                <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-                            <div class="flex items-center text-[10px] sm:text-xs font-medium min-w-[50px] sm:min-w-[80px] justify-end" id="sync-status"></div>
-                            
-                            <div class="relative" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
-                                <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" class="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold transition-colors">
-                                    <i data-lucide="user" class="w-4 h-4"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
-                                </button>
-                                <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 flex-col overflow-hidden origin-top-right">
-                                    <a href="admin.html" id="btn-admin-secreto" class="hidden flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i> Admin CRM</a>
-                                    <a href="https://wa.me/5511946358213" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="message-circle" class="w-4 h-4 text-emerald-500"></i> Suporte WhatsApp</a>
-                                    <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="credit-card" class="w-4 h-4 text-blue-500"></i> Gerenciar assinatura</a>
-                                    <button onclick="AppActions.sair()" class="flex items-center gap-2 px-4 py-3 hover:bg-rose-50 text-rose-600 text-sm font-bold text-left w-full transition-colors"><i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i> Sair da Conta</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex md:hidden mt-3 items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 w-full">
-                        <div class="flex items-center border-r border-slate-200 pr-2 mr-2 shrink-0">
-                            <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <div class="font-bold text-sm text-slate-700 px-2 w-12 text-center">${AppState.currentYear}</div>
-                            <button onclick="AppActions.changeYear(1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
-                        <div class="flex items-center flex-1 justify-between">
-                            <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <div class="font-bold text-sm text-slate-700 uppercase tracking-widest px-2 text-center flex-1">${AppState.currentMonth}</div>
-                            <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="border-t border-slate-100 w-full overflow-x-auto scrollbar-hide mt-3 md:mt-0">
-                    <div class="max-w-7xl mx-auto px-2 sm:px-4 flex flex-nowrap justify-start lg:justify-center gap-1 sm:gap-4 md:gap-8">
-                        ${tabs.map(t => `<button onclick="AppActions.changeTab('${t.id}')" class="py-3 px-3 md:px-4 border-b-2 transition-colors whitespace-nowrap text-xs md:text-sm font-bold ${AppState.activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">${t.label}</button>`).join('')}
-                    </div>
-                </div>
-            </header>`;
-        }
-
-        function renderModal() {
-            const root = document.getElementById('modal-root');
-            if (!AppState.activeModal && !AppState.confirmMonthChange && !AppState.confirmDeleteItem) {
-                root.innerHTML = '';
-                return;
-            }
-
-            let content = '';
-
-            if (AppState.confirmMonthChange !== null) {
-                content = `
-                <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                    <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Fechar o mês?</h3>
-                    <p class="text-xs md:text-sm text-slate-500 mb-6">Tem certeza que deseja fechar <strong>${AppState.currentMonth}</strong> e ir para o mês seguinte?</p>
-                    <div class="flex gap-3 justify-end">
-                        <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                        <button onclick="AppActions.confirmMonthChange()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Sim, fechar mês</button>
-                    </div>
-                </div>`;
-            } else if (AppState.confirmDeleteItem !== null) {
-                const item = AppState.confirmDeleteItem;
-                content = `
-                <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
-                    <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Excluir Ativo?</h3>
-                    <p class="text-xs md:text-sm text-slate-500 mb-6">Você tem <strong>${formatCurrency(item.accumulatedValue)}</strong> acumulados em <strong>${item.name}</strong>. Excluir este ativo apagará todo o seu histórico e não poderá ser desfeito. Tem certeza?</p>
-                    <div class="flex gap-3 justify-end">
-                        <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                        <button onclick="AppActions.confirmDeleteInvest()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
-                    </div>
-                </div>`;
-            } else if (AppState.activeModal) {
-                const m = AppState.activeModal;
-                if (m.type === 'confirmDelete') {
                     content = `
                     <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">${m.title}</h3>
-                        <p class="text-xs md:text-sm text-slate-500 mb-6">${m.message}</p>
-                        <div class="flex gap-3 justify-end">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Não, cancelar</button>
-                            <button onclick="AppActions.executeDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
+                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">Aporte Mensal</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase">Selecione o Ativo</label>
+                                <select id="modal-aporte-asset" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
+                                    ${optionsHTML}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase">Valor do Aporte (R$)</label>
+                                <input type="text" id="modal-aporte-val" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="0,00" oninput="AppActions.handleModalCurrencyInput(this)" />
+                            </div>
+                        </div>
+                        <div class="flex gap-3 justify-end mt-6">
+                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+                            <button onclick="AppActions.saveAporte()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors" ${assetsList.length===0?'disabled':''}>Adicionar Aporte</button>
                         </div>
                     </div>`;
                 } else if (m.type === 'addItem') {
@@ -1348,6 +755,15 @@
                                 <label class="text-[10px] font-bold text-slate-500 uppercase">Valor do Mês (R$)</label>
                                 <input type="text" id="modal-item-val" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="0,00" oninput="AppActions.handleModalCurrencyInput(this)" />
                             </div>
+                            ${m.cat !== 'Renda Familiar' && m.cat !== 'Investimento' ? `
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase">Tipo de Despesa</label>
+                                <select id="modal-item-expense-type" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
+                                    <option value="variable">Variável</option>
+                                    <option value="fixed">Fixa</option>
+                                </select>
+                            </div>
+                            ` : ''}
                             ${m.cat === 'Investimento' ? `
                             <div>
                                 <label class="text-[10px] font-bold text-slate-500 uppercase">Instituição</label>
