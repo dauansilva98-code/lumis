@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumis - Pagamento Aprovado</title>
     
+    <script>
+        // Plataformas de pagamento (Stripe, Kiwify, etc) geralmente adicionam parâmetros na URL quando aprovam a compra.
+        // Exemplo: seussite.com/sucesso.html?session_id=123 ou ?status=approved
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Verifica se a URL NÃO contém parâmetros comuns de retorno de checkout aprovado
+        // Se o seu gateway usar um parâmetro diferente, basta adicionar aqui.
+        if (!urlParams.has('session_id') && !urlParams.has('success') && !urlParams.has('status') && !urlParams.has('approved')) {
+            // Se tentar acessar direto, é redirecionado para o login/home
+            window.location.href = 'login.html'; 
+        }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
