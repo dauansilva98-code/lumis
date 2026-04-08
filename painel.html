@@ -23,6 +23,34 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
         input[type=range] { accent-color: #3b82f6; }
+
+        /* ── Drawer mobile ── */
+        #mobile-drawer {
+            position: fixed;
+            top: 0; right: 0;
+            width: 260px;
+            height: 100%;
+            background: #fff;
+            box-shadow: -4px 0 24px rgba(0,0,0,.12);
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform .25s cubic-bezier(.4,0,.2,1);
+            display: flex;
+            flex-direction: column;
+        }
+        #mobile-drawer.open {
+            transform: translateX(0);
+        }
+        #mobile-drawer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,.45);
+            z-index: 9998;
+        }
+        #mobile-drawer-overlay.open {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-800 pb-20 font-sans">
@@ -35,6 +63,23 @@
     </div>
 
     <div id="modal-root"></div>
+
+    <!-- ── DRAWER MOBILE ─────────────────────────────────────────────────── -->
+    <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
+    <div id="mobile-drawer">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <img src="logo.png" alt="Lumis" class="h-7 object-contain" onerror="this.style.display='none'">
+            <button onclick="closeMobileDrawer()" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <nav id="mobile-drawer-nav" class="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+            <!-- preenchido dinamicamente por renderMobileDrawer() -->
+        </nav>
+        <div class="border-t border-slate-100 px-3 py-3 space-y-1" id="mobile-drawer-bottom">
+            <!-- perfil e sair — preenchidos dinamicamente -->
+        </div>
+    </div>
 
     <script>
         // --- CONFIGURAÇÃO DO SUPABASE ---
@@ -286,6 +331,58 @@
             } catch (error) {} finally { AppState.loading = false; renderApp(); }
         }
 
+        // --- DRAWER MOBILE ---
+        function openMobileDrawer() {
+            document.getElementById('mobile-drawer').classList.add('open');
+            document.getElementById('mobile-drawer-overlay').classList.add('open');
+            renderMobileDrawer();
+        }
+        function closeMobileDrawer() {
+            document.getElementById('mobile-drawer').classList.remove('open');
+            document.getElementById('mobile-drawer-overlay').classList.remove('open');
+        }
+        function renderMobileDrawer() {
+            const tabs = [
+                { id: 'dashboard',    label: 'Dashboard',            icon: 'layout-dashboard' },
+                { id: 'renda',        label: 'Renda',                icon: 'wallet' },
+                { id: 'gastos',       label: 'Gastos',               icon: 'receipt' },
+                { id: 'planejamento', label: 'Planejamento',         icon: 'target' },
+                { id: 'investimento', label: 'Investimentos',        icon: 'trending-up' },
+                { id: 'historico',    label: 'Reserva e Histórico',  icon: 'clock' },
+            ];
+
+            const nav = document.getElementById('mobile-drawer-nav');
+            nav.innerHTML = tabs.map(t => {
+                const active = AppState.activeTab === t.id;
+                return `<button onclick="AppActions.changeTab('${t.id}'); closeMobileDrawer();"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all
+                    ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}">
+                    <i data-lucide="${t.icon}" class="w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-slate-400'}"></i>
+                    <span>${t.label}</span>
+                </button>`;
+            }).join('');
+
+            const bottom = document.getElementById('mobile-drawer-bottom');
+            bottom.innerHTML = `
+                <a href="https://wa.me/5511946358213" target="_blank"
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-all">
+                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                    <span>Suporte WhatsApp</span>
+                </a>
+                <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank"
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-all">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-blue-500 shrink-0"></i>
+                    <span>Gerenciar assinatura</span>
+                </a>
+                <button onclick="AppActions.sair()"
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-rose-600 hover:bg-rose-50 transition-all">
+                    <i data-lucide="log-out" class="w-4 h-4 shrink-0"></i>
+                    <span>Sair da Conta</span>
+                </button>
+            `;
+            lucide.createIcons();
+        }
+
         // --- AÇÕES DO USUÁRIO & DEBOUNCE ---
         let typingTimer;
 
@@ -332,7 +429,6 @@
             nextMonthConfirm: () => { if (AppState.currentMonthIdx < 11) { AppState.confirmMonthChange = AppState.currentMonthIdx + 1; renderModal(); } },
             confirmMonthChange: () => { AppState.currentMonthIdx = AppState.confirmMonthChange; AppState.confirmMonthChange = null; renderApp(); },
             
-            // Controle de Modais Unificado
             closeModal: () => { AppState.activeModal = null; AppState.confirmMonthChange = null; AppState.confirmDeleteItem = null; renderModal(); },
             
             openAddCategoryModal: (year, month) => { AppState.activeModal = { type: 'category', year, month, oldName: null }; renderModal(); },
@@ -353,7 +449,6 @@
             
             requestDeleteGeneric: (type, title, message, data) => { AppState.activeModal = { type: 'confirmDelete', title, message, actionData: { type, ...data } }; renderModal(); },
             
-            // Especial para Investimentos com aviso de acúmulo (Mantido para preservar a lógica original segura)
             requestDeleteItem: (year, month, cat, name, accumulatedValue) => {
                 if (accumulatedValue > 0) {
                     AppState.confirmDeleteItem = { year, month, cat, name, accumulatedValue };
@@ -368,7 +463,6 @@
                 AppActions.deleteItem(year, month, cat, name);
             },
             
-            // Executores dos Modais
             executeDelete: () => {
                 const d = AppState.activeModal.actionData;
                 if(d.type === 'category') {
@@ -621,6 +715,40 @@
                         delete AppState.budgetData[year][month].itemMetadata[cat][name]; 
                         delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_inst`]; 
                         delete AppState.budgetData[year][month].itemMetadata[cat][`${name}_yield`]; 
+                    } 
+                }
+                saveToDatabase(); renderApp(); 
+            },
+
+            renameItem: (year, month, cat, old, el) => { 
+                const nw = el.value.trim(); 
+                if (old === nw || nw === '') { el.value = old; return; } 
+                let fn = nw, c = 1; 
+                while (AppState.budgetData[year][month][cat] && AppState.budgetData[year][month][cat][fn] !== undefined && fn !== old) { fn = `${nw} ${c}`; c++; } 
+
+                const isInvest = (AppState.budgetData[year][month].categoriesMetadata?.[cat] || CATEGORIES_CONFIG[cat]?.type) === 'investment';
+
+                if (isInvest) {
+                    Object.keys(AppState.budgetData).forEach(y => {
+                        Object.keys(AppState.budgetData[y]).forEach(m => {
+                            if (AppState.budgetData[y][m][cat] && AppState.budgetData[y][m][cat][old] !== undefined) {
+                                AppState.budgetData[y][m][cat][fn] = AppState.budgetData[y][m][cat][old];
+                                delete AppState.budgetData[y][m][cat][old];
+                                if (AppState.budgetData[y][m].itemMetadata?.[cat]) {
+                                    if(AppState.budgetData[y][m].itemMetadata[cat][old] !== undefined) { AppState.budgetData[y][m].itemMetadata[cat][fn] = AppState.budgetData[y][m].itemMetadata[cat][old]; delete AppState.budgetData[y][m].itemMetadata[cat][old]; }
+                                    if (AppState.budgetData[y][m].itemMetadata[cat][`${old}_inst`] !== undefined) { AppState.budgetData[y][m].itemMetadata[cat][`${fn}_inst`] = AppState.budgetData[y][m].itemMetadata[cat][`${old}_inst`]; delete AppState.budgetData[y][m].itemMetadata[cat][`${old}_inst`]; }
+                                    if (AppState.budgetData[y][m].itemMetadata[cat][`${old}_yield`] !== undefined) { AppState.budgetData[y][m].itemMetadata[cat][`${fn}_yield`] = AppState.budgetData[y][m].itemMetadata[cat][`${old}_yield`]; delete AppState.budgetData[y][m].itemMetadata[cat][`${old}_yield`]; }
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    AppState.budgetData[year][month][cat][fn] = AppState.budgetData[year][month][cat][old]; 
+                    delete AppState.budgetData[year][month][cat][old]; 
+                    if (AppState.budgetData[year][month].itemMetadata[cat]) { 
+                        if (AppState.budgetData[year][month].itemMetadata[cat][old] !== undefined) { AppState.budgetData[year][month].itemMetadata[cat][fn] = AppState.budgetData[year][month].itemMetadata[cat][old]; delete AppState.budgetData[year][month].itemMetadata[cat][old]; }
+                        if (AppState.budgetData[year][month].itemMetadata[cat][`${old}_inst`] !== undefined) { AppState.budgetData[year][month].itemMetadata[cat][`${fn}_inst`] = AppState.budgetData[year][month].itemMetadata[cat][`${old}_inst`]; delete AppState.budgetData[year][month].itemMetadata[cat][`${old}_inst`]; } 
+                        if (AppState.budgetData[year][month].itemMetadata[cat][`${old}_yield`] !== undefined) { AppState.budgetData[year][month].itemMetadata[cat][`${fn}_yield`] = AppState.budgetData[year][month].itemMetadata[cat][`${old}_yield`]; delete AppState.budgetData[year][month].itemMetadata[cat][`${old}_yield`]; } 
                     } 
                 }
                 saveToDatabase(); renderApp(); 
@@ -1142,7 +1270,6 @@
 
             return `
             <div class="space-y-6">
-
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div class="lg:col-span-8 space-y-6">
                         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -1171,15 +1298,9 @@
                                             const inputId = `input-inv-${safeId(i.cat)}-${safeId(i.name)}`; 
                                             const yieldId = `input-yield-${safeId(i.cat)}-${safeId(i.name)}`; 
                                             const nameInputId = `input-name-${safeId(i.cat)}-${safeId(i.name)}`; 
-                                            
                                             const displayVal = (i.hasVal && i.val !== 0) ? formatCurrencyInput(i.val) : '';
                                             const displayYield = (i.hasYield && i.yieldVal !== 0) ? formatCurrencyInput(i.yieldVal) : '';
-                                            
-                                            const typeColorClass = i.type==='reserva' ? 'bg-blue-100 text-blue-700' : 
-                                                                   i.type==='fixa' ? 'bg-emerald-100 text-emerald-700' : 
-                                                                   i.type==='cripto' ? 'bg-amber-100 text-amber-700' : 
-                                                                   'bg-purple-100 text-purple-700';
-
+                                            const typeColorClass = i.type==='reserva' ? 'bg-blue-100 text-blue-700' : i.type==='fixa' ? 'bg-emerald-100 text-emerald-700' : i.type==='cripto' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700';
                                             return `
                                             <tr class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row mb-4 sm:mb-0 p-3 sm:p-0 rounded-xl sm:rounded-none shadow-sm sm:shadow-none border sm:border-0 sm:border-b">
                                                 <td class="px-2 sm:px-3 py-2 sm:py-3 border-b border-slate-50 sm:border-0"><div class="flex sm:block items-center justify-between mb-1 sm:mb-0"><span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ativo</span><input id="${nameInputId}" type="text" value="${i.name}" onblur="AppActions.renameItem('${y}', '${m}', '${i.cat}', '${i.name}', this)" class="font-bold text-slate-800 bg-transparent outline-none w-full min-w-[80px] hover:bg-slate-100 focus:bg-white rounded px-2 py-1 text-xs text-right sm:text-left"></div></td>
@@ -1207,14 +1328,11 @@
                             </div>
                             <div class="px-4 md:px-6 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center"><span class="text-[11px] md:text-xs font-bold text-slate-600 uppercase tracking-wide">Total Investido (Exclui Reserva)</span><span class="text-sm md:text-base font-black text-blue-700">${formatCurrency(totalInvestidoAcumulado)}</span></div>
                         </div>
-                        
                     </div>
-
                     <div class="lg:col-span-4 space-y-6">
                         <div class="bg-[#0f172a] rounded-3xl p-6 md:p-8 text-white shadow-xl h-fit sticky top-24 flex flex-col relative overflow-hidden border border-slate-700/50">
                             <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>
                             <div class="absolute -left-6 -bottom-6 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"></div>
-                            
                             <div class="mb-6 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>Reserva de Emergência</h4><p class="text-2xl md:text-3xl font-black text-blue-400">${formatCurrency(totalReservaAcumulado)}</p></div>
                             <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-white"></div>Aportes Totais (S/ Reserva)</h4><p class="text-xl md:text-2xl font-black text-white">${formatCurrency(totalInvestidoAcumulado)}</p></div>
                             <div class="mb-6 pt-6 border-t border-slate-800 relative z-10"><h4 class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Rendimentos Totais</h4><p class="text-xl md:text-2xl font-black text-emerald-400">+ ${formatCurrency(totalRendimentosAcumulado + totalRendimentoReserva)}</p></div>
@@ -1222,13 +1340,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-2">
                     ${renderPieChartCard('chart-inv-investido', 'Valor Investido', chartInvestidoData, colorsInvestido, 'pie')}
                     ${renderPieChartCard('chart-inv-rends', 'Rendimentos / Dividendos', chartRendimentosData, colorsRends, 'pie')}
                     ${renderPieChartCard('chart-inv-total', 'Investido + Rendimentos', chartTotalData, colorsTotal, 'pie')}
                 </div>
-
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 mt-6">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 border-b border-slate-100 pb-4">
                         <h3 class="font-extrabold text-slate-800 uppercase text-xs md:text-[13px] tracking-widest flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i> Evolução Patrimonial</h3>
@@ -1260,7 +1376,6 @@
                         <canvas id="chart-inv-evolucao"></canvas>
                     </div>
                 </div>
-
                 <div class="bg-blue-50 rounded-3xl p-5 md:p-8 border border-blue-100/50 mt-6">
                     <h3 class="font-extrabold text-blue-800 mb-2 flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest"><i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i> Aprenda Antes de Investir</h3>
                     <p class="text-[11px] md:text-xs text-blue-700 mb-6 leading-relaxed">Investir sem conhecimento é como dirigir no escuro. Entenda o risco de cada ativo e nunca invista no que não compreende.</p>
@@ -1293,8 +1408,16 @@
                                 </tbody></table></div></div></div></div>`;
         }
 
+        // --- HEADER — única função alterada ---
         function renderHeader() {
-            const tabs = [ { id: 'dashboard', label: 'Dashboard' }, { id: 'renda', label: 'Renda' }, { id: 'gastos', label: 'Gastos' }, { id: 'planejamento', label: 'Planejamento' }, { id: 'investimento', label: 'Investimentos' }, { id: 'historico', label: 'Reserva e Histórico' } ];
+            const tabs = [
+                { id: 'dashboard',    label: 'Dashboard' },
+                { id: 'renda',        label: 'Renda' },
+                { id: 'gastos',       label: 'Gastos' },
+                { id: 'planejamento', label: 'Planejamento' },
+                { id: 'investimento', label: 'Investimentos' },
+                { id: 'historico',    label: 'Reserva e Histórico' }
+            ];
 
             return `
             <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
@@ -1304,6 +1427,7 @@
                             <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
                         </div>
                         
+                        <!-- Seletor mês/ano: visível só em desktop -->
                         <div class="hidden md:flex flex-1 max-w-md items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 mx-auto">
                             <div class="flex items-center border-r border-slate-200 pr-2 mr-2">
                                 <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
@@ -1317,10 +1441,12 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                            <!-- Status sync -->
                             <div class="flex items-center text-[10px] sm:text-xs font-medium min-w-[50px] sm:min-w-[80px] justify-end" id="sync-status"></div>
                             
-                            <div class="relative" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
+                            <!-- Perfil dropdown — visível só em desktop -->
+                            <div class="hidden md:block relative" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
                                 <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" class="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold transition-colors">
                                     <i data-lucide="user" class="w-4 h-4"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
                                 </button>
@@ -1331,9 +1457,15 @@
                                     <button onclick="AppActions.sair()" class="flex items-center gap-2 px-4 py-3 hover:bg-rose-50 text-rose-600 text-sm font-bold text-left w-full transition-colors"><i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i> Sair da Conta</button>
                                 </div>
                             </div>
+
+                            <!-- Hambúrguer — visível só em mobile -->
+                            <button onclick="openMobileDrawer()" class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" aria-label="Menu">
+                                <i data-lucide="menu" class="w-5 h-5"></i>
+                            </button>
                         </div>
                     </div>
 
+                    <!-- Seletor mês/ano mobile -->
                     <div class="flex md:hidden mt-3 items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 w-full">
                         <div class="flex items-center border-r border-slate-200 pr-2 mr-2 shrink-0">
                             <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
@@ -1348,156 +1480,19 @@
                     </div>
                 </div>
                 
-                <div class="border-t border-slate-100 w-full overflow-x-auto scrollbar-hide mt-3 md:mt-0">
+                <!-- Tabs desktop (ocultas em mobile) -->
+                <div class="hidden md:block border-t border-slate-100 w-full overflow-x-auto scrollbar-hide mt-0">
                     <div class="max-w-7xl mx-auto px-2 sm:px-4 flex flex-nowrap justify-start lg:justify-center gap-1 sm:gap-4 md:gap-8">
                         ${tabs.map(t => `<button onclick="AppActions.changeTab('${t.id}')" class="py-3 px-3 md:px-4 border-b-2 transition-colors whitespace-nowrap text-xs md:text-sm font-bold ${AppState.activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">${t.label}</button>`).join('')}
                     </div>
                 </div>
+
+                <!-- Indicador de aba ativa em mobile (abaixo do seletor de mês) -->
+                <div class="md:hidden flex items-center gap-2 px-4 py-2 border-t border-slate-100 bg-slate-50/60">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seção:</span>
+                    <span class="text-[11px] font-black text-blue-600 uppercase tracking-wide">${tabs.find(t => t.id === AppState.activeTab)?.label || 'Dashboard'}</span>
+                </div>
             </header>`;
-        }
-
-        function renderModal() {
-            const root = document.getElementById('modal-root');
-            if (!AppState.activeModal && !AppState.confirmMonthChange && !AppState.confirmDeleteItem) {
-                root.innerHTML = '';
-                return;
-            }
-
-            let content = '';
-
-            if (AppState.confirmMonthChange !== null) {
-                content = `
-                <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                    <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Fechar o mês?</h3>
-                    <p class="text-xs md:text-sm text-slate-500 mb-6">Tem certeza que deseja fechar <strong>${AppState.currentMonth}</strong> e ir para o mês seguinte?</p>
-                    <div class="flex gap-3 justify-end">
-                        <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                        <button onclick="AppActions.confirmMonthChange()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Sim, fechar mês</button>
-                    </div>
-                </div>`;
-            } else if (AppState.confirmDeleteItem !== null) {
-                const item = AppState.confirmDeleteItem;
-                content = `
-                <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
-                    <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">Excluir Ativo?</h3>
-                    <p class="text-xs md:text-sm text-slate-500 mb-6">Você tem <strong>${formatCurrency(item.accumulatedValue)}</strong> acumulados em <strong>${item.name}</strong>. Excluir este ativo apagará todo o seu histórico e não poderá ser desfeito. Tem certeza?</p>
-                    <div class="flex gap-3 justify-end">
-                        <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                        <button onclick="AppActions.confirmDeleteInvest()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
-                    </div>
-                </div>`;
-            } else if (AppState.activeModal) {
-                const m = AppState.activeModal;
-                if (m.type === 'confirmDelete') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-2">${m.title}</h3>
-                        <p class="text-xs md:text-sm text-slate-500 mb-6">${m.message}</p>
-                        <div class="flex gap-3 justify-end">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Não, cancelar</button>
-                            <button onclick="AppActions.executeDelete()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors">Sim, excluir</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'addItem') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.cat === 'Investimento' ? 'Novo Ativo' : 'Novo Registro'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome / Descrição</label>
-                                <input type="text" id="modal-item-name" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: ${m.cat === 'Renda Familiar' ? 'Salário Extra' : m.cat === 'Investimento' ? 'Ações Petrobras' : 'Nova Conta'}" />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Valor do Mês (R$)</label>
-                                <input type="text" id="modal-item-val" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="0,00" oninput="AppActions.handleModalCurrencyInput(this)" />
-                            </div>
-                            ${m.cat === 'Investimento' ? `
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Instituição</label>
-                                <input type="text" id="modal-item-inst" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Itaú, XP..." />
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Tipo</label>
-                                <select id="modal-item-type" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
-                                    <option value="variavel">Variável</option>
-                                    <option value="fixa">Fixa</option>
-                                    <option value="reserva">Reserva</option>
-                                    <option value="cripto">Cripto</option>
-                                </select>
-                            </div>
-                            ` : m.cat === 'Renda Familiar' ? '' : `
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Tipo</label>
-                                <select id="modal-item-type" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
-                                    <option value="variable">Variável</option>
-                                    <option value="fixed">Fixo</option>
-                                </select>
-                            </div>
-                            `}
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveNewItem()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Adicionar</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'aporte') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">Aporte Mensal</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Selecione o Ativo</label>
-                                <select id="modal-aporte-name" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500">
-                                    ${m.assets.map(a => `<option value="${a}">${a}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Valor do Aporte (R$)</label>
-                                <input type="text" id="modal-aporte-val" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="0,00" oninput="AppActions.handleModalCurrencyInput(this)" />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveAporte()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Salvar Aporte</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'category') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.oldName ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome da Categoria</label>
-                                <input type="text" id="modal-cat-name" value="${m.oldName || ''}" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Moradia, Lazer..." />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveCategory()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Salvar</button>
-                        </div>
-                    </div>`;
-                } else if (m.type === 'goal') {
-                    content = `
-                    <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl">
-                        <h3 class="text-lg md:text-xl font-bold text-slate-800 mb-4">${m.id ? 'Editar Planejamento' : 'Novo Planejamento'}</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-500 uppercase">Nome do Planejamento</label>
-                                <input type="text" id="modal-goal-name" value="${m.oldName || ''}" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500" placeholder="Ex: Viagem, Carro Novo..." />
-                            </div>
-                        </div>
-                        <div class="flex gap-3 justify-end mt-6">
-                            <button onclick="AppActions.closeModal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                            <button onclick="AppActions.saveGoal()" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors">Salvar</button>
-                        </div>
-                    </div>`;
-                }
-            }
-
-            root.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4 shadow-2xl">${content}</div>`;
-            if(content) lucide.createIcons();
         }
 
         function renderApp() {
@@ -1581,9 +1576,7 @@
             }
         }
 
-        // Inicia a aplicação
         initAuth();
-
     </script>
 </body>
 </html>
