@@ -384,7 +384,10 @@
         }
 
         // --- AÇÕES DO USUÁRIO & DEBOUNCE ---
+        // FIX #1 (Debounce): Timers separados para campos de valor e de rendimento,
+        // evitando que a digitação em um campo cancele o salvamento de outro.
         let typingTimer;
+        let yieldTypingTimer;
 
         window.AppActions = {
             sair: async () => { 
@@ -483,6 +486,8 @@
                 saveToDatabase(); AppState.activeModal = null; renderApp();
             },
 
+            // FIX #2 (saveAporte): Preserva o itemMetadata do ativo (tipo e instituição)
+            // no mês do aporte, puxando do histórico acumulado caso o mês não tenha registro.
             saveAporte: () => {
                 const m = AppState.activeModal;
                 const name = document.getElementById('modal-aporte-name').value;
@@ -502,9 +507,23 @@
                 const currentVal = Number(AppState.budgetData[m.year][m.month][assetCat][name]) || 0;
                 AppState.budgetData[m.year][m.month][assetCat][name] = currentVal + numVal;
 
+                // Garante que o itemMetadata do ativo seja preservado neste mês
+                // (tipo e instituição podem estar ausentes se for o primeiro aporte do mês)
+                if (!AppState.budgetData[m.year][m.month].itemMetadata) AppState.budgetData[m.year][m.month].itemMetadata = {};
+                if (!AppState.budgetData[m.year][m.month].itemMetadata[assetCat]) AppState.budgetData[m.year][m.month].itemMetadata[assetCat] = {};
+
+                const monthMeta = AppState.budgetData[m.year][m.month].itemMetadata[assetCat];
+                if (!monthMeta[name] && accDetails.assets[name]) {
+                    // Preenche tipo e instituição a partir do histórico acumulado
+                    monthMeta[name] = accDetails.assets[name].type || 'variavel';
+                    if (accDetails.assets[name].inst) monthMeta[`${name}_inst`] = accDetails.assets[name].inst;
+                }
+
                 saveToDatabase(); AppState.activeModal = null; renderApp();
             },
 
+            // FIX #3 (saveNewItem): Verifica se o ativo já existe globalmente antes de
+            // executar o loop que zera todos os meses, evitando perda de dados históricos.
             saveNewItem: () => {
                 const m = AppState.activeModal;
                 let name = document.getElementById('modal-item-name').value.trim();
@@ -521,16 +540,39 @@
                 if (isInvest) {
                     const typeVal = document.getElementById('modal-item-type').value;
                     const instVal = document.getElementById('modal-item-inst').value.trim();
+
+                    // Verifica se o ativo com esse nome já existe em algum mês/ano antes de fazer o loop destrutivo
+                    let alreadyExistsGlobally = false;
                     Object.keys(AppState.budgetData).forEach(y => {
                         Object.keys(AppState.budgetData[y]).forEach(mon => {
-                            if (!AppState.budgetData[y][mon][m.cat]) AppState.budgetData[y][mon][m.cat] = {};
-                            if (!AppState.budgetData[y][mon].itemMetadata[m.cat]) AppState.budgetData[y][mon].itemMetadata[m.cat] = {};
-                            AppState.budgetData[y][mon][m.cat][fn] = 0;
-                            AppState.budgetData[y][mon].itemMetadata[m.cat][fn] = typeVal;
-                            if(instVal) AppState.budgetData[y][mon].itemMetadata[m.cat][`${fn}_inst`] = instVal;
+                            if (AppState.budgetData[y][mon][m.cat] && AppState.budgetData[y][mon][m.cat][fn] !== undefined) {
+                                alreadyExistsGlobally = true;
+                            }
                         });
                     });
-                    AppState.budgetData[m.year][m.month][m.cat][fn] = numVal;
+
+                    if (alreadyExistsGlobally) {
+                        // Ativo já existe em outros meses — apenas define o valor no mês atual
+                        // sem sobrescrever o histórico
+                        AppState.budgetData[m.year][m.month][m.cat][fn] = numVal;
+                        if (!AppState.budgetData[m.year][m.month].itemMetadata[m.cat]) AppState.budgetData[m.year][m.month].itemMetadata[m.cat] = {};
+                        if (!AppState.budgetData[m.year][m.month].itemMetadata[m.cat][fn]) {
+                            AppState.budgetData[m.year][m.month].itemMetadata[m.cat][fn] = typeVal;
+                            if(instVal) AppState.budgetData[m.year][m.month].itemMetadata[m.cat][`${fn}_inst`] = instVal;
+                        }
+                    } else {
+                        // Ativo novo de fato — propaga estrutura para todos os meses/anos (comportamento original)
+                        Object.keys(AppState.budgetData).forEach(y => {
+                            Object.keys(AppState.budgetData[y]).forEach(mon => {
+                                if (!AppState.budgetData[y][mon][m.cat]) AppState.budgetData[y][mon][m.cat] = {};
+                                if (!AppState.budgetData[y][mon].itemMetadata[m.cat]) AppState.budgetData[y][mon].itemMetadata[m.cat] = {};
+                                AppState.budgetData[y][mon][m.cat][fn] = 0;
+                                AppState.budgetData[y][mon].itemMetadata[m.cat][fn] = typeVal;
+                                if(instVal) AppState.budgetData[y][mon].itemMetadata[m.cat][`${fn}_inst`] = instVal;
+                            });
+                        });
+                        AppState.budgetData[m.year][m.month][m.cat][fn] = numVal;
+                    }
                 } else {
                     if (!AppState.budgetData[m.year][m.month][m.cat]) { 
                         AppState.budgetData[m.year][m.month][m.cat] = {}; 
@@ -603,6 +645,9 @@
                 saveToDatabase(); AppState.activeModal = null; renderApp();
             },
 
+            // FIX #1 (Debounce): handleInputDebounced usa typingTimer (campos de valor)
+            // handleYieldInputDebounced usa yieldTypingTimer (campos de rendimento)
+            // Os dois timers são independentes — digitar em um não cancela o outro.
             handleInputDebounced: (year, month, category, item, inputEl) => {
                 const rawDigits = inputEl.value.replace(/\D/g, ''); inputEl.value = rawDigits ? formatCurrencyInput(Number(rawDigits) / 100) : '0,00';
                 clearTimeout(typingTimer); typingTimer = setTimeout(() => { 
@@ -618,14 +663,15 @@
             },
             handleYieldInputDebounced: (year, month, category, item, inputEl) => {
                 const rawDigits = inputEl.value.replace(/\D/g, ''); inputEl.value = rawDigits ? formatCurrencyInput(Number(rawDigits) / 100) : '0,00';
-                clearTimeout(typingTimer); typingTimer = setTimeout(() => { 
+                // Usa yieldTypingTimer separado do typingTimer de valor
+                clearTimeout(yieldTypingTimer); yieldTypingTimer = setTimeout(() => { 
                     const numValue = parseCurrencyString(inputEl.value); 
                     if (!AppState.budgetData[year][month].itemMetadata[category]) AppState.budgetData[year][month].itemMetadata[category] = {};
                     if (AppState.budgetData[year][month].itemMetadata[category][`${item}_yield`] !== numValue) { AppState.budgetData[year][month].itemMetadata[category][`${item}_yield`] = numValue; saveToDatabase(); renderApp(); } 
                 }, 1000);
             },
             handleYieldBlur: (year, month, category, item, inputEl) => { 
-                clearTimeout(typingTimer); const numValue = parseCurrencyString(inputEl.value); inputEl.value = formatCurrencyInput(numValue); 
+                clearTimeout(yieldTypingTimer); const numValue = parseCurrencyString(inputEl.value); inputEl.value = formatCurrencyInput(numValue); 
                 if (!AppState.budgetData[year][month].itemMetadata[category]) AppState.budgetData[year][month].itemMetadata[category] = {};
                 if (AppState.budgetData[year][month].itemMetadata[category][`${item}_yield`] !== numValue) { AppState.budgetData[year][month].itemMetadata[category][`${item}_yield`] = numValue; saveToDatabase(); renderApp(); } 
             },
@@ -787,6 +833,8 @@
             AppState.charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: data.map(d => d.name), datasets: [ { label: 'Renda', data: data.map(d => d.Valor), backgroundColor: '#10b981', borderRadius: 4 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0', drawBorder: false }, ticks: { callback: (val) => `R$ ${val}`, font: { size: 10 } } } }, plugins: { datalabels: { display: false }, legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` R$ ${formatCurrency(ctx.raw).replace('R$', '').trim()}` } } } } });
         }
 
+        // FIX #4 (renderModal duplicada): Mantida apenas UMA declaração de renderModal,
+        // removendo a cópia que existia antes do bloco AppActions no código anterior.
         function renderModal() {
             const root = document.getElementById('modal-root');
             if (!AppState.activeModal && !AppState.confirmMonthChange && !AppState.confirmDeleteItem) {
@@ -1408,7 +1456,6 @@
                                 </tbody></table></div></div></div></div>`;
         }
 
-        // --- HEADER — única função alterada ---
         function renderHeader() {
             const tabs = [
                 { id: 'dashboard',    label: 'Dashboard' },
@@ -1427,7 +1474,6 @@
                             <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
                         </div>
                         
-                        <!-- Seletor mês/ano: visível só em desktop -->
                         <div class="hidden md:flex flex-1 max-w-md items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 mx-auto">
                             <div class="flex items-center border-r border-slate-200 pr-2 mr-2">
                                 <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
@@ -1442,10 +1488,8 @@
                         </div>
 
                         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                            <!-- Status sync -->
                             <div class="flex items-center text-[10px] sm:text-xs font-medium min-w-[50px] sm:min-w-[80px] justify-end" id="sync-status"></div>
                             
-                            <!-- Perfil dropdown — visível só em desktop -->
                             <div class="hidden md:block relative" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
                                 <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" class="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold transition-colors">
                                     <i data-lucide="user" class="w-4 h-4"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
@@ -1458,14 +1502,12 @@
                                 </div>
                             </div>
 
-                            <!-- Hambúrguer — visível só em mobile -->
                             <button onclick="openMobileDrawer()" class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" aria-label="Menu">
                                 <i data-lucide="menu" class="w-5 h-5"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Seletor mês/ano mobile -->
                     <div class="flex md:hidden mt-3 items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 w-full">
                         <div class="flex items-center border-r border-slate-200 pr-2 mr-2 shrink-0">
                             <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
@@ -1480,14 +1522,12 @@
                     </div>
                 </div>
                 
-                <!-- Tabs desktop (ocultas em mobile) -->
                 <div class="hidden md:block border-t border-slate-100 w-full overflow-x-auto scrollbar-hide mt-0">
                     <div class="max-w-7xl mx-auto px-2 sm:px-4 flex flex-nowrap justify-start lg:justify-center gap-1 sm:gap-4 md:gap-8">
                         ${tabs.map(t => `<button onclick="AppActions.changeTab('${t.id}')" class="py-3 px-3 md:px-4 border-b-2 transition-colors whitespace-nowrap text-xs md:text-sm font-bold ${AppState.activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">${t.label}</button>`).join('')}
                     </div>
                 </div>
 
-                <!-- Indicador de aba ativa em mobile (abaixo do seletor de mês) -->
                 <div class="md:hidden flex items-center gap-2 px-4 py-2 border-t border-slate-100 bg-slate-50/60">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seção:</span>
                     <span class="text-[11px] font-black text-blue-600 uppercase tracking-wide">${tabs.find(t => t.id === AppState.activeTab)?.label || 'Dashboard'}</span>
@@ -1536,7 +1576,6 @@
             }
         }
 
-        // --- INICIALIZAÇÃO COM FECHADURA DE SEGURANÇA ---
         async function initAuth() {
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
