@@ -12,11 +12,6 @@
       }
     </script>
 
-    <!-- Premium Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,395 +19,46 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* ── Design Tokens ── */
-        :root {
-            --bg-primary:    #f0f2f7;
-            --bg-surface:    #ffffff;
-            --bg-elevated:   #f8fafd;
-            --border-subtle: rgba(99,102,241,0.10);
-            --border-muted:  #e4e7f0;
-            --accent:        #6366f1;
-            --accent-light:  #818cf8;
-            --accent-dim:    rgba(99,102,241,0.08);
-            --accent-glow:   rgba(99,102,241,0.18);
-            --emerald:       #10b981;
-            --rose:          #f43f5e;
-            --amber:         #f59e0b;
-            --text-primary:  #0f172a;
-            --text-muted:    #64748b;
-            --text-faint:    #94a3b8;
-            --shadow-sm:     0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
-            --shadow-md:     0 4px 16px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04);
-            --shadow-lg:     0 12px 40px rgba(15,23,42,0.10), 0 2px 8px rgba(15,23,42,0.06);
-            --radius-sm:     10px;
-            --radius-md:     16px;
-            --radius-lg:     24px;
-            --radius-xl:     32px;
-        }
-
-        /* ── Base ── */
-        *, *::before, *::after { box-sizing: border-box; }
-
-        body {
-            font-family: 'DM Sans', system-ui, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            background-image:
-                radial-gradient(ellipse 80% 60% at 10% -10%, rgba(99,102,241,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 90% 110%, rgba(16,185,129,0.04) 0%, transparent 60%);
-            background-attachment: fixed;
-        }
-
-        /* ── Scrollbar ── */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* ── Forms ── */
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-        input[type=range] { accent-color: var(--accent); }
-
-        /* ── Currency inputs with mono font ── */
-        input[inputmode="numeric"],
-        input[type="text"].currency-mono {
-            font-family: 'DM Mono', monospace;
-            font-size: 12px;
-            letter-spacing: -0.01em;
-        }
-
-        /* ── Cards ── */
-        .lm-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-muted);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .lm-card:hover { box-shadow: var(--shadow-md); }
-
-        /* ── Header ── */
-        header {
-            background: rgba(255,255,255,0.85) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--border-muted) !important;
-            box-shadow: 0 1px 0 rgba(99,102,241,0.06), var(--shadow-sm) !important;
-        }
-
-        /* ── Nav tabs ── */
-        .nav-tab {
-            position: relative;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            color: var(--text-muted);
-            transition: color 0.2s;
-        }
-        .nav-tab.active {
-            color: var(--accent);
-        }
-        .nav-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-light));
-            border-radius: 2px 2px 0 0;
-        }
-
-        /* ── Buttons ── */
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
-            color: #fff;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            border-radius: var(--radius-sm);
-            box-shadow: 0 2px 8px var(--accent-glow), 0 1px 2px rgba(99,102,241,0.2);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px var(--accent-glow), 0 2px 4px rgba(99,102,241,0.25);
-        }
-        .btn-primary:active { transform: translateY(0); }
-
-        .btn-ghost {
-            background: var(--accent-dim);
-            color: var(--accent);
-            font-weight: 600;
-            border-radius: var(--radius-sm);
-            border: 1px solid rgba(99,102,241,0.15);
-            transition: background 0.15s ease, border-color 0.15s ease;
-        }
-        .btn-ghost:hover {
-            background: rgba(99,102,241,0.14);
-            border-color: rgba(99,102,241,0.28);
-        }
-
-        /* ── Metric cards ── */
-        .metric-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-muted);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            overflow: hidden;
-            position: relative;
-        }
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .metric-card:hover::before { opacity: 1; }
-
-        /* ── Stat label ── */
-        .stat-label {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-faint);
-        }
-        .stat-value {
-            font-family: 'DM Mono', monospace;
-            font-weight: 500;
-            letter-spacing: -0.02em;
-            line-height: 1.1;
-        }
-
-        /* ── Input rows ── */
-        .editable-row {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-muted);
-            border-radius: var(--radius-sm);
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-        .editable-row:hover {
-            border-color: rgba(99,102,241,0.25);
-            box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-        .editable-row:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-
-        /* ── Badges ── */
-        .badge-reserva  { background: rgba(59,130,246,0.10); color: #2563eb; border: 1px solid rgba(59,130,246,0.20); }
-        .badge-fixa     { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.20); }
-        .badge-variavel { background: rgba(139,92,246,0.10); color: #7c3aed; border: 1px solid rgba(139,92,246,0.20); }
-        .badge-cripto   { background: rgba(245,158,11,0.10); color: #d97706; border: 1px solid rgba(245,158,11,0.20); }
-        .badge-fixed    { background: rgba(244,63,94,0.10);  color: #e11d48; border: 1px solid rgba(244,63,94,0.18); }
-        .badge-variable { background: rgba(249,115,22,0.10); color: #ea580c; border: 1px solid rgba(249,115,22,0.18); }
-
-        /* ── Section header ── */
-        .section-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: var(--text-faint);
-        }
-
-        /* ── Table ── */
-        .lm-table thead th {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-faint);
-            border-bottom: 1px solid var(--border-muted);
-            padding-bottom: 10px;
-        }
-        .lm-table tbody tr {
-            border-bottom: 1px solid var(--bg-elevated);
-            transition: background 0.12s ease;
-        }
-        .lm-table tbody tr:hover { background: var(--bg-elevated); }
-
-        /* ── Dark panel (patrimônio) ── */
-        .panel-dark {
-            background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        .panel-dark::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 200px; height: 200px;
-            background: radial-gradient(circle, rgba(99,102,241,0.20) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .panel-dark::after {
-            content: '';
-            position: absolute;
-            bottom: -60px; left: -60px;
-            width: 180px; height: 180px;
-            background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        /* ── Progress bar ── */
-        .progress-track {
-            background: rgba(99,102,241,0.08);
-            border-radius: 100px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            background: linear-gradient(90deg, var(--accent), var(--accent-light));
-            border-radius: 100px;
-            transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        /* ── Sync status pill ── */
-        #sync-status span {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        /* ── Profile dropdown ── */
-        #profile-dropdown {
-            border-radius: var(--radius-md) !important;
-            border: 1px solid var(--border-muted) !important;
-            box-shadow: var(--shadow-lg) !important;
-            backdrop-filter: blur(12px);
-            overflow: hidden;
-        }
-        #profile-dropdown a,
-        #profile-dropdown button {
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            transition: background 0.12s ease !important;
-        }
-
-        /* ── Month/year selector ── */
-        .month-nav {
-            background: rgba(99,102,241,0.04);
-            border: 1px solid rgba(99,102,241,0.12);
-            border-radius: var(--radius-sm);
-        }
-        .month-nav button {
-            color: var(--text-muted);
-            border-radius: 6px;
-            transition: background 0.12s ease, color 0.12s ease;
-        }
-        .month-nav button:hover { background: rgba(99,102,241,0.10); color: var(--accent); }
-        .month-label {
-            font-weight: 700;
-            letter-spacing: 0.06em;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
+        input[type=range] { accent-color: #3b82f6; }
 
         /* ── Drawer mobile ── */
         #mobile-drawer {
             position: fixed;
             top: 0; right: 0;
-            width: 280px;
+            width: 260px;
             height: 100%;
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(24px);
-            box-shadow: -8px 0 40px rgba(15,23,42,0.12);
+            background: #fff;
+            box-shadow: -4px 0 24px rgba(0,0,0,.12);
             z-index: 9999;
             transform: translateX(100%);
-            transition: transform .28s cubic-bezier(.4,0,.2,1);
+            transition: transform .25s cubic-bezier(.4,0,.2,1);
             display: flex;
             flex-direction: column;
-            border-left: 1px solid var(--border-muted);
         }
-        #mobile-drawer.open { transform: translateX(0); }
-
+        #mobile-drawer.open {
+            transform: translateX(0);
+        }
         #mobile-drawer-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15,23,42,0.40);
-            backdrop-filter: blur(4px);
+            background: rgba(15,23,42,.45);
             z-index: 9998;
-            transition: opacity 0.25s ease;
         }
-        #mobile-drawer-overlay.open { display: block; }
-
-        /* ── Gradient accent bar on active tab ── */
-        .tab-active-pill {
-            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
-            border-radius: 10px;
+        #mobile-drawer-overlay.open {
+            display: block;
         }
-
-        /* ── Chart card polish ── */
-        .chart-card-header {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-            color: var(--accent);
-        }
-
-        /* ── Loading screen ── */
-        .loading-screen {
-            background: linear-gradient(145deg, #f0f2f7 0%, #e8eaf6 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* ── Animations ── */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-            0%   { background-position: -200% 0; }
-            100% { background-position:  200% 0; }
-        }
-        .animate-fadeup { animation: fadeUp 0.4s ease both; }
-        .animate-fadeup-1 { animation: fadeUp 0.4s 0.05s ease both; }
-        .animate-fadeup-2 { animation: fadeUp 0.4s 0.10s ease both; }
-        .animate-fadeup-3 { animation: fadeUp 0.4s 0.15s ease both; }
-
-        /* ── Slider custom ── */
-        .goal-slider {
-            height: 6px;
-            background: rgba(99,102,241,0.12);
-            border-radius: 100px;
-        }
-        .goal-slider::-webkit-slider-thumb {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 0 4px rgba(99,102,241,0.18);
-            cursor: pointer;
-            -webkit-appearance: none;
-            border: 2px solid #fff;
-        }
-
-        /* ── Util ── */
-        .font-mono-num { font-family: 'DM Mono', monospace; letter-spacing: -0.01em; }
     </style>
 </head>
-<body class="pb-20">
+<body class="bg-[#f8fafc] text-slate-800 pb-20 font-sans">
 
     <div id="app-root">
-        <div class="loading-screen">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-                <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(99,102,241,0.35);">
-                    <i data-lucide="loader-2" style="width:24px;height:24px;color:#fff;" class="animate-spin"></i>
-                </div>
-                <div style="text-align:center;">
-                    <p style="font-weight:700;font-size:15px;color:#0f172a;letter-spacing:-0.01em;margin:0;">Lumis</p>
-                    <p style="font-size:12px;color:#94a3b8;margin:2px 0 0;font-weight:500;">Carregando sua plataforma...</p>
-                </div>
-            </div>
+        <div class="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc]">
+            <i data-lucide="loader-2" class="w-10 h-10 text-blue-600 animate-spin mb-4"></i>
+            <p class="text-slate-500 font-medium text-sm">Validando acesso e carregando...</p>
         </div>
     </div>
 
@@ -421,10 +67,10 @@
     <!-- ── DRAWER MOBILE ─────────────────────────────────────────────────── -->
     <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
     <div id="mobile-drawer">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border-muted);">
-            <img src="logo.png" alt="Lumis" style="height:28px;object-fit:contain;" onerror="this.style.display='none'">
-            <button onclick="closeMobileDrawer()" style="width:32px;height:32px;border-radius:8px;background:var(--bg-elevated);border:1px solid var(--border-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:background 0.12s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='var(--bg-elevated)'">
-                <i data-lucide="x" style="width:16px;height:16px;"></i>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <img src="logo.png" alt="Lumis" class="h-7 object-contain" onerror="this.style.display='none'">
+            <button onclick="closeMobileDrawer()" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
         <nav id="mobile-drawer-nav" class="flex-1 overflow-y-auto py-3 px-3 space-y-1">
@@ -722,15 +368,9 @@
             nav.innerHTML = tabs.map(t => {
                 const active = AppState.activeTab === t.id;
                 return `<button onclick="AppActions.changeTab('${t.id}'); closeMobileDrawer();"
-                    style="width:100%;display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;font-size:13px;font-weight:${active?'700':'500'};transition:all 0.15s;border:none;cursor:pointer;text-align:left;
-                    background:${active?'linear-gradient(135deg,var(--accent),#4f46e5)':'transparent'};
-                    color:${active?'#fff':'var(--text-muted)'};
-                    box-shadow:${active?'0 4px 12px var(--accent-glow)':'none'};"
-                    onmouseover="if(!${active}) { this.style.background='var(--accent-dim)'; this.style.color='var(--accent)'; }"
-                    onmouseout="if(!${active}) { this.style.background='transparent'; this.style.color='var(--text-muted)'; }">
-                    <div style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${active?'rgba(255,255,255,0.20)':'rgba(99,102,241,0.08)'};flex-shrink:0;">
-                        <i data-lucide="${t.icon}" style="width:14px;height:14px;color:${active?'#fff':'var(--accent)'};"></i>
-                    </div>
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all
+                    ${active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}">
+                    <i data-lucide="${t.icon}" class="w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-slate-400'}"></i>
                     <span>${sanitizeHTML(t.label)}</span>
                 </button>`;
             }).join('');
@@ -738,24 +378,18 @@
             const bottom = document.getElementById('mobile-drawer-bottom');
             bottom.innerHTML = `
                 <a href="https://wa.me/5511946358213" target="_blank"
-                   style="display:flex;align-items:center;gap:12px;padding:12px 16px;color:var(--text-primary);font-size:13px;font-weight:500;text-decoration:none;border-radius:10px;transition:background 0.12s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'">
-                    <div style="width:32px;height:32px;border-radius:8px;background:rgba(16,185,129,0.10);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i data-lucide="bot" style="width:15px;height:15px;color:#10b981;"></i>
-                    </div>
-                    <span>Mia assistente financeira</span>
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-all">
+                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                    <span>Suporte WhatsApp</span>
                 </a>
                 <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank"
-                   style="display:flex;align-items:center;gap:12px;padding:12px 16px;color:var(--text-primary);font-size:13px;font-weight:500;text-decoration:none;border-radius:10px;transition:background 0.12s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'">
-                    <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i data-lucide="credit-card" style="width:15px;height:15px;color:var(--accent);"></i>
-                    </div>
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 transition-all">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-blue-500 shrink-0"></i>
                     <span>Gerenciar assinatura</span>
                 </a>
                 <button onclick="AppActions.sair()"
-                   style="display:flex;align-items:center;gap:12px;padding:12px 16px;color:#e11d48;font-size:13px;font-weight:500;width:100%;background:transparent;border:none;cursor:pointer;border-radius:10px;text-align:left;transition:background 0.12s;" onmouseover="this.style.background='#fff1f2'" onmouseout="this.style.background='transparent'">
-                    <div style="width:32px;height:32px;border-radius:8px;background:rgba(225,29,72,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i data-lucide="log-out" style="width:15px;height:15px;color:#e11d48;"></i>
-                    </div>
+                   class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-rose-600 hover:bg-rose-50 transition-all">
+                    <i data-lucide="log-out" class="w-4 h-4 shrink-0"></i>
                     <span>Sair da Conta</span>
                 </button>
             `;
@@ -1812,63 +1446,63 @@
             ];
 
             return `
-            <header class="sticky top-0 z-20">
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 py-2 md:py-3">
                     <div class="flex items-center justify-between gap-3 md:gap-4">
                         <div class="flex items-center h-10 md:h-12 relative w-24 sm:w-32 md:w-44 shrink-0">
                             <img src="logo.png" alt="Lumis Logo" class="absolute top-1/2 left-0 -translate-y-1/2 w-full h-auto object-contain max-w-none">
                         </div>
-                        <div class="hidden md:flex flex-1 max-w-sm items-center justify-between p-1 mx-auto month-nav">
-                            <div class="flex items-center pr-3 mr-2" style="border-right:1px solid rgba(99,102,241,0.15);">
-                                <button onclick="AppActions.changeYear(-1)" class="p-1.5 rounded-lg transition-all" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                                <div class="month-label px-2 w-14 text-center">${AppState.currentYear}</div>
-                                <button onclick="AppActions.changeYear(1)" class="p-1.5 rounded-lg transition-all" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        <div class="hidden md:flex flex-1 max-w-md items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 mx-auto">
+                            <div class="flex items-center border-r border-slate-200 pr-2 mr-2">
+                                <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <div class="font-bold text-sm text-slate-700 px-2">${AppState.currentYear}</div>
+                                <button onclick="AppActions.changeYear(1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                             </div>
                             <div class="flex items-center flex-1 justify-between">
-                                <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 rounded-lg" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                                <div class="month-label px-2 text-center flex-1">${AppState.currentMonth}</div>
-                                <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 rounded-lg" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                                <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <div class="font-bold text-sm text-slate-700 uppercase tracking-widest px-2 text-center flex-1">${AppState.currentMonth}</div>
+                                <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                             <div class="flex items-center text-[10px] sm:text-xs font-medium min-w-[50px] sm:min-w-[80px] justify-end" id="sync-status"></div>
                             <div class="hidden md:block relative" tabindex="-1" onblur="setTimeout(() => { const m = document.getElementById('profile-dropdown'); if(m) m.classList.add('hidden'); }, 200)">
-                                <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.18);border-radius:10px;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;transition:all 0.15s ease;" onmouseover="this.style.background='rgba(99,102,241,0.14)'" onmouseout="this.style.background='var(--accent-dim)'">
-                                    <i data-lucide="user" style="width:14px;height:14px;"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" style="width:12px;height:12px;opacity:0.6;"></i>
+                                <button onclick="const m = document.getElementById('profile-dropdown'); if(m) m.classList.toggle('hidden');" class="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> <span class="hidden sm:inline">Perfil</span> <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
                                 </button>
-                                <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-52 z-50" style="background:#fff;border:1px solid var(--border-muted);border-radius:16px;box-shadow:0 12px 40px rgba(15,23,42,0.12),0 2px 8px rgba(15,23,42,0.06);overflow:hidden;">
-                                    <a href="admin.html" id="btn-admin-secreto" class="hidden" style="display:none;align-items:center;gap:10px;padding:12px 16px;background:linear-gradient(135deg,#0f172a,#1e1b4b);color:#fff;font-size:12px;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.08);transition:opacity 0.15s;"><i data-lucide="shield-check" style="width:15px;height:15px;color:#818cf8;flex-shrink:0;"></i> Admin CRM</a>
-                                    <a href="https://wa.me/5511946358213" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--text-primary);font-size:12px;font-weight:500;text-decoration:none;border-bottom:1px solid var(--border-muted);transition:background 0.12s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'"><i data-lucide="bot" style="width:15px;height:15px;color:#10b981;flex-shrink:0;"></i> Mia assistente financeira</a>
-                                    <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--text-primary);font-size:12px;font-weight:500;text-decoration:none;border-bottom:1px solid var(--border-muted);transition:background 0.12s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'"><i data-lucide="credit-card" style="width:15px;height:15px;color:var(--accent);flex-shrink:0;"></i> Gerenciar assinatura</a>
-                                    <button onclick="AppActions.sair()" style="display:flex;align-items:center;gap:10px;padding:12px 16px;color:#e11d48;font-size:12px;font-weight:500;width:100%;background:transparent;border:none;cursor:pointer;text-align:left;transition:background 0.12s;" onmouseover="this.style.background='#fff1f2'" onmouseout="this.style.background='transparent'"><i data-lucide="log-out" style="width:15px;height:15px;flex-shrink:0;"></i> Sair da Conta</button>
+                                <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 flex-col overflow-hidden origin-top-right">
+                                    <a href="admin.html" id="btn-admin-secreto" class="hidden flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i> Admin CRM</a>
+                                    <a href="https://wa.me/5511959333374" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="message-circle" class="w-4 h-4 text-emerald-500"></i> Suporte WhatsApp</a>
+                                    <a href="https://billing.stripe.com/p/login/8x29ATe0PbI8bT00h800000" target="_blank" class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50 text-slate-700 text-sm font-bold border-b border-slate-100 transition-colors"><i data-lucide="credit-card" class="w-4 h-4 text-blue-500"></i> Gerenciar assinatura</a>
+                                    <button onclick="AppActions.sair()" class="flex items-center gap-2 px-4 py-3 hover:bg-rose-50 text-rose-600 text-sm font-bold text-left w-full transition-colors"><i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i> Sair da Conta</button>
                                 </div>
                             </div>
-                            <button onclick="openMobileDrawer()" class="md:hidden" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.18);color:var(--accent);cursor:pointer;transition:background 0.15s;" aria-label="Menu">
-                                <i data-lucide="menu" style="width:18px;height:18px;"></i>
+                            <button onclick="openMobileDrawer()" class="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" aria-label="Menu">
+                                <i data-lucide="menu" class="w-5 h-5"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="flex md:hidden mt-3 items-center justify-between p-1 w-full month-nav">
-                        <div class="flex items-center pr-3 mr-3" style="border-right:1px solid rgba(99,102,241,0.15);">
-                            <button onclick="AppActions.changeYear(-1)" class="p-1.5 rounded-lg transition-colors" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <div class="month-label px-2 w-14 text-center">${AppState.currentYear}</div>
-                            <button onclick="AppActions.changeYear(1)" class="p-1.5 rounded-lg transition-colors" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    <div class="flex md:hidden mt-3 items-center justify-between border border-slate-200 bg-slate-50 rounded-lg p-1 w-full">
+                        <div class="flex items-center border-r border-slate-200 pr-2 mr-2 shrink-0">
+                            <button onclick="AppActions.changeYear(-1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <div class="font-bold text-sm text-slate-700 px-2 w-12 text-center">${AppState.currentYear}</div>
+                            <button onclick="AppActions.changeYear(1)" class="p-1.5 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center flex-1 justify-between">
-                            <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 rounded-lg" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                            <div class="month-label px-2 text-center flex-1">${AppState.currentMonth}</div>
-                            <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 rounded-lg" style="color:var(--text-muted);background:transparent;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(99,102,241,0.10)'" onmouseout="this.style.background='transparent'"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            <button onclick="AppActions.prevMonth()" ${AppState.currentMonthIdx === 0 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <div class="font-bold text-sm text-slate-700 uppercase tracking-widest px-2 text-center flex-1">${AppState.currentMonth}</div>
+                            <button onclick="AppActions.nextMonthConfirm()" ${AppState.currentMonthIdx === 11 ? 'disabled' : ''} class="p-1.5 disabled:opacity-30 hover:bg-white rounded transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </div>
-                <div class="hidden md:block border-t w-full overflow-x-auto scrollbar-hide mt-0" style="border-color:var(--border-muted)">
-                    <div class="max-w-7xl mx-auto px-2 sm:px-4 flex flex-nowrap justify-start lg:justify-center gap-0">
-                        ${tabs.map(t => `<button onclick="AppActions.changeTab('${t.id}')" class="nav-tab py-3 px-4 md:px-5 whitespace-nowrap text-[11px] md:text-xs font-semibold transition-colors hover:text-slate-800 ${AppState.activeTab === t.id ? 'active' : ''}">${t.label}</button>`).join('')}
+                <div class="hidden md:block border-t border-slate-100 w-full overflow-x-auto scrollbar-hide mt-0">
+                    <div class="max-w-7xl mx-auto px-2 sm:px-4 flex flex-nowrap justify-start lg:justify-center gap-1 sm:gap-4 md:gap-8">
+                        ${tabs.map(t => `<button onclick="AppActions.changeTab('${t.id}')" class="py-3 px-3 md:px-4 border-b-2 transition-colors whitespace-nowrap text-xs md:text-sm font-bold ${AppState.activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">${t.label}</button>`).join('')}
                     </div>
                 </div>
-                <div class="md:hidden flex items-center gap-2 px-4 py-2 border-t" style="border-color:var(--border-muted);background:var(--bg-elevated)">
-                    <div style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></div>
-                    <span style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.04em;text-transform:uppercase;">${tabs.find(t => t.id === AppState.activeTab)?.label || 'Dashboard'}</span>
+                <div class="md:hidden flex items-center gap-2 px-4 py-2 border-t border-slate-100 bg-slate-50/60">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seção:</span>
+                    <span class="text-[11px] font-black text-blue-600 uppercase tracking-wide">${tabs.find(t => t.id === AppState.activeTab)?.label || 'Dashboard'}</span>
                 </div>
             </header>`;
         }
